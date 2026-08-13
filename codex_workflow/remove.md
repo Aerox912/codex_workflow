@@ -15,8 +15,10 @@ python3 ~/.codex/codex_workflow/workflow.py \
   remove --project <project> --json
 ```
 
-Use the equivalent `py -3.11` invocation and native paths on Windows. Report the
-plan and explicitly warn that the confirmed phase will permanently delete:
+Use the equivalent `py -3` invocation and native paths on Windows. The launcher
+selects the default installed Python 3 runtime, and the lifecycle CLI rejects
+versions older than 3.11. Report the plan and explicitly warn that the confirmed
+phase will permanently delete:
 
 - the recognized project-level `AGENTS.md` (active or disabled), project
   personalization, and project workflow state;

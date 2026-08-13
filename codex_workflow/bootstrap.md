@@ -2,7 +2,8 @@
 
 Use this guide only for the first installation from a universal GitHub Release
 ZIP. Python 3.11 or newer is required. On Windows, use the equivalent
-`py -3.11` invocation and native paths.
+`py -3` invocation and native paths. The launcher selects the default installed
+Python 3 runtime, and the lifecycle CLI rejects versions older than 3.11.
 
 Verify `codex_workflow-<version>.zip` against `SHA256SUMS`, extract it into a
 temporary directory, and require exactly one top-level `codex_workflow/`

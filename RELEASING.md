@@ -73,9 +73,9 @@ python3 scripts/package_release.py --verify dist/codex_workflow-*.zip
 Windows PowerShell:
 
 ```powershell
-py -3.11 -B scripts\test_workflow_runtime.py -v
-py -3.11 scripts/package_release.py --release-tag v1.1.1 --output-dir dist
-py -3.11 scripts/package_release.py --verify dist\codex_workflow-1.1.1.zip
+py -3 -B scripts\test_workflow_runtime.py -v
+py -3 scripts/package_release.py --release-tag v1.1.1 --output-dir dist
+py -3 scripts/package_release.py --verify dist\codex_workflow-1.1.1.zip
 ```
 
 The build validates the version, marker, lifecycle runtime, and required

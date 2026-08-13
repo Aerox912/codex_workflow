@@ -4,8 +4,9 @@ Use this procedure only to install the already-bootstrapped workflow into the
 current project. Do not manually copy or merge workflow files, and do not
 modify or reinstall anything under `~/.codex/`.
 
-Python 3.11 or newer is required. On Windows, use the equivalent `py -3.11`
-invocation and native paths.
+Python 3.11 or newer is required. On Windows, use the equivalent `py -3`
+invocation and native paths. The launcher selects the default installed Python
+3 runtime, and the lifecycle CLI rejects versions older than 3.11.
 
 ## Existing project installation
 
