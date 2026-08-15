@@ -1175,18 +1175,20 @@ class LifecycleIntegrationTests(unittest.TestCase):
 
     def test_installed_launcher_delegates_to_incoming_update_runtime(self) -> None:
         self.bootstrap()
+        major, minor, patch = (int(part) for part in PACKAGE_VERSION.split("-", 1)[0].split("."))
+        incoming_version = f"{major}.{minor}.{patch + 1}"
         incoming_root = self.root / "delegated-incoming" / "codex_workflow"
         shutil.copytree(
             PACKAGE,
             incoming_root,
             ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
         )
-        (incoming_root / "VERSION").write_text("1.1.1\n", encoding="utf-8")
+        (incoming_root / "VERSION").write_text(f"{incoming_version}\n", encoding="utf-8")
         user_agents = (incoming_root / "user_AGENTS.md").read_text(encoding="utf-8")
         (incoming_root / "user_AGENTS.md").write_text(
             user_agents.replace(
                 f"codex-workflow-version: {PACKAGE_VERSION}",
-                "codex-workflow-version: 1.1.1",
+                f"codex-workflow-version: {incoming_version}",
             ),
             encoding="utf-8",
         )
@@ -1210,7 +1212,7 @@ class LifecycleIntegrationTests(unittest.TestCase):
         )
         self.assertEqual(completed.returncode, 0, completed.stderr)
         summary = json.loads(completed.stdout)
-        self.assertEqual(summary["details"]["to_version"], "1.1.1")
+        self.assertEqual(summary["details"]["to_version"], incoming_version)
         self.assertTrue(summary["applied"])
 
 
