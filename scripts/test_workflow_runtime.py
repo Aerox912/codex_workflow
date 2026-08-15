@@ -107,13 +107,17 @@ class MarkerTests(unittest.TestCase):
             name: (PACKAGE / name).read_text(encoding="utf-8") for name in names
         }
         for name, text in policies.items():
-            self.assertLess(len(text.splitlines()), 200, name)
+            limit = 225 if name == "heavy_route.md" else 200
+            self.assertLess(len(text.splitlines()), limit, name)
 
         heavy = policies["heavy_route.md"]
         self.assertIn("recommended approach", heavy.lower())
         self.assertIn("canonical task names", heavy)
         self.assertIn("Decision required: none", heavy)
         self.assertIn("knowledge-delta brief", heavy)
+        self.assertIn("Only when the assigned worker is `executor_luna`", heavy)
+        self.assertIn("ordered implementation sequence", heavy)
+        self.assertIn("Do not add this Execution Guide requirement", heavy)
         self.assertIn("not spawn, message, or otherwise call subagents", heavy)
         self.assertIn("skips End-of-Session and worker statistics", heavy)
         self.assertIn("before the final response", heavy)
@@ -180,6 +184,9 @@ class MarkerTests(unittest.TestCase):
         executor = (PACKAGE / "agents" / "executor_luna.toml").read_text(
             encoding="utf-8"
         )
+        terra = (PACKAGE / "agents" / "executor_terra.toml").read_text(
+            encoding="utf-8"
+        )
         doc_writer = (PACKAGE / "agents" / "doc-writer.toml").read_text(
             encoding="utf-8"
         )
@@ -187,6 +194,9 @@ class MarkerTests(unittest.TestCase):
         install = (PACKAGE / "install.md").read_text(encoding="utf-8")
         self.assertIn("contact the named executor directly", tester)
         self.assertIn("Do not involve the parent for a routine defect", executor)
+        self.assertIn("Execution Guide as the primary work sequence", executor)
+        self.assertIn("Track the completion checklist internally", executor)
+        self.assertNotIn("Execution Guide as the primary work sequence", terra)
         self.assertIn("always contains one required", bootstrap)
         self.assertIn("explicitly labeled bootstrap/project-install action", doc_writer)
         for required_context in (
@@ -782,12 +792,12 @@ class LifecycleIntegrationTests(unittest.TestCase):
         )
         incoming_root = self.root / "incoming" / "codex_workflow"
         shutil.copytree(PACKAGE, incoming_root, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
-        (incoming_root / "VERSION").write_text("1.1.1\n", encoding="utf-8")
+        (incoming_root / "VERSION").write_text("1.1.3\n", encoding="utf-8")
         user_agents = (incoming_root / "user_AGENTS.md").read_text(encoding="utf-8")
         (incoming_root / "user_AGENTS.md").write_text(
             user_agents.replace(
                 f"codex-workflow-version: {PACKAGE_VERSION}",
-                "codex-workflow-version: 1.1.1",
+                "codex-workflow-version: 1.1.3",
             ),
             encoding="utf-8",
         )
@@ -795,7 +805,7 @@ class LifecycleIntegrationTests(unittest.TestCase):
         plan_update(incoming, self.runtime, self.project).apply()
         entry = self.project.active.read_text(encoding="utf-8")
         self.assertEqual(extract(entry, PROJECT_LOCAL), "Local policy.")
-        self.assertEqual((self.runtime.runtime / "VERSION").read_text(), "1.1.1\n")
+        self.assertEqual((self.runtime.runtime / "VERSION").read_text(), "1.1.3\n")
         updated_config = json.loads(installed_config_path.read_text(encoding="utf-8"))
         self.assertEqual(updated_config["default_executor"], "executor_terra")
         self.assertEqual(updated_config["max_concurrent_workers"], 7)

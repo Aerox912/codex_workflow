@@ -19,7 +19,7 @@ Requires Python 3.11 or newer for deterministic lifecycle operations.
 ▶️ Send:
 
 ```text
-Download and extract the latest GitHub Release from https://github.com/viettran-edgeAI/codex_workflow/releases. Then read the bundled `codex_workflow/bootstrap.md` and follow it to complete the initial installation.
+Download and extract the latest `codex_workflow-<version>.zip` asset (not GitHub's Source code archive) from https://github.com/viettran-edgeAI/codex_workflow/releases. Verify it against `SHA256SUMS`, then read the bundled `codex_workflow/bootstrap.md` and follow it to complete the initial installation.
 ```
 > ⭐ Recommended: use 5.6 Luna xhigh for installation. 
 
@@ -36,6 +36,8 @@ After this initial installation, the current project is ready to use. Whenever y
 
 > Full workflow mode : Activate `explorer companion` and the ability to automatically manage context and processes.
 
+Note that the `medium route` doesn't call subagents; it completes the task itself. It only applies `full workflow mode` to automatically manage context & progress. It's suitable for moderately sized or narrow tasks, where the main agent can do everything itself faster and more efficiently than calling a small number of workers.
+
 ### How to use
 - Normally, for simple work, general Q&A, you don't need to do anything. `light route` is the default route.
 
@@ -45,7 +47,7 @@ After this initial installation, the current project is ready to use. Whenever y
 ```text
 use medium/heavy route. [your task description]".
 ```
-Or:
+Or continue a task that was already underway in the previous session:
 ```text
 use medium/heavy route. Continue ongoing work.
 ```
@@ -53,7 +55,11 @@ use medium/heavy route. Continue ongoing work.
 ---------------
 > **⭐ Recommendation:** Assign very large and complex tasks to the `heavy route` to make the most of its capabilities and maximize token usage savings.
 
-## 3. More details 🧭 
+## Light benchmark
+
+![Light benchmark analysis](light_benchmark/analysis.png)
+
+## 3. More details
 
 Send these exact commands to Codex from the relevant project directory:
 
