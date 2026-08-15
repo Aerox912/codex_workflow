@@ -1,0 +1,30 @@
+{
+  "name": "codex-workflow",
+  "version": "1.1.1",
+  "description": "Operate the Aerox912 Codex Workflow fork through its installed, agent-system-managed runtime.",
+  "author": {
+    "name": "Aerox912",
+    "url": "https://github.com/Aerox912"
+  },
+  "homepage": "https://github.com/Aerox912/codex_workflow",
+  "repository": "https://github.com/Aerox912/codex_workflow",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Codex Workflow (Aerox912 Fork)",
+    "shortDescription": "Manage Codex Workflow projects through the installed fork runtime",
+    "longDescription": "Codex Workflow adds explicit Light, Medium, and Heavy execution routes plus project lifecycle commands. This companion plugin routes those commands to the runtime installed and updated by agent-system; installing the plugin does not replace or self-update that runtime.",
+    "developerName": "Aerox912 (fork; upstream by viettran-edgeAI)",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/Aerox912/codex_workflow",
+    "defaultPrompt": [
+      "Install Codex Workflow in this project.",
+      "Check whether this project needs a Workflow update.",
+      "Configure the Codex Workflow route and workers for this project."
+    ]
+  }
+}
