@@ -49,12 +49,17 @@ system:
 
 ## Versioning
 
-Use SemVer 2.0.0. Keep the plain version in `codex_workflow/VERSION` and the
-`codex-workflow-version` marker in `codex_workflow/user_AGENTS.md` identical.
-The release tag is the same value with an optional leading `v`, for example
-`VERSION=1.1.2` and tag `v1.1.2`. GitHub's prerelease flag is independent of
-the SemVer string; the initial releases are marked as prereleases by the
-workflow.
+Use SemVer 2.0.0. Keep the plain version in `codex_workflow/VERSION`, the
+`codex-workflow-version` marker in `codex_workflow/user_AGENTS.md`, and the
+companion plugin version in `plugins/codex-workflow/.codex-plugin/plugin.json`
+identical. The release tag is the same value with a leading `v`, for example
+`VERSION=1.1.3` and tag `v1.1.3`. GitHub's prerelease flag is independent of
+the SemVer string; automated fork releases are prereleases by default.
+
+Every upstream integration must select a version that has not already been
+published by the Aerox912 fork. If the integrated upstream version already has
+a complete fork release, increment the patch version and update all three
+version surfaces before pushing `main`.
 
 ## Local build and validation
 
@@ -66,7 +71,7 @@ Linux/macOS:
 
 ```sh
 python3 -B scripts/test_workflow_runtime.py -v
-python3 scripts/package_release.py --release-tag v1.1.2 --output-dir dist
+python3 scripts/package_release.py --release-tag v1.1.3 --output-dir dist
 python3 scripts/package_release.py --verify dist/codex_workflow-*.zip
 ```
 
@@ -74,8 +79,8 @@ Windows PowerShell:
 
 ```powershell
 py -3 -B scripts\test_workflow_runtime.py -v
-py -3 scripts/package_release.py --release-tag v1.1.2 --output-dir dist
-py -3 scripts/package_release.py --verify dist\codex_workflow-1.1.2.zip
+py -3 scripts/package_release.py --release-tag v1.1.3 --output-dir dist
+py -3 scripts/package_release.py --verify dist\codex_workflow-1.1.3.zip
 ```
 
 The build validates the version, marker, lifecycle runtime, and required
@@ -83,31 +88,28 @@ resources; rejects generated Python caches; creates a deterministic ZIP asset;
 and writes `dist/SHA256SUMS`. Run the runtime tests before packaging and inspect
 the archive listing when package contents change.
 
-## Publishing — approval required
+## Automatic fork publishing
 
-Do not run the following commands until the release structure, contents, tag,
-and prerelease setting have been approved:
+A push to the Aerox912 fork's `main` branch starts
+`.github/workflows/release.yml` when release-owned files change. The workflow
+derives the tag from the validated package version, runs the runtime tests,
+validates and builds the universal archive, verifies it, and publishes the tag
+and prerelease with generated notes. If a complete release for that version
+already exists, the workflow succeeds without changing it. A tag without a
+complete release is a hard failure and is never moved or overwritten.
 
-```sh
-git status --short
-git tag -a v1.1.2 -m "codex_workflow v1.1.2"
-git push origin v1.1.2
-```
-
-Pushing a semantic `v*` tag starts `.github/workflows/release.yml`. It rebuilds
-and validates the archives from that tagged commit, then publishes the GitHub
-Release with `--prerelease` and generated notes. The workflow also supports a
-manual dispatch with a tag and defaults to prerelease publication. The
-prerelease flag should be removed or disabled only after a separate decision to
-promote the project to stable releases.
+The scheduled upstream-sync task is authorized to use this path after a clean
+integration and successful local validation. `workflow_dispatch` can retry the
+same idempotent pipeline. Promoting a prerelease to stable or manually replacing
+release assets remains a separate approval-gated operation.
 
 If the workflow is unavailable, the equivalent manual publication command is:
 
 ```sh
-gh release create v1.1.2 \
-  dist/codex_workflow-1.1.2.zip \
+gh release create v1.1.3 \
+  dist/codex_workflow-1.1.3.zip \
   dist/SHA256SUMS \
-  --title "codex_workflow v1.1.2" \
+  --title "codex_workflow v1.1.3" \
   --generate-notes \
   --prerelease
 ```
