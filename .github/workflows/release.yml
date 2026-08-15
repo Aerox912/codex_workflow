@@ -44,6 +44,10 @@ jobs:
         shell: bash
         run: |
           version="$(tr -d '\r\n' < codex_workflow/VERSION)"
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+-patch\.[1-9][0-9]*$ ]]; then
+            echo "::error::Fork release version must use X.Y.Z-patch.N."
+            exit 1
+          fi
           release_tag="v${version}"
           asset="codex_workflow-${version}.zip"
           echo "version=$version" >> "$GITHUB_OUTPUT"

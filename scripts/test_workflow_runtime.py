@@ -20,8 +20,10 @@ PACKAGE_VERSION = (PACKAGE / "VERSION").read_text(encoding="utf-8").strip()
 import sys
 
 sys.path.insert(0, str(PACKAGE))
+sys.path.insert(0, str(ROOT / "scripts"))
 
 import workflow as workflow_cli
+from set_fork_version import ForkVersionError, set_fork_version
 
 from runtime.config import (
     WorkflowConfig,
@@ -61,6 +63,73 @@ from runtime.release import (
     summarize_release_notes,
 )
 from runtime.transaction import Mutation, apply
+
+
+class ForkVersionTests(unittest.TestCase):
+    def test_repository_plugin_version_matches_runtime(self) -> None:
+        plugin = json.loads(
+            (
+                ROOT
+                / "plugins"
+                / "codex-workflow"
+                / ".codex-plugin"
+                / "plugin.json"
+            ).read_text(encoding="utf-8")
+        )
+        self.assertEqual(plugin["version"], PACKAGE_VERSION)
+
+    def make_root(self, root: Path, version: str = "1.1.3") -> Path:
+        package = root / "codex_workflow"
+        plugin = root / "plugins" / "codex-workflow" / ".codex-plugin"
+        package.mkdir(parents=True)
+        plugin.mkdir(parents=True)
+        (package / "VERSION").write_text(version + "\n", encoding="utf-8")
+        (package / "user_AGENTS.md").write_text(
+            f"<!-- codex-workflow-version: {version} -->\n", encoding="utf-8"
+        )
+        (plugin / "plugin.json").write_text(
+            json.dumps({"name": "codex-workflow", "version": version}, indent=2)
+            + "\n",
+            encoding="utf-8",
+        )
+        return root
+
+    def test_sets_idempotent_upstream_patch_version(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.make_root(Path(temporary))
+            result = set_fork_version(root, "v1.1.3", 1)
+            self.assertEqual(result["version"], "1.1.3-patch.1")
+            self.assertEqual(len(result["changed"]), 3)
+            self.assertEqual(
+                (root / "codex_workflow" / "VERSION").read_text().strip(),
+                "1.1.3-patch.1",
+            )
+            self.assertIn(
+                "codex-workflow-version: 1.1.3-patch.1",
+                (root / "codex_workflow" / "user_AGENTS.md").read_text(),
+            )
+            plugin = json.loads(
+                (
+                    root
+                    / "plugins"
+                    / "codex-workflow"
+                    / ".codex-plugin"
+                    / "plugin.json"
+                ).read_text()
+            )
+            self.assertEqual(plugin["version"], "1.1.3-patch.1")
+            self.assertEqual(
+                set_fork_version(root, "1.1.3", 1)["changed"], []
+            )
+
+    def test_rejects_version_surface_drift(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.make_root(Path(temporary))
+            (root / "codex_workflow" / "VERSION").write_text(
+                "1.1.3-patch.1\n", encoding="utf-8"
+            )
+            with self.assertRaises(ForkVersionError):
+                set_fork_version(root, "1.1.3", 2)
 
 
 class MarkerTests(unittest.TestCase):

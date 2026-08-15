@@ -49,17 +49,22 @@ system:
 
 ## Versioning
 
-Use SemVer 2.0.0. Keep the plain version in `codex_workflow/VERSION`, the
+Use SemVer 2.0.0. Fork releases follow the upstream stable version with a
+`-patch.N` prerelease suffix: `1.1.3-patch.1`, then `1.1.3-patch.2`. When the
+upstream base advances, restart at patch 1, for example `1.1.4-patch.1`.
+Keep the plain version in `codex_workflow/VERSION`, the
 `codex-workflow-version` marker in `codex_workflow/user_AGENTS.md`, and the
 companion plugin version in `plugins/codex-workflow/.codex-plugin/plugin.json`
-identical. The release tag is the same value with a leading `v`, for example
-`VERSION=1.1.3` and tag `v1.1.3`. GitHub's prerelease flag is independent of
-the SemVer string; automated fork releases are prereleases by default.
+identical. Use `scripts/set_fork_version.py` to change those surfaces together.
+The release tag is the same value with a leading `v`, for example
+`VERSION=1.1.3-patch.1` and tag `v1.1.3-patch.1`.
 
-Every upstream integration must select a version that has not already been
-published by the Aerox912 fork. If the integrated upstream version already has
-a complete fork release, increment the patch version and update all three
-version surfaces before pushing `main`.
+Every upstream integration selects the next unused patch number for its
+upstream base from the Aerox912 fork's releases before pushing `main`:
+
+```text
+python3 scripts/set_fork_version.py --upstream-version 1.1.3 --patch 1
+```
 
 ## Local build and validation
 
@@ -71,7 +76,7 @@ Linux/macOS:
 
 ```sh
 python3 -B scripts/test_workflow_runtime.py -v
-python3 scripts/package_release.py --release-tag v1.1.3 --output-dir dist
+python3 scripts/package_release.py --release-tag v1.1.3-patch.1 --output-dir dist
 python3 scripts/package_release.py --verify dist/codex_workflow-*.zip
 ```
 
@@ -79,8 +84,8 @@ Windows PowerShell:
 
 ```powershell
 py -3 -B scripts\test_workflow_runtime.py -v
-py -3 scripts/package_release.py --release-tag v1.1.3 --output-dir dist
-py -3 scripts/package_release.py --verify dist\codex_workflow-1.1.3.zip
+py -3 scripts/package_release.py --release-tag v1.1.3-patch.1 --output-dir dist
+py -3 scripts/package_release.py --verify dist\codex_workflow-1.1.3-patch.1.zip
 ```
 
 The build validates the version, marker, lifecycle runtime, and required
@@ -106,10 +111,10 @@ release assets remains a separate approval-gated operation.
 If the workflow is unavailable, the equivalent manual publication command is:
 
 ```sh
-gh release create v1.1.3 \
-  dist/codex_workflow-1.1.3.zip \
+gh release create v1.1.3-patch.1 \
+  dist/codex_workflow-1.1.3-patch.1.zip \
   dist/SHA256SUMS \
-  --title "codex_workflow v1.1.3" \
+  --title "codex_workflow v1.1.3-patch.1" \
   --generate-notes \
   --prerelease
 ```
