@@ -36,14 +36,13 @@ from runtime.platform_settings import (
     remove_workflow_owned_settings,
 )
 from runtime.backup import append_backup_mutations
-from runtime.errors import TransactionError, ValidationError, WorkflowError
+from runtime.errors import TransactionError, ValidationError
 from runtime.lifecycle import (
     PackageLayout,
     ProjectPaths,
     RuntimePaths,
     materialize_personalization,
     plan_bootstrap,
-    plan_auto_check_update_setting,
     plan_enable,
     plan_personalize,
     plan_project_install,
@@ -51,7 +50,6 @@ from runtime.lifecycle import (
     plan_update,
 )
 from runtime.markers import (
-    AUTO_CHECK_UPDATE_PLACEHOLDER,
     PROJECT_LOCAL,
     PROJECT_PERSONALIZATION,
     USER_MANAGED,
@@ -69,19 +67,9 @@ from runtime.transaction import Mutation, apply
 
 
 class MarkerTests(unittest.TestCase):
-    def test_user_command_contract_keeps_automatic_check_optional(self) -> None:
+    def test_user_command_contract_exposes_only_supported_lifecycle_prompts(self) -> None:
         instructions = (PACKAGE / "user_AGENTS.md").read_text(encoding="utf-8")
-        auto_check = (PACKAGE / "resources" / "auto_check_update.md").read_text(
-            encoding="utf-8"
-        )
-        self.assertNotIn("auto-check-update --json", instructions)
-        self.assertEqual(instructions.count(AUTO_CHECK_UPDATE_PLACEHOLDER), 1)
-        self.assertIn("auto-check-update --json", auto_check)
         self.assertIn("codex_workflow --check-update", instructions)
-        self.assertIn("codex_workflow --enable_auto_check_update", instructions)
-        self.assertIn("codex_workflow --disable_auto_check_update", instructions)
-        self.assertIn("codex_workflow --enable_auto_update", instructions)
-        self.assertIn("codex_workflow --disable_auto_update", instructions)
         self.assertIn("codex_workflow --remove", instructions)
 
         personalization = (PACKAGE / "personalization_guide.md").read_text(
@@ -128,9 +116,6 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("skips Closure Steward and worker statistics", heavy)
         self.assertIn("before the final response", heavy)
         self.assertIn("automatic handoff context fork", heavy)
-        self.assertIn("gpt-5.6-sol", heavy)
-        self.assertIn("gpt-5.6-terra", heavy)
-        self.assertIn("session's currently selected main agent", heavy)
         self.assertIn("sends routine production defects directly", heavy)
         self.assertIn("does not relay, acknowledge, or rediagnose", heavy)
         self.assertIn("follow `investigation_team.md`", heavy)
@@ -269,8 +254,6 @@ class MarkerTests(unittest.TestCase):
         self.assertNotIn("the capsule names Companion", investigator)
         self.assertIn("Do not\n  emit routine progress", investigator)
         self.assertIn("always contains one required", bootstrap)
-        self.assertIn("check-compatibility --json", bootstrap)
-        self.assertIn("Codex 0.147.0", bootstrap)
         self.assertIn("explicitly labeled bootstrap/project-install action", doc_writer)
         self.assertIn("assignment brief", doc_writer)
         self.assertNotIn("task capsule", doc_writer)
@@ -311,38 +294,6 @@ class MarkerTests(unittest.TestCase):
             with self.assertRaises(ValidationError):
                 PackageLayout.resolve(root)
 
-    def test_package_requires_auto_check_placeholder(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary) / "codex_workflow"
-            shutil.copytree(
-                PACKAGE,
-                root,
-                ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
-            )
-            path = root / "user_AGENTS.md"
-            path.write_text(
-                path.read_text(encoding="utf-8").replace(
-                    AUTO_CHECK_UPDATE_PLACEHOLDER, "", 1
-                ),
-                encoding="utf-8",
-            )
-            with self.assertRaises(ValidationError):
-                PackageLayout.resolve(root)
-
-    def test_package_requires_auto_check_instruction_command(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary) / "codex_workflow"
-            shutil.copytree(
-                PACKAGE,
-                root,
-                ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
-            )
-            (root / "resources" / "auto_check_update.md").write_text(
-                "Missing command.\n", encoding="utf-8"
-            )
-            with self.assertRaises(ValidationError):
-                PackageLayout.resolve(root)
-
     def test_package_requires_complete_builtin_worker_set(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary) / "codex_workflow"
@@ -369,21 +320,14 @@ class MarkerTests(unittest.TestCase):
         self.assertNotIn("--source", completed.stdout)
         self.assertNotIn("--apply", completed.stdout)
 
-    def test_explicit_auto_check_commands_and_legacy_aliases_are_available(self) -> None:
-        for command in (
-            "enable-auto-check-update",
-            "disable-auto-check-update",
-            "enable-auto-update",
-            "disable-auto-update",
-            "check-update",
-        ):
-            completed = subprocess.run(
-                [sys.executable, "-B", str(PACKAGE / "workflow.py"), command, "--help"],
-                check=False,
-                capture_output=True,
-                text=True,
-            )
-            self.assertEqual(completed.returncode, 0, completed.stderr)
+    def test_check_update_command_is_available(self) -> None:
+        completed = subprocess.run(
+            [sys.executable, "-B", str(PACKAGE / "workflow.py"), "check-update", "--help"],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
 
     def test_removed_tuning_command_is_unavailable(self) -> None:
         retired = "con" + "figure"
@@ -626,26 +570,6 @@ class ReleaseTests(unittest.TestCase):
                         self.assertEqual(workflow_cli.main(), 1)
                     self.assertIn(expected_error, json.loads(output.getvalue())["error"])
 
-    def test_codex_compatibility_accepts_leaf_model_release(self) -> None:
-        completed = subprocess.CompletedProcess(
-            ["codex", "--version"], 0, "codex-cli 0.147.0\n", ""
-        )
-        with mock.patch.object(workflow_cli.subprocess, "run", return_value=completed):
-            result = workflow_cli._require_compatible_codex()
-        self.assertTrue(result["compatible"])
-        self.assertEqual(result["codex_version"], "0.147.0")
-        self.assertEqual(result["minimum_codex_version"], "0.147.0")
-
-    def test_codex_compatibility_rejects_pre_leaf_model_release(self) -> None:
-        completed = subprocess.CompletedProcess(
-            ["codex", "--version"], 0, "codex-cli 0.146.0\n", ""
-        )
-        with (
-            mock.patch.object(workflow_cli.subprocess, "run", return_value=completed),
-            self.assertRaisesRegex(WorkflowError, "0.147.0 or newer"),
-        ):
-            workflow_cli._require_compatible_codex()
-
     def test_check_update_reports_new_release_notes_without_mutation(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             home = Path(temporary) / "codex-home"
@@ -812,9 +736,6 @@ class LifecycleIntegrationTests(unittest.TestCase):
             "[features.multi_agent_v2]",
             self.runtime.config_toml.read_text(encoding="utf-8"),
         )
-        installed_user_agents = self.runtime.user_agents.read_text(encoding="utf-8")
-        self.assertNotIn("auto-check-update --json", installed_user_agents)
-        self.assertNotIn(AUTO_CHECK_UPDATE_PLACEHOLDER, installed_user_agents)
         self.assertEqual(len(plan.agent_actions), 1)
         action = plan.agent_actions[0]
         self.assertEqual(action["role"], "doc-writer")
@@ -910,7 +831,6 @@ class LifecycleIntegrationTests(unittest.TestCase):
             )
         state = json.loads((self.runtime.runtime / "install_state.json").read_text())
         self.assertEqual(set(state["owned_workers"]), self.package.worker_names)
-        self.assertFalse(state["auto_check_update"])
 
     def test_personalize_and_enable_disable_preserve_regions(self) -> None:
         self.bootstrap(existing_agents="Local policy.\n")
@@ -955,13 +875,8 @@ class LifecycleIntegrationTests(unittest.TestCase):
         with self.assertRaises(ValidationError):
             plan_project_install(self.package, self.project)
 
-    def test_update_restores_workers_and_preserves_user_preferences(self) -> None:
+    def test_update_restores_workers_and_preserves_project_state(self) -> None:
         self.bootstrap(existing_agents="Local policy.\n")
-        plan_auto_check_update_setting(self.runtime, enabled=True).apply()
-        self.assertIn(
-            "auto-check-update --json",
-            self.runtime.user_agents.read_text(encoding="utf-8"),
-        )
         (self.runtime.agents / "default_executor.toml").write_text(
             "# local worker override\n", encoding="utf-8"
         )
@@ -981,74 +896,11 @@ class LifecycleIntegrationTests(unittest.TestCase):
         entry = self.project.active.read_text(encoding="utf-8")
         self.assertEqual(extract(entry, PROJECT_LOCAL), "Local policy.")
         self.assertEqual((self.runtime.runtime / "VERSION").read_text(), "1.1.5\n")
-        updated_state = json.loads(
-            (self.runtime.runtime / "install_state.json").read_text(encoding="utf-8")
-        )
-        self.assertTrue(updated_state["auto_check_update"])
-        self.assertIn(
-            "auto-check-update --json",
-            self.runtime.user_agents.read_text(encoding="utf-8"),
-        )
         self.assertNotIn(
             "local worker override",
             (self.runtime.agents / "default_executor.toml").read_text(encoding="utf-8"),
         )
         self.assertTrue(any((self.runtime.runtime / ".backups").iterdir()))
-
-    def test_update_migrates_legacy_auto_check_preference(self) -> None:
-        self.bootstrap()
-
-        state_path = self.runtime.runtime / "install_state.json"
-        state = json.loads(state_path.read_text(encoding="utf-8"))
-        state.pop("auto_check_update")
-        # This is the ownership manifest written by the legacy runtime.  The
-        # new runtime must read the file before removing it as obsolete.
-        state["owned_runtime_files"].append("workflow_config.json")
-        state_path.write_text(json.dumps(state) + "\n", encoding="utf-8")
-        legacy_config = self.runtime.runtime / "workflow_config.json"
-        legacy_config.write_text(
-            json.dumps({"auto_check_update": True}) + "\n", encoding="utf-8"
-        )
-
-        plan_update(
-            self.incoming_package("legacy-auto-check-incoming", "1.2.0"),
-            self.runtime,
-            self.project,
-        ).apply()
-
-        migrated_state = json.loads(state_path.read_text(encoding="utf-8"))
-        self.assertTrue(migrated_state["auto_check_update"])
-        self.assertIn(
-            "auto-check-update --json",
-            self.runtime.user_agents.read_text(encoding="utf-8"),
-        )
-        self.assertFalse(legacy_config.exists())
-
-    def test_update_state_preference_overrides_legacy_config(self) -> None:
-        self.bootstrap()
-
-        state_path = self.runtime.runtime / "install_state.json"
-        state = json.loads(state_path.read_text(encoding="utf-8"))
-        state["auto_check_update"] = False
-        state_path.write_text(json.dumps(state) + "\n", encoding="utf-8")
-        legacy_config = self.runtime.runtime / "workflow_config.json"
-        legacy_config.write_text(
-            json.dumps({"auto_check_update": True}) + "\n", encoding="utf-8"
-        )
-
-        plan_update(
-            self.incoming_package("state-precedence-incoming", "1.2.0"),
-            self.runtime,
-            self.project,
-        ).apply()
-
-        migrated_state = json.loads(state_path.read_text(encoding="utf-8"))
-        self.assertFalse(migrated_state["auto_check_update"])
-        self.assertNotIn(
-            "auto-check-update --json",
-            self.runtime.user_agents.read_text(encoding="utf-8"),
-        )
-        self.assertFalse(legacy_config.exists())
 
     def test_projects_update_against_their_recorded_historical_sources(self) -> None:
         self.bootstrap()
@@ -1292,95 +1144,6 @@ class LifecycleIntegrationTests(unittest.TestCase):
                 self.project,
             )
         self.assertTrue(outside.is_file())
-
-    def test_disable_auto_check_is_scoped_and_skips_network_check(self) -> None:
-        self.bootstrap()
-        default_user_agents = self.runtime.user_agents.read_text(encoding="utf-8")
-        self.assertNotIn("auto-check-update --json", default_user_agents)
-        self.runtime.user_agents.write_text(
-            default_user_agents + "\nUser-level custom instruction.\n",
-            encoding="utf-8",
-        )
-        plan = plan_auto_check_update_setting(self.runtime, enabled=False)
-        self.assertEqual(len(plan.mutations), 2)
-        plan.apply()
-        configured = json.loads(
-            (self.runtime.runtime / "install_state.json").read_text(encoding="utf-8")
-        )
-        self.assertFalse(configured["auto_check_update"])
-        self.assertNotIn(
-            "auto-check-update --json",
-            self.runtime.user_agents.read_text(encoding="utf-8"),
-        )
-        completed = subprocess.run(
-            [
-                sys.executable,
-                "-B",
-                str(self.runtime.runtime / "workflow.py"),
-                "auto-check-update",
-                "--codex-home",
-                str(self.codex_home),
-                "--json",
-            ],
-            check=False,
-            capture_output=True,
-            text=True,
-        )
-        self.assertEqual(completed.returncode, 0, completed.stderr)
-        self.assertEqual(json.loads(completed.stdout)["status"], "disabled")
-
-        completed = subprocess.run(
-            [
-                sys.executable,
-                "-B",
-                str(self.runtime.runtime / "workflow.py"),
-                "enable-auto-check-update",
-                "--codex-home",
-                str(self.codex_home),
-                "--json",
-            ],
-            check=False,
-            capture_output=True,
-            text=True,
-        )
-        self.assertEqual(completed.returncode, 0, completed.stderr)
-        self.assertTrue(
-            json.loads(
-                (self.runtime.runtime / "install_state.json").read_text(
-                    encoding="utf-8"
-                )
-            )["auto_check_update"]
-        )
-        enabled_user_agents = self.runtime.user_agents.read_text(encoding="utf-8")
-        self.assertIn("auto-check-update --json", enabled_user_agents)
-        self.assertIn("User-level custom instruction.", enabled_user_agents)
-        self.assertNotIn(AUTO_CHECK_UPDATE_PLACEHOLDER, enabled_user_agents)
-
-        completed = subprocess.run(
-            [
-                sys.executable,
-                "-B",
-                str(self.runtime.runtime / "workflow.py"),
-                "disable-auto-check-update",
-                "--codex-home",
-                str(self.codex_home),
-                "--json",
-            ],
-            check=False,
-            capture_output=True,
-            text=True,
-        )
-        self.assertEqual(completed.returncode, 0, completed.stderr)
-        self.assertFalse(
-            json.loads(
-                (self.runtime.runtime / "install_state.json").read_text(
-                    encoding="utf-8"
-                )
-            )["auto_check_update"]
-        )
-        disabled_user_agents = self.runtime.user_agents.read_text(encoding="utf-8")
-        self.assertNotIn("auto-check-update --json", disabled_user_agents)
-        self.assertIn("User-level custom instruction.", disabled_user_agents)
 
     def test_legacy_entry_with_edits_requires_reviewed_local_instructions(self) -> None:
         self.bootstrap()

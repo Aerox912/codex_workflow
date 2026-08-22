@@ -4,15 +4,8 @@ Supported command forms:
 
     codex_workflow --update
 
-Codex 0.147.0 or newer and Python 3.11 or newer are required. Before downloading
-or mutating anything, run:
-
-```text
-python3 ~/.codex/codex_workflow/workflow.py check-compatibility --json
-```
-
-Stop unless it reports `"compatible": true`. The lifecycle CLI then applies a
-validated update directly.
+Python 3.11 or newer is required. The lifecycle CLI applies a validated update
+directly.
 
 ## Source
 
@@ -36,8 +29,8 @@ For migration from a pre-script installation, run the incoming package's
 The script replaces installed routes and worker TOMLs with the incoming
 release's fixed definitions. It preserves unrelated Codex settings,
 project documents, personalization, project-local instructions, source backups,
-the independent automatic-check preference, and the project's enabled/disabled
-state. For projects that still use an older workflow version, it validates their
+and the project's enabled/disabled state. For projects that still use an older
+workflow version, it validates their
 managed region against that version's source backup instead of the latest global
 template. It removes obsolete workflow-owned files, creates a verified
 timestamped backup, and applies user/project state as one compensating
@@ -54,5 +47,5 @@ then rerun with:
 This is a one-time migration into the dedicated local region. Never infer the
 content automatically. A downgrade additionally requires `--allow-downgrade`.
 
-Report the installed version, preserved preferences, backup location, and any failure.
+Report the installed version, backup location, and any failure.
 Do not describe a partial or rolled-back update as successful.

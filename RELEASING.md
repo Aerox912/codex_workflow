@@ -25,10 +25,6 @@ codex_workflow/
 ├── install.md
 ├── update.md
 ├── remove.md
-├── enable_auto_check_update.md
-├── disable_auto_check_update.md
-├── enable_auto_update.md              # legacy alias
-├── disable_auto_update.md             # legacy alias
 ├── workflow.py
 ├── runtime/
 ├── resources/                              # immutable package defaults
@@ -125,13 +121,8 @@ same tagged commit.
   applies the user-level bootstrap transaction directly.
 - `codex_workflow --install` reads the installed `install.md` and creates only
   project-level workflow assets from the existing bootstrap.
-- At session start, the installed runtime checks GitHub Releases once when
-  `auto_check_update` is enabled and reports an available update.
-- `codex_workflow --enable_auto_check_update` explicitly enables that independent
-  installed preference.
-- `codex_workflow --disable_auto_check_update` disables it again. The former
-  `--enable_auto_update` and `--disable_auto_update` prompts remain compatibility
-  aliases; no command automatically installs an update.
+- `codex_workflow --check-update` explicitly checks GitHub Releases without
+  downloading or installing an update.
 - `codex_workflow --update` selects the latest appropriate ZIP asset, downloads
   it from its GitHub Release URL, verifies it, and follows the package's update
   procedure. It never clones the repository.

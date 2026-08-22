@@ -11,7 +11,6 @@ from .platform_settings import (
 from .errors import ValidationError
 from .layout import USER_STATE, WORKER_MARKER, PackageLayout, RuntimePaths
 from .markers import (
-    AUTO_CHECK_UPDATE_PLACEHOLDER,
     USER_MANAGED,
     append_region,
     extract,
@@ -25,7 +24,6 @@ from .transaction import Mutation
 def plan_runtime_files(
     package: PackageLayout,
     runtime: RuntimePaths,
-    auto_check_update: bool,
 ) -> tuple[list[Mutation], set[str]]:
     mutations: list[Mutation] = []
     owned: set[str] = set()
@@ -62,7 +60,7 @@ def plan_runtime_files(
     for source, target in template_targets:
         mutations.append(Mutation(target, source.read_bytes()))
         owned.add(target.relative_to(runtime.runtime).as_posix())
-    mutations.extend(plan_user_agents(package, runtime, enabled=auto_check_update))
+    mutations.extend(plan_user_agents(package, runtime))
     mutations.extend(plan_platform_and_workers(runtime, package=package))
     backup = runtime.runtime / ".source_backup" / package.version
     for source in sorted(package.root.rglob("*")):
@@ -79,30 +77,12 @@ def plan_runtime_files(
     return mutations, owned
 
 
-def _render_user_managed(source: str, instruction: str, *, enabled: bool) -> str:
-    managed = extract(source, USER_MANAGED)
-    if managed.count(AUTO_CHECK_UPDATE_PLACEHOLDER) != 1:
-        raise ValidationError(
-            "user_AGENTS.md auto-check placeholder is missing or duplicated"
-        )
-    before, after = managed.split(AUTO_CHECK_UPDATE_PLACEHOLDER)
-    sections = [before.strip()]
-    if enabled:
-        sections.append(instruction.strip())
-    sections.append(after.strip())
-    return "\n\n".join(section for section in sections if section)
-
-
-def _plan_user_agents_from_sources(
+def _plan_user_agents_from_source(
     source_path: Path,
-    instruction_path: Path,
     runtime: RuntimePaths,
-    *,
-    enabled: bool,
 ) -> list[Mutation]:
     source = source_path.read_text(encoding="utf-8")
-    instruction = instruction_path.read_text(encoding="utf-8")
-    managed = _render_user_managed(source, instruction, enabled=enabled)
+    managed = extract(source, USER_MANAGED)
     if runtime.user_agents.is_file():
         current = runtime.user_agents.read_text(encoding="utf-8")
         if USER_MANAGED.start in current or USER_MANAGED.end in current:
@@ -115,24 +95,11 @@ def _plan_user_agents_from_sources(
 
 
 def plan_user_agents(
-    package: PackageLayout, runtime: RuntimePaths, *, enabled: bool
+    package: PackageLayout, runtime: RuntimePaths
 ) -> list[Mutation]:
-    return _plan_user_agents_from_sources(
+    return _plan_user_agents_from_source(
         package.root / "user_AGENTS.md",
-        package.root / "resources" / "auto_check_update.md",
         runtime,
-        enabled=enabled,
-    )
-
-
-def plan_installed_user_agents(
-    runtime: RuntimePaths, *, enabled: bool
-) -> list[Mutation]:
-    return _plan_user_agents_from_sources(
-        runtime.runtime / "user_AGENTS.md",
-        runtime.runtime / "resources" / "auto_check_update.md",
-        runtime,
-        enabled=enabled,
     )
 
 

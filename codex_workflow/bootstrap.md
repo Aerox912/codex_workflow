@@ -1,20 +1,12 @@
 # Initial Workflow Bootstrap
 
 Use this guide only for the first installation from a universal GitHub Release
-ZIP. Codex 0.147.0 or newer and Python 3.11 or newer are required. On Windows,
-use the equivalent `py -3.11` invocation and native paths.
+ZIP. Python 3.11 or newer is required. On Windows, use the equivalent
+`py -3.11` invocation and native paths.
 
 Verify `codex_workflow-<version>.zip` against `SHA256SUMS`, extract it into a
 temporary directory, and require exactly one top-level `codex_workflow/`
-directory. Verify Codex compatibility before any mutation:
-
-```text
-python3 codex_workflow/workflow.py check-compatibility --json
-```
-
-Stop if that command does not report `"compatible": true`; Codex 0.147.0 is
-the tested minimum release for this workflow's role-specific subagents. Then
-validate the package:
+directory. Then validate the package:
 
 ```text
 python3 codex_workflow/workflow.py validate --package-root codex_workflow --json

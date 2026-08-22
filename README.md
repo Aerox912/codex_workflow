@@ -14,8 +14,7 @@ built-in context and progress management across sessions.
 
 ## 1. Quick installation ⚙️
 
-Requires Codex 0.147.0 or newer (the tested subagent-support baseline)
-and Python 3.11 or newer for deterministic lifecycle operations.
+Requires Python 3.11 or newer for deterministic lifecycle operations.
 
 ### Open Codex CLI / Codex app from your project directory 
 
@@ -115,7 +114,7 @@ Send these exact commands to Codex from the relevant project directory:
 | `codex_workflow --install` | Install workflow in the current project and initialize its documentation framework. |
 | `codex_workflow --personal` | Add or update project-specific workflow preferences. |
 | `codex_workflow --check-update` | Check for a newer release without installing it. |
-| `codex_workflow --update` | Download, verify, and install the latest eligible release. |
+| `codex_workflow --update` | Download, verify, and install the latest matching release. |
 | `codex_workflow --disable` / `codex_workflow --enable` | Disable or re-enable the workflow for the current project. |
 | `codex_workflow --remove` | Remove the installed workflow after a destructive dry-run and confirmation. |
 

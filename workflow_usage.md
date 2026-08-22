@@ -29,12 +29,7 @@ The release package is a universal ZIP for Linux, macOS, and Windows. Its
 installation guide invokes the bundled lifecycle CLI, which owns validation,
 rendering, backups, project initialization, and rollback. After the first
 installation, start a new Codex session so the newly installed user
-instructions are loaded. Codex 0.147.0 or newer and Python 3.11 or newer are
-required. The bootstrap, installation, and update guides require the user to run
-the explicit compatibility preflight before mutation. The CLI exposes
-`check-compatibility` for that purpose but does not implicitly run it inside a
-mutating command; callers following another integration path must run the check
-themselves. This is the workflow's tested subagent-support baseline.
+instructions are loaded. Python 3.11 or newer is required.
 
 The bootstrap installs the user-level workflow and the current project with the
 release's built-in definitions. Project personalization remains an explicit follow-up
@@ -99,15 +94,15 @@ entry points stop with an actionable error.
 
 Update the installed workflow and the recognized current project from a GitHub
 Release asset. The command queries the GitHub Releases API, selects the latest
-eligible semantic-versioned release with the matching ZIP and checksum,
+semantic-versioned release with the matching ZIP and checksum,
 downloads the asset, verifies it, and extracts it into a temporary directory.
 It never clones or pulls the repository.
 
 The update applies the incoming release's fixed definitions and regenerates
 distributed worker TOMLs. It preserves
 project personalization, project-local instructions, project documents,
-unrelated Codex settings, source backups, the automatic-check preference, and
-the project's enabled or disabled state. Projects on older workflow versions
+unrelated Codex settings, source backups, and the project's enabled or disabled
+state. Projects on older workflow versions
 are validated against their matching historical source backups. It stops on
 marker drift, unavailable historical source, or legacy edits requiring a
 one-time reviewed project-entry migration. Obsolete workflow-owned files and
@@ -115,10 +110,9 @@ worker roles are removed from the installed manifest.
 
 #### `codex_workflow --check-update`
 
-Run an explicit read-only release check. It always queries the available
-installable releases, regardless of the automatic-check setting, and reports
-every version newer than the installed one with a compact summary of each
-release's notes. It does not download or change files.
+Run an explicit read-only release check. It queries the available installable
+releases and reports every version newer than the installed one with a compact
+summary of each release's notes. It does not download or change files.
 
 #### `codex_workflow --remove`
 
@@ -130,22 +124,6 @@ settings and workers, and the complete installed runtime including backups. It
 restores the entry point's project-local instructions, removes marked
 workflow-owned `.gitignore` rules, and preserves `agent_docs/` and unrelated
 user-level content. A non-affirmative response performs no changes.
-
-#### Automatic update check
-
-The package default is disabled: `~/.codex/AGENTS.md` contains no session-start
-check instruction, so new sessions make no automatic update-check call.
-
-Send `codex_workflow --enable_auto_check_update` to explicitly enable the
-session-start check. It updates only the independent preference and adds an
-instruction that runs the read-only `auto-check-update` command once per new
-session. When enabled, the command compares the installed version with the
-highest usable GitHub Release and reports an available update; it stays quiet
-when current. `codex_workflow --disable_auto_check_update` disables the setting
-and removes that instruction. Both commands preserve unrelated user-level
-content.
-The former `--enable_auto_update` and `--disable_auto_update` prompts remain
-compatibility aliases; no command automatically installs an update.
 
 #### `codex_workflow --disable`
 
@@ -181,10 +159,8 @@ There are three execution routes:
   tester packages. Companion acts as the workflow-mode secretary and office
   wrapper. An explicitly requested read-only evidence wave may assist, but it
   never owns implementation, verification, or the root-cause decision.
-- **Heavy route** — a Sol or Terra main agent with subagent support orchestrates fixed
-  worker subagents for larger deployment-state tasks. This is the current
-  session's user-selected model; the workflow never pins the main model in
-  persistent settings.
+- **Heavy route** — the main agent orchestrates fixed worker subagents for
+  larger deployment-state tasks.
 
 For ordinary questions and small tasks, no route command is needed. To select
 a route for a task or plan, include one of these instructions in the prompt:
@@ -230,13 +206,12 @@ and the current project as follows:
 │   └── closure_steward.toml
 └── codex_workflow/
     ├── VERSION                             # installed workflow version
-    ├── user_AGENTS.md                      # managed commands and optional-check placeholder
+    ├── user_AGENTS.md                      # managed command interface
     ├── workflow.py                         # validated lifecycle CLI
     ├── runtime/                            # validation, rendering, release, and transaction modules
     ├── resources/                          # immutable package defaults
-    │   ├── auto_check_update.md
     │   └── personalization.md
-    ├── install_state.json                  # ownership, version, and automatic-check preference
+    ├── install_state.json                  # ownership and version
     ├── heavy_route.md                      # Heavy-route orchestration rules
     ├── medium_route.md                     # Medium-route rules
     ├── companion.md                        # persistent secretary/office-wrapper contract
@@ -247,10 +222,6 @@ and the current project as follows:
     ├── update.md                           # Release-based update procedure
     ├── check_update.md                     # explicit read-only release check
     ├── remove.md                            # two-phase removal procedure
-    ├── enable_auto_check_update.md         # enable automatic session check
-    ├── disable_auto_check_update.md        # disable automatic session check
-    ├── enable_auto_update.md               # legacy enable alias
-    ├── disable_auto_update.md              # legacy disable alias
     ├── personalization_guide.md            # --personal procedure
     ├── disable.md                          # --disable procedure
     ├── enable.md                            # --enable procedure
@@ -311,11 +282,6 @@ three are Heavy production/verification roles. `doc-writer` and Closure
 Steward own documentation updates, while Companion and investigator provide
 read-only workflow support. The default executor uses `xhigh`; Heavy permits
 at most one senior executor; and the Codex child-worker ceiling is twenty.
-
-`auto_check_update` is not a workflow setting. It is an independent boolean in
-`install_state.json`, disabled on first bootstrap and changed only by its
-dedicated enable/disable commands. Project personalization and activation state
-remain separate.
 
 All listed roles are fixed built-in definitions. Companion is the single
 persistent secretary and office wrapper: it handles routine read-only work,
@@ -399,7 +365,6 @@ statistics table.
 
 ```mermaid
 flowchart LR
-    G["Eligibility gate<br/>Sol or Terra + subagent support"]
     I["Investigator swarm<br/>independent read-only evidence lanes"]
     C["Companion<br/>secretary + report wrapper"]
     M(("Main agent<br/>core context, root cause,<br/>plan and acceptance"))
@@ -409,7 +374,6 @@ flowchart LR
     W["doc-writer<br/>assigned documentation"]
     X["Closure Steward<br/>documents + final handoff"]
 
-    G -.->|eligible Heavy session| M
     M -->|initialize and brief| C
     M -.->|serious or ambiguous issue:<br/>defines independent search lanes| I
     M -->|batch scope and boundaries| C
@@ -622,8 +586,8 @@ The original design grouped the system into five logical blocks across two
 geographical levels. That model remains useful, but some paths need a precise
 distinction: `agent_docs/` is project documentation, while personalization is
 private under `.codex_workflow_hidden_resources/`; worker TOMLs are materialized
-runtime definitions, while `install_state.json` tracks lifecycle ownership,
-version, and the independent automatic-check preference.
+runtime definitions, while `install_state.json` tracks lifecycle ownership and
+version.
 
 The five blocks are:
 
@@ -681,8 +645,7 @@ The release-owned surfaces are:
   templates, with model bindings isolated inside their semantic role files.
 
 No aggregate workflow-settings document is generated. Update replaces these
-release-owned definitions and carries forward the independent automatic-check
-preference from `install_state.json`.
+release-owned definitions.
 
 ### 4. Personalization — project level
 
@@ -708,20 +671,14 @@ in `AGENTS.md` or in the hidden disabled entry point. It is not stored in
 
 Location: `~/.codex/codex_workflow/`
 
-- `user_AGENTS.md` contains the workflow marker, installed version marker,
-  optional-check placeholder, and exact command prompts for
-  `--install`, `--update`, `--remove`, `--enable_auto_check_update`,
-  `--disable_auto_check_update`, `--personal`, `--disable`, and
-  `--enable`, plus the former automatic-check naming aliases.
+- `user_AGENTS.md` contains the workflow marker, installed version marker, and
+  exact command prompts for `--install`, `--update`, `--check-update`,
+  `--remove`, `--personal`, `--disable`, and `--enable`.
 - `bootstrap.md`, `install.md`, and `personalization_guide.md` describe initial
   bootstrap, project installation, and personalization.
 - `update.md`, `disable.md`, and `enable.md` describe update and activation
   lifecycle operations.
 - `remove.md` describes the destructive two-phase removal procedure.
-- `enable_auto_check_update.md` and `disable_auto_check_update.md` describe the
-  explicit update-check controls; `resources/auto_check_update.md` supplies the
-  optional session instruction. `enable_auto_update.md` and
-  `disable_auto_update.md` retain the former names as compatibility aliases.
 - `workflow.py` and `runtime/` implement validated lifecycle operations.
 - `VERSION` identifies the installed workflow version.
 - `templates/` stores the project entry-point, worker, and project-document

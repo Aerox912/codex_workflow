@@ -2,15 +2,6 @@
 
 Use after Heavy is selected under `AGENTS.md`.
 
-## Eligibility Gate
-
-Heavy orchestration requires the session's currently selected main agent to be
-`gpt-5.6-sol` or `gpt-5.6-terra` with subagent support available. Do not pin or
-change that model in worker or route definitions. If the selected main agent is
-ineligible or its subagent support is unavailable, stop before initializing
-Companion or another worker and ask the user to switch the current session to
-Sol or Terra.
-
 ## Main Agent: Knowledge Plane
 
 You are the main agent.

@@ -12,7 +12,6 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import re
 import subprocess
 import sys
 from pathlib import Path
@@ -21,14 +20,13 @@ if sys.version_info < (3, 11):
     raise SystemExit("codex_workflow requires Python 3.11 or newer")
 
 from runtime.errors import WorkflowError
-from runtime.layout import PROJECT_ID, USER_STATE
+from runtime.layout import PROJECT_ID
 from runtime.lifecycle import (
     OperationPlan,
     PackageLayout,
     ProjectPaths,
     RuntimePaths,
     plan_bootstrap,
-    plan_auto_check_update_setting,
     plan_enable,
     plan_personalize,
     plan_project_install,
@@ -41,15 +39,6 @@ from runtime.release import (
     select_latest,
     select_releases,
     summarize_release_notes,
-)
-
-
-MIN_CODEX_VERSION = "0.147.0"
-_CODEX_VERSION = re.compile(
-    r"(?<![0-9A-Za-z])v?"
-    r"((?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)"
-    r"(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?"
-    r"(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?)"
 )
 
 
@@ -97,22 +86,8 @@ def parse_args() -> argparse.Namespace:
     _add_common(remove)
     remove.add_argument("--confirm", action="store_true", help=argparse.SUPPRESS)
 
-    auto_check = commands.add_parser("auto-check-update")
-    _add_common(auto_check, project=False)
-
     check_update = commands.add_parser("check-update")
     _add_common(check_update, project=False)
-
-    for name in (
-        "enable-auto-check-update",
-        "disable-auto-check-update",
-        # Compatibility aliases retained from releases that called a
-        # notification-only check an automatic update.
-        "enable-auto-update",
-        "disable-auto-update",
-    ):
-        command = commands.add_parser(name)
-        _add_common(command, project=False)
 
     personalize = commands.add_parser("personalize")
     _add_common(personalize)
@@ -126,11 +101,6 @@ def parse_args() -> argparse.Namespace:
     _add_common(validate, project=False)
     validate.add_argument("--package-root", type=Path, default=Path(__file__).resolve().parent)
 
-    compatibility = commands.add_parser(
-        "check-compatibility",
-        help="verify that the installed Codex release supports this workflow",
-    )
-    _add_common(compatibility, project=False)
     return parser.parse_args()
 
 
@@ -145,45 +115,6 @@ def _emit(value: dict[str, object], *, compact: bool) -> None:
         print(json.dumps(value, separators=(",", ":"), sort_keys=True))
     else:
         print(json.dumps(value, indent=2, sort_keys=True))
-
-
-def _require_compatible_codex() -> dict[str, object]:
-    try:
-        completed = subprocess.run(
-            ["codex", "--version"],
-            check=False,
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
-    except (OSError, subprocess.TimeoutExpired) as error:
-        raise WorkflowError(
-            f"cannot determine the installed Codex version: {error}"
-        ) from error
-    output = "\n".join(
-        value.strip() for value in (completed.stdout, completed.stderr) if value.strip()
-    )
-    if completed.returncode:
-        raise WorkflowError(
-            "cannot determine the installed Codex version"
-            + (f": {output}" if output else "")
-        )
-    match = _CODEX_VERSION.search(output)
-    if match is None:
-        raise WorkflowError(f"cannot parse the installed Codex version from: {output!r}")
-    detected_text = match.group(1)
-    detected = parse_semver(detected_text)
-    minimum = parse_semver(MIN_CODEX_VERSION)
-    if detected < minimum:
-        raise WorkflowError(
-            f"Codex {detected_text} is incompatible; Codex {MIN_CODEX_VERSION} or "
-            "newer is required for this workflow's tested subagent support"
-        )
-    return {
-        "compatible": True,
-        "codex_version": detected_text,
-        "minimum_codex_version": MIN_CODEX_VERSION,
-    }
 
 
 def _finish(plan: OperationPlan, args: argparse.Namespace) -> int:
@@ -284,9 +215,6 @@ def main() -> int:
     temporary = None
     try:
         runtime, project = _paths(args)
-        if args.command == "check-compatibility":
-            _emit(_require_compatible_codex(), compact=args.json)
-            return 0
         if args.command == "validate":
             package = PackageLayout.resolve(args.package_root)
             _emit(
@@ -294,39 +222,6 @@ def main() -> int:
                     "valid": True,
                     "version": package.version,
                     "workers": sorted(package.worker_names),
-                },
-                compact=args.json,
-            )
-            return 0
-        if args.command == "auto-check-update":
-            state_path = runtime.runtime / USER_STATE
-            try:
-                state = json.loads(state_path.read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError) as error:
-                raise WorkflowError(f"cannot read workflow installation state: {error}") from error
-            if not isinstance(state, dict):
-                raise WorkflowError("workflow installation state must be a JSON object")
-            auto_check_update = state.get("auto_check_update", False)
-            if not isinstance(auto_check_update, bool):
-                raise WorkflowError("install state auto_check_update must be boolean")
-            if not auto_check_update:
-                _emit(
-                    {"status": "disabled", "installed": None, "available": None},
-                    compact=args.json,
-                )
-                return 0
-            installed_text = (runtime.runtime / "VERSION").read_text(encoding="utf-8").strip()
-            installed = parse_semver(installed_text)
-            selected = select_latest()
-            status = "current" if selected.version == installed else (
-                "update available" if selected.version > installed else "installed newer"
-            )
-            _emit(
-                {
-                    "status": status,
-                    "installed": installed_text,
-                    "available": selected.version_text,
-                    "asset": selected.zip_name,
                 },
                 compact=args.json,
             )
@@ -380,22 +275,6 @@ def main() -> int:
                 _emit(summary, compact=args.json)
                 return 0
             return _finish(plan, args)
-        if args.command in {
-            "enable-auto-check-update",
-            "disable-auto-check-update",
-            "enable-auto-update",
-            "disable-auto-update",
-        }:
-            return _finish(
-                plan_auto_check_update_setting(
-                    runtime,
-                    enabled=args.command in {
-                        "enable-auto-check-update",
-                        "enable-auto-update",
-                    },
-                ),
-                args,
-            )
         if args.command == "bootstrap":
             assert project is not None
             package = PackageLayout.resolve(args.package_root)

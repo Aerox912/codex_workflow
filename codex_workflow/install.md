@@ -4,13 +4,8 @@ Use this procedure only to install the already-bootstrapped workflow into the
 current project. Do not manually copy or merge workflow files, and do not
 modify or reinstall anything under `~/.codex/`.
 
-Codex 0.147.0 or newer and Python 3.11 or newer are required. On Windows, use
-the equivalent `py -3.11` invocation and native paths. Before any mutation,
-run and require `"compatible": true`:
-
-```text
-python3 ~/.codex/codex_workflow/workflow.py check-compatibility --json
-```
+Python 3.11 or newer is required. On Windows, use the equivalent `py -3.11`
+invocation and native paths.
 
 ## Existing project installation
 
