@@ -299,7 +299,14 @@ def main() -> int:
                 # into actionable errors instead of misreporting them as merely
                 # disabled.
                 existing_plan = plan_project_install(package, project)
-                if existing_plan.agent_actions[0]["files"]:
+                documentation_action_required = any(
+                    action.get("files") for action in existing_plan.agent_actions
+                )
+                if (
+                    existing_plan.mutations
+                    or existing_plan.cleanup_dirs
+                    or documentation_action_required
+                ):
                     return _finish(existing_plan, args)
                 enabled = existing == project.active
                 _emit(

@@ -61,13 +61,6 @@ There are three routes:
 - **Heavy**: deployment-state work orchestrated through specialized workers.
   Read `~/.codex/codex_workflow/heavy_route.md`.
 
-Heavy requires the session's currently selected main agent to be
-`gpt-5.6-sol` or `gpt-5.6-terra` with subagent support available. This is a
-session-model requirement, not a persistent workflow setting. If the selected
-model is ineligible or its subagent support is unavailable, do not initialize
-Companion or any other worker; ask the user to switch the current session to
-Sol or Terra. Never pin or rewrite the main model in `config.toml`.
-
 The user selects the route for the session. If unspecified, use Light; do not
 infer Medium or Heavy. Light implies `leaf state`; Medium and Heavy imply
 `deployment state` only for substantive work. Their direct fast path remains
@@ -87,23 +80,32 @@ ends.
   requested Medium evidence wave.
 - Give Companion the session goal, known constraints, escalation boundaries,
   and evidence format. It is the main agent's secretary and office wrapper: it
-  completes routine read-only work, retains context, filters coherent batches of
-  operational reports, and returns the director brief defined in its contract.
-- Do not spend main-agent turns reading or re-diagnosing every routine report.
-  When a worker batch exists, register one coherent batch with Companion and
-  name it in the dispatch envelopes; dispatched workers deliver detailed
-  terminal reports directly to it and return compact receipts to the main agent.
-  Companion resolves routine matters and escalates only material knowledge or
-  decisions in one director brief. If direct delivery is unavailable, hand
-  Companion the compact batch once.
+  completes routine read-only context work, retains operational context, and
+  returns the director brief defined in its contract.
+- Workers return one concise terminal report directly to the main agent. Wait
+  for a coherent group to become terminal, then integrate the group once rather
+  than acknowledging or analyzing routine completions individually. Use
+  Companion separately for assigned read-only context work; it is not a
+  worker-report relay.
 - The main agent directly reads task-critical project documentation, relevant
   source paths and contracts, and decisive failure evidence. It owns defect
   identification, root-cause adjudication, architecture, scope, and final claims.
 - For serious or ambiguous issues with independent search lanes, Heavy may use
   read-only investigators under `investigation_team.md`; Medium may use them
   only as explicitly requested evidence support. Investigators gather evidence;
-  Companion filters their terminal report batch; the main agent opens decisive
-  evidence and adjudicates the root cause.
+  the main agent evaluates their concise terminal reports as one wave, opens
+  decisive evidence, and adjudicates the root cause.
+- In Heavy, main-agent ownership of acceptance and integration gates means
+  defining the gates, assigning their execution, evaluating returned evidence,
+  and deciding acceptance. It does not mean rerunning evidenced worker checks.
+  Delegate deployment state, endpoints, uploads, browser or screenshot work,
+  external search, routine Git or status collation, tool or API discovery, and
+  operational diagnostics to the responsible worker.
+- If a Heavy integration check genuinely cannot be delegated, resolve the exact
+  operation first and batch all already-known independent reads and checks into
+  one bounded tool turn. Unless an existing escalation gate applies, return a
+  failure or ambiguous result to the responsible worker instead of starting a
+  main-agent diagnostic loop.
 - Resolve stale or conflicting project status with targeted evidence. Load only
   relevant module documentation and avoid replaying raw logs, large diffs,
   directory listings, or complete source files into the main context.

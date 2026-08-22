@@ -33,12 +33,8 @@ normally the two status/handoff documents.
 
 Event (≤100 words): event; task ID/iteration; evidence; decision impact; next
 action.
-When the assignment brief names Companion and a report-batch ID, send Companion the full
-final package below and return the parent a <=40-word terminal receipt with task
-ID, status, batch ID, delivery state, and any exact decision required. If direct
-delivery is unavailable, return the full package to the parent instead.
-
-Final package (≤250 words): task ID/iteration; status; outcome; contract changes;
+Final report to the parent (≤250 words): task ID/iteration; status; outcome;
+contract changes;
 new facts or invalidated assumptions; verification/source evidence; residual
 risks; `Decision required: none` or the exact decision; exact references.
 """

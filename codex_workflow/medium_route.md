@@ -17,22 +17,20 @@ One fresh `closure_steward` worker reconciles the complete documentation framewo
 during automatic closure; it does not implement or verify the task.
 
 Use Companion to protect main-agent context and attention. Give it routine
-read-only questions, peripheral or unfamiliar context, and coherent batches of
-operational reports (or explicitly requested investigator reports). It resolves
-routine matters, filters duplication and noise, retains the supporting detail,
-and returns one director brief. The main agent directly reads the task's Core
-Context Set and remains responsible for source it edits, defect identification,
-material acceptance decisions, critical evidence, and final claims.
+read-only questions and peripheral or unfamiliar context. It resolves bounded
+routine matters, retains supporting detail, and returns a director brief. The
+main agent directly reads the task's Core Context Set and every investigator
+terminal report, and remains responsible for source it edits, defect
+identification, material acceptance decisions, critical evidence, and final
+claims.
 
 For a serious or ambiguous issue with independent search lanes, follow
 `investigation_team.md` before implementation only when those read-only lanes
 are materially useful. Investigators gather and challenge evidence and deliver
-the parent-defined terminal batch directly to
-Companion; the main agent receives compact receipts and one director brief,
-opens the decisive project sources,
-and alone passes the root-cause gate. If direct delivery is unavailable, the
-main agent hands the reports to Companion once. If investigators are unavailable,
-continue with main-agent evidence work only when safe and report the limitation.
+one concise terminal report each directly to the main agent. The main agent
+evaluates the wave together, opens the decisive project sources, and alone
+passes the root-cause gate. If investigators are unavailable, continue with
+main-agent evidence work only when safe and report the limitation.
 
 Questions and small or odd bounded tasks use the direct main-agent fast path:
 do not initialize Companion or investigators; do not call `closure_steward`; omit

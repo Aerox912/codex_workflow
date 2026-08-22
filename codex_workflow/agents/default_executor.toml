@@ -3,7 +3,8 @@ name = "default_executor"
 description = "Default production implementation agent for bounded code changes from a parent-owned plan."
 
 model = "gpt-5.6-luna"
-model_reasoning_effort = "xhigh"
+model_reasoning_effort = "max"
+# service_tier = "fast"
 sandbox_mode = "workspace-write"
 
 developer_instructions = """
@@ -57,12 +58,8 @@ Keep dependencies, adaptive investigation, overlapping writes, Git mutations, an
 
 Event (≤150 words): event; task ID/iteration; knowledge-changing evidence;
 decision or scope impact; next action.
-When the capsule names Companion and a report-batch ID, send Companion the full
-final package below and return the parent a <=40-word terminal receipt with task
-ID, status, batch ID, delivery state, and any exact decision required. If direct
-delivery is unavailable, return the full package to the parent instead.
-
-Final package (≤250 words): task ID/iteration; status; outcome; contract changes;
+Final report to the parent (≤250 words): task ID/iteration; status; outcome;
+contract changes;
 new facts; invalidated assumptions; verification evidence and artifacts;
 residual risks; `Decision required: none` or the exact decision; exact
 references.

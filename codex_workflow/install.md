@@ -11,12 +11,17 @@ invocation and native paths.
 
 The CLI validates the current project's active `AGENTS.md` and disabled
 `.codex_workflow_hidden_resources/.AGENTS.md` entry points before reporting an
-existing installation. If any framework document is missing or still carries
+existing installation. Before reporting a no-op, it applies pending repairs for
+a missing or stale project state file, a recoverable missing personalization
+resource, missing or incomplete workflow-owned `.gitignore` rules, and leftover
+project package staging. If any framework document is missing or still carries
 its bootstrap marker, the CLI safely recreates only missing templates and
 returns the required documentation recovery action; complete that action using
-the procedure below. Otherwise, a valid active entry is reported as `already
-enabled` and needs no action. A valid hidden entry is reported as `already
-disabled`; then tell the user to run:
+the procedure below. A repair result can therefore contain an empty
+documentation `files` list while still applying non-document mutations.
+Otherwise, a valid active entry is reported as `already enabled` and needs no
+action. A valid hidden entry is reported as `already disabled`; then tell the
+user to run:
 
 ```text
 codex_workflow --enable

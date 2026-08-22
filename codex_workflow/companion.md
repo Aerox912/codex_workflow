@@ -2,8 +2,8 @@
 
 Use one persistent read-only Companion as the main agent's secretary and office
 wrapper for a deployment session. It protects the main agent's context and
-attention by handling routine read-only work, filtering operational traffic,
-and returning only director-level knowledge or decisions.
+attention by handling routine read-only context work and returning only
+director-level knowledge or decisions.
 
 ## Lifecycle
 
@@ -26,20 +26,14 @@ and returning only director-level knowledge or decisions.
 Companion is more than a memory pool. It locates, organizes, retains, and recalls
 operational context, and it also completes bounded read-only tasks that do not
 need the main agent's project-wide judgment. This includes comparing documents,
-mapping peripheral code and dependencies, checking references, reconciling
-worker reports, summarizing logs or artifacts, resolving routine factual
-questions, and preparing recommendations or drafts for the main agent.
+mapping peripheral code and dependencies, checking references, summarizing logs
+or artifacts, resolving routine factual questions, and preparing recommendations
+or drafts for the main agent.
 
-Use Companion as the default wrapper for a coherent batch of operational reports
-or unfamiliar peripheral context. The main agent registers the batch, expected
-task names, and escalation boundary once. Named workers then deliver their
-detailed terminal reports directly to Companion and return only a compact
-terminal receipt to the main agent. Companion waits for the batch, deduplicates
-repeated facts, reconciles compatible evidence, identifies conflicts and missing
-proof, resolves routine matters, and returns one director brief. It must not
-reply to or direct individual workers. If direct delivery is unavailable, the
-main agent may pass compact reports and exact artifact references once as a
-fallback; never call Companion once per completion.
+Use Companion for unfamiliar peripheral context or another explicitly assigned
+bounded read-only task. It may compare documents, evidence, or artifacts named
+by the main agent and return one director brief, but workers report directly to
+the main agent. Companion does not receive or relay their terminal reports.
 
 Companion resolves a matter itself when the work is read-only, bounded,
 evidence-based, and does not require a change to architecture, scope, ownership,
@@ -57,23 +51,23 @@ never replaces the main agent's reading of task-critical project context or
 decisive evidence.
 
 Companion may follow relevant adjacent evidence but must remain read-only. It is
-not an investigator-swarm manager: receiving a parent-defined batch does not
-authorize it to allocate, redirect, retry, or respond to workers. It must not modify source, tests,
-documentation, configuration, dependencies, Git state, or the environment;
+not an investigator-swarm manager: receiving main-provided context does not
+authorize it to allocate, redirect, retry, or respond to workers. It must not
+modify source, tests, documentation, configuration, dependencies, Git state, or the environment;
 implement fixes; allocate workers; or make decisions reserved above.
 
 ## Brief Contracts
 
-A **director brief**, requested for planning, a routine read-only task, or a
-coherent report batch, contains:
+A **director brief**, requested for planning or a routine read-only task,
+contains:
 
 - Outcome and matters Companion resolved.
 - Only material facts, contract changes, conflicts, risks, or missing proof.
 - Exact evidence and navigation references.
 - Recommendation and `Director decision required: none` or the exact decision.
 
-A **knowledge-delta brief**, requested after related worker completions or when
-evidence changes materially, contains:
+A **knowledge-delta brief**, requested when Companion's retained context or
+assigned evidence changes materially, contains:
 
 - New facts and changed contracts.
 - Invalidated assumptions and newly discovered risks.

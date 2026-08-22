@@ -108,7 +108,6 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("recommended approach", heavy.lower())
         self.assertIn("canonical task names", heavy)
         self.assertIn("Decision required: none", heavy)
-        self.assertIn("knowledge-delta brief", heavy)
         self.assertIn("When the assigned worker is `default_executor`", heavy)
         self.assertIn("ordered implementation sequence", heavy)
         self.assertIn("Do not add this Execution Guide requirement", heavy)
@@ -121,12 +120,16 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("follow `investigation_team.md`", heavy)
         self.assertIn("alone identifies the actual defect", heavy)
         self.assertIn("directly reads and understands task-critical", heavy)
-        self.assertIn("default wrapper for coherent operational-report", heavy)
-        self.assertIn("never relay or invoke Companion per completion", heavy)
+        self.assertIn("one concise terminal report directly", heavy)
+        self.assertIn("do not route worker reports through it", heavy)
         self.assertIn("receives only a minimal\ndispatch envelope", heavy)
         self.assertIn("Only executors receive an implementation capsule", heavy)
         self.assertIn("Testers receive a verification capsule instead", heavy)
         self.assertIn("Other roles receive only the short brief", heavy)
+        self.assertIn("Owning acceptance and integration gates means", heavy)
+        self.assertIn("does not mean rerunning", heavy)
+        self.assertIn("one bounded tool turn", heavy)
+        self.assertIn("does not authorize\na main-agent diagnostic loop", heavy)
         self.assertNotIn("compact ledger", heavy)
 
         medium = policies["medium_route.md"]
@@ -135,25 +138,27 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("Before the final response", medium)
         self.assertIn("complete documentation framework", medium)
         self.assertIn("follow\n`investigation_team.md`", medium)
-        self.assertIn("terminal batch directly to\nCompanion", medium)
-        self.assertIn("alone passes the root-cause gate", medium)
+        self.assertIn("terminal report each directly to the main agent", medium)
+        self.assertIn("alone\npasses the root-cause gate", medium)
         self.assertNotIn("usage ledger", medium)
 
         agents_policy = policies["AGENTS.md"]
         self.assertIn("handoff is not a user command", agents_policy)
-        self.assertIn("session-model requirement", agents_policy)
-        self.assertIn("Never pin or rewrite the main model", agents_policy)
+        self.assertNotIn("session-model requirement", agents_policy)
         self.assertIn("read-only investigators", agents_policy)
         self.assertIn("directly reads task-critical", agents_policy)
+        self.assertIn("Workers return one concise terminal report directly", agents_policy)
+        self.assertIn("one bounded tool turn", agents_policy)
+        self.assertNotIn("compact receipts", agents_policy)
 
         companion = policies["companion.md"]
         self.assertIn("Office-Wrapper Role", companion)
-        self.assertIn("routine read-only work", companion)
+        self.assertIn("routine read-only context work", companion)
         self.assertIn("director brief", companion)
         self.assertIn("knowledge-delta brief", companion)
         self.assertIn("distinct task names", companion)
-        self.assertIn("coherent batch of operational reports", companion)
-        self.assertIn("deliver their\ndetailed terminal reports directly", companion)
+        self.assertIn("workers report directly to\nthe main agent", companion)
+        self.assertIn("does not receive or relay their terminal reports", companion)
         self.assertIn("project-wide judgment", companion)
 
         investigation = policies["investigation_team.md"]
@@ -161,9 +166,9 @@ class MarkerTests(unittest.TestCase):
         self.assertIn('agent_type="investigator"', investigation)
         self.assertIn('fork_turns="none"', investigation)
         self.assertIn("fixed concurrency ceiling", investigation)
-        self.assertIn("main agent retains access to every", investigation)
         self.assertIn("treat them as one investigation", investigation)
-        self.assertIn("Wait once for Companion's brief", investigation)
+        self.assertIn("returns one concise terminal evidence package directly", investigation)
+        self.assertIn("reviews the complete set of concise lane", investigation)
         self.assertIn("root-cause gate", investigation.lower())
 
         handoff_contract = (PACKAGE / "closure_steward.md").read_text(
@@ -235,24 +240,25 @@ class MarkerTests(unittest.TestCase):
         self.assertIn('model = "gpt-5.6-luna"', executor)
         self.assertIn('model = "gpt-5.6-sol"', senior)
         self.assertFalse((PACKAGE / "agents" / "executor_terra.toml").exists())
-        self.assertIn("model_context_window = 1_050_000", companion_worker)
+        self.assertIn("model_context_window = 1050000", companion_worker)
         self.assertIn(
-            "model_auto_compact_token_limit = 900_000", companion_worker
+            "model_auto_compact_token_limit = 800000", companion_worker
         )
         self.assertIn("secretary and office", companion_worker)
-        self.assertIn("complete routine read-only work", companion_worker)
-        self.assertIn("For a coherent report batch", companion_worker)
-        self.assertIn("sent directly\nby those workers", companion_worker)
+        self.assertIn("complete routine read-only context work", companion_worker)
+        self.assertNotIn("report-batch", companion_worker)
+        self.assertNotIn("sent directly\nby those workers", companion_worker)
         self.assertIn('model = "gpt-5.6-luna"', investigator)
         self.assertNotIn("terra", investigator.lower())
         self.assertIn('sandbox_mode = "read-only"', investigator)
         self.assertIn("never declare the authoritative", investigator.lower())
         self.assertIn("Do not modify source", investigator)
-        self.assertIn("terminal package (<=180 words)", investigator)
-        self.assertIn("return the parent a <=40-word receipt", investigator)
-        self.assertIn("lane brief names Companion", investigator)
-        self.assertNotIn("the capsule names Companion", investigator)
+        self.assertIn("Terminal report to the parent (<=180 words)", investigator)
         self.assertIn("Do not\n  emit routine progress", investigator)
+        for worker_policy in (executor, senior, tester, doc_writer, investigator):
+            self.assertIn("report to the parent", worker_policy)
+            self.assertNotIn("terminal receipt", worker_policy)
+            self.assertNotIn("report-batch", worker_policy)
         self.assertIn("always contains one required", bootstrap)
         self.assertIn("explicitly labeled bootstrap/project-install action", doc_writer)
         self.assertIn("assignment brief", doc_writer)
@@ -461,7 +467,7 @@ class PlatformSettingsTests(unittest.TestCase):
         )
         self.assertNotIn("codex-workflow-effective-config", heavy)
         self.assertNotIn("Fixed Workflow Settings", heavy)
-        self.assertIn('model_reasoning_effort = "xhigh"', default)
+        self.assertIn('model_reasoning_effort = "max"', default)
         self.assertIn(
             'fork_turns="200"',
             (PACKAGE / "closure_steward.md").read_text(encoding="utf-8"),
@@ -882,12 +888,12 @@ class LifecycleIntegrationTests(unittest.TestCase):
         )
         incoming_root = self.root / "incoming" / "codex_workflow"
         shutil.copytree(PACKAGE, incoming_root, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
-        (incoming_root / "VERSION").write_text("1.1.5\n", encoding="utf-8")
+        (incoming_root / "VERSION").write_text("1.1.6\n", encoding="utf-8")
         user_agents = (incoming_root / "user_AGENTS.md").read_text(encoding="utf-8")
         (incoming_root / "user_AGENTS.md").write_text(
             user_agents.replace(
                 f"codex-workflow-version: {PACKAGE_VERSION}",
-                "codex-workflow-version: 1.1.5",
+                "codex-workflow-version: 1.1.6",
             ),
             encoding="utf-8",
         )
@@ -895,7 +901,7 @@ class LifecycleIntegrationTests(unittest.TestCase):
         plan_update(incoming, self.runtime, self.project).apply()
         entry = self.project.active.read_text(encoding="utf-8")
         self.assertEqual(extract(entry, PROJECT_LOCAL), "Local policy.")
-        self.assertEqual((self.runtime.runtime / "VERSION").read_text(), "1.1.5\n")
+        self.assertEqual((self.runtime.runtime / "VERSION").read_text(), "1.1.6\n")
         self.assertNotIn(
             "local worker override",
             (self.runtime.agents / "default_executor.toml").read_text(encoding="utf-8"),
@@ -988,6 +994,18 @@ class LifecycleIntegrationTests(unittest.TestCase):
         self.assertEqual(enabled.returncode, 0, enabled.stderr)
         self.assertEqual(json.loads(enabled.stdout)["status"], "already enabled")
         self.assertEqual(json.loads(enabled.stdout)["instruction"], "No action is required.")
+
+        self.project.state.unlink()
+        self.project.personalization.unlink()
+        self.project.gitignore.unlink()
+        repaired = subprocess.run(command, check=False, capture_output=True, text=True)
+        self.assertEqual(repaired.returncode, 0, repaired.stderr)
+        repaired_summary = json.loads(repaired.stdout)
+        self.assertTrue(repaired_summary["applied"])
+        self.assertEqual(repaired_summary["agent_actions"][0]["files"], [])
+        self.assertTrue(self.project.state.is_file())
+        self.assertTrue(self.project.personalization.is_file())
+        self.assertTrue(self.project.gitignore.is_file())
 
         plan_enable(self.project, enable=False).apply()
         disabled = subprocess.run(command, check=False, capture_output=True, text=True)
@@ -1194,12 +1212,12 @@ class LifecycleIntegrationTests(unittest.TestCase):
             incoming_root,
             ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
         )
-        (incoming_root / "VERSION").write_text("1.1.5\n", encoding="utf-8")
+        (incoming_root / "VERSION").write_text("1.1.6\n", encoding="utf-8")
         user_agents = (incoming_root / "user_AGENTS.md").read_text(encoding="utf-8")
         (incoming_root / "user_AGENTS.md").write_text(
             user_agents.replace(
                 f"codex-workflow-version: {PACKAGE_VERSION}",
-                "codex-workflow-version: 1.1.5",
+                "codex-workflow-version: 1.1.6",
             ),
             encoding="utf-8",
         )
@@ -1223,7 +1241,7 @@ class LifecycleIntegrationTests(unittest.TestCase):
         )
         self.assertEqual(completed.returncode, 0, completed.stderr)
         summary = json.loads(completed.stdout)
-        self.assertEqual(summary["details"]["to_version"], "1.1.5")
+        self.assertEqual(summary["details"]["to_version"], "1.1.6")
         self.assertTrue(summary["applied"])
 
     def test_external_update_delegates_before_launcher_validation(self) -> None:
@@ -1234,7 +1252,7 @@ class LifecycleIntegrationTests(unittest.TestCase):
             incoming_root,
             ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
         )
-        (incoming_root / "VERSION").write_text("1.1.5\n", encoding="utf-8")
+        (incoming_root / "VERSION").write_text("1.1.6\n", encoding="utf-8")
 
         argv = [
             str(PACKAGE / "workflow.py"),

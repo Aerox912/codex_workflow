@@ -47,12 +47,8 @@ Do not broaden the package or create additional investigation merely to fill a b
 
 Event (≤150 words): event; task ID/iteration; knowledge-changing evidence;
 decision or scope impact; next action.
-When the capsule names Companion and a report-batch ID, send Companion the full
-final package below and return the parent a <=40-word terminal receipt with task
-ID, status, batch ID, delivery state, and any exact decision required. If direct
-delivery is unavailable, return the full package to the parent instead.
-
-Final package (≤250 words): task ID/iteration; status; outcome; contract changes;
+Final report to the parent (≤250 words): task ID/iteration; status; outcome;
+contract changes;
 new facts; invalidated assumptions; verification evidence and artifacts;
 residual risks; `Decision required: none` or the exact decision; exact
 references.

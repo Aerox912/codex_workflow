@@ -285,9 +285,10 @@ at most one senior executor; and the Codex child-worker ceiling is twenty.
 
 All listed roles are fixed built-in definitions. Companion is the single
 persistent secretary and office wrapper: it handles routine read-only work,
-retains operational context, and filters coherent report batches. Multiple
-investigator task names may use the one read-only investigator definition for
-Heavy evidence lanes or an explicitly requested Medium evidence wave.
+and retains operational context. Workers report directly to the main agent.
+Multiple investigator task names may use the one read-only investigator
+definition for Heavy evidence lanes or an explicitly requested Medium evidence
+wave.
 
 Bootstrap and update enable the documented multi-agent settings under `[agents]`
 and `[features]`. They remove workflow-owned legacy V2 keys instead of
@@ -347,8 +348,8 @@ contracts, and worker definitions still agree.
 
 Medium keeps planning, root-cause analysis, implementation, and verification in
 the main agent. Its workflow mode activates one persistent Companion
-secretary/office wrapper for routine read-only context work and report
-filtering; it does not create delegated production packages. If the user
+secretary/office wrapper for routine read-only context work; it does not create
+delegated production packages. If the user
 explicitly requests independent evidence lanes, read-only investigators may
 assist, but the main agent still opens decisive evidence and owns the root-cause
 decision. Heavy adds the delegated production and testing packages after that
@@ -366,7 +367,7 @@ statistics table.
 ```mermaid
 flowchart LR
     I["Investigator swarm<br/>independent read-only evidence lanes"]
-    C["Companion<br/>secretary + report wrapper"]
+    C["Companion<br/>read-only secretary"]
     M(("Main agent<br/>core context, root cause,<br/>plan and acceptance"))
     D["default_executor<br/>normal production work"]
     S["senior_executor<br/>exceptionally difficult work"]
@@ -376,10 +377,8 @@ flowchart LR
 
     M -->|initialize and brief| C
     M -.->|serious or ambiguous issue:<br/>defines independent search lanes| I
-    M -->|batch scope and boundaries| C
-    I -->|detailed terminal evidence| C
-    I -->|compact terminal receipt| M
-    C -->|filtered director brief| M
+    C -->|director brief| M
+    I -->|concise terminal evidence| M
 
     M -->|implementation capsule| D
     M -.->|senior implementation capsule:<br/>only when difficulty requires it| S
@@ -388,31 +387,25 @@ flowchart LR
     D -->|repair evidence for recheck| T
     T -->|routine production defect packet<br/>when assigned| S
     S -->|repair evidence for recheck<br/>when assigned| T
-    D -->|detailed terminal report| C
-    S -->|detailed terminal report| C
-    T -->|detailed verification report| C
-    D -->|compact receipt| M
-    S -->|compact receipt| M
-    T -->|compact receipt| M
+    D -->|concise terminal report| M
+    S -->|concise terminal report| M
+    T -->|concise verification report| M
     D -.->|material escalation| M
     S -.->|material escalation| M
     T -.->|material escalation| M
 
     M -->|documentation package<br/>after behavior is verified| W
-    W -->|documentation report| C
-    W -->|compact receipt| M
+    W -->|concise documentation report| M
 
     M -->|route + deployment ID<br/>+ closure state| X
     X -->|final report + statistics| M
 
-    classDef gate fill:#2e1065,color:#fff,stroke:#c084fc,stroke-width:2px;
     classDef center fill:#172554,color:#fff,stroke:#60a5fa,stroke-width:3px;
     classDef wrapper fill:#ecfeff,stroke:#0891b2,stroke-width:2px;
     classDef research fill:#f5f3ff,stroke:#7c3aed,stroke-width:2px;
     classDef execution fill:#eff6ff,stroke:#2563eb,stroke-width:2px;
     classDef documentation fill:#f0fdf4,stroke:#65a30d,stroke-width:2px;
     classDef closure fill:#f0fdf4,stroke:#16a34a,stroke-width:2px;
-    class G gate;
     class M center;
     class C wrapper;
     class I research;
@@ -427,12 +420,12 @@ The fixed role set is:
 
 | Role | Responsibility | Can edit project source? |
 | --- | --- | --- |
-| Main agent | Knowledge architect: chooses scope and architecture, distributes guidance, integrates knowledge, and reviews decision-critical boundaries | Only for exceptional scoped takeover, not routine Heavy implementation |
+| Main agent | Knowledge architect: chooses scope and architecture, defines and evaluates gates, distributes guidance, and integrates knowledge | Only for decision-critical inspection or exceptional scoped takeover, not routine Heavy implementation or operational verification |
 | `default_executor` | Package discovery, production implementation, self-check, and routine repair | Yes, within its work package |
 | `senior_executor` | Complex core reasoning or exceptionally difficult cross-cutting implementation | Yes, within its work package; fixed to at most one instance |
 | `tester` | Independent focused tests and failure analysis | Test/fixture scope; production defects return to the executor |
 | `doc-writer` | Assigned documentation during implementation and required installation initialization; not automatic deployment closure | Documentation scope; installation may authorize listed new or still-template-marked recovery files |
-| Companion | Single persistent secretary and office wrapper that solves routine read-only tasks, retains operational context, filters coherent report batches, and returns director briefs | No |
+| Companion | Single persistent secretary and office wrapper that solves routine read-only context tasks, retains operational context, and returns director briefs | No |
 | `investigator` | Disposable Luna leaf agent for one bounded code, evidence, dependency, documentation, log, or external-solution lane | No |
 | `closure_steward` | Inherited-context reconciliation of the complete documentation framework, read-only Git status/handoff, and statistics | `agent_docs/` plus read-only Git inspection during automatic closure; no automatic staging or commit |
 
@@ -447,16 +440,16 @@ When Heavy is selected for a deployment-state task, the main agent:
 1. reads the project entry point, route instructions, and task-critical project
    documentation, source paths, contracts, and failure evidence directly;
 2. initializes one read-only Companion secretary/office wrapper and asks it to
-   solve routine planning work and filter wider operational context into a
-   director brief;
+   solve routine planning or peripheral context work and return a director
+   brief;
 3. for a serious or ambiguous issue, dispatches orthogonal read-only
    investigator lanes under the shared investigation contract;
-4. registers their terminal batch with Companion; investigators deliver detailed
-   reports there directly while the main receives compact receipts and one
-   filtered director brief, then opens decisive sources and identifies the
-   actual defect through the main-owned root-cause gate;
+4. waits for one concise terminal report from each investigator, evaluates the
+   evidence wave together, then opens decisive sources and identifies the actual
+   defect through the main-owned root-cause gate;
 5. forms the architecture, bounded plan, acceptance matrix, ownership,
-   dependencies, and verification gates without replaying raw discovery;
+   dependencies, and verification gates for the responsible workers to execute,
+   without replaying raw discovery;
 6. sends only the role-specific package needed by each worker.
 
 Every worker gets a minimal dispatch envelope containing identity, outcome,
@@ -483,10 +476,7 @@ Companion solves routine planning work and returns a director brief
 Main reads the Core Context Set and frames independent search lanes
         │
         ▼
-Investigator swarm tests hypotheses and sends terminal evidence to Companion
-        │
-        ▼
-Companion filters and reconciles the coherent report batch
+Investigator swarm tests hypotheses and reports directly to the main agent
         │
         ▼
 Main inspects decisive sources and passes the root-cause gate
@@ -501,11 +491,8 @@ Executor implements one coherent increment and self-validates
 Tester independently runs focused checks when testing is warranted
         │
         ├── routine defect ──► direct executor repair ─► tester recheck
-        ├── proof ─────────► compact knowledge report
+        ├── proof ─────────► concise terminal report to main
         └── decision defect ─► main agent re-scopes or decides
-        │
-        ▼
-Companion resolves routine report traffic and retains material knowledge deltas
         │
         ▼
 Main integrates verified package outcomes
@@ -529,6 +516,20 @@ routine operational proof without reopening its artifact, but it directly
 inspects any project source or evidence that determines the root cause,
 architecture, scope, or another high-risk decision.
 
+In Heavy, owning acceptance and integration gates means defining the gate,
+assigning its execution, evaluating the returned evidence, and deciding
+acceptance. It does not mean repeating checks that an executor or tester already
+proved. Deployment state, public endpoints, uploads, browser and screenshot
+work, external search, routine Git or status collation, tool or API discovery,
+and operational diagnostics stay with the responsible worker.
+
+If an integration check genuinely cannot be delegated, the main agent first
+resolves the exact operation and combines all already-known independent reads
+and checks into one bounded tool turn. Unless the result crosses a material
+decision or escalation boundary, a failure or ambiguous result goes back to the
+responsible worker with the new evidence instead of starting a main-agent
+diagnostic chain.
+
 ### Concurrency and communication controls
 
 The fixed platform and route definitions permit at most twenty concurrent child
@@ -541,17 +542,15 @@ child-agent slot available for the fresh Closure Steward worker and must not
 exceed the fixed role or worker limits.
 
 Worker communication is event-driven and knowledge-aware. Named executor-tester
-pairs exchange routine repair packets directly. For a parent-registered report
-batch, workers send their detailed terminal packages directly to Companion and
-only compact receipts to the main agent. A worker that returns no concrete
-evidence gets one short retry; repeated evidence-free work triggers replacement
-or a narrowly scoped, explicit main-agent takeover.
+pairs exchange routine repair packets directly. Every worker returns one concise
+terminal report directly to the main agent. The main waits for a coherent group
+and integrates its reports together rather than acknowledging each completion.
+A worker that returns no concrete evidence gets one short retry; repeated
+evidence-free work triggers replacement or a narrowly scoped, explicit
+main-agent takeover.
 
-Task workers must not edit Git state or the shared status documents. Coherent
-groups of routine worker reports flow directly into Companion's office wrapper
-before main-agent integration; a single parent-to-Companion handoff is the
-fallback when direct delivery is unavailable. Decision escalations and decisive
-evidence remain available to the main agent. During
+Task workers must not edit Git state or the shared status documents. Worker
+terminal reports and decision escalations go directly to the main agent. During
 automatic closure, `closure_steward` alone reconciles the complete documentation
 framework and reports Git status/handoff; it does not invoke another
 documentation worker or mutate Git state. Companion and investigators remain
@@ -599,7 +598,7 @@ Location: `~/.codex/`
   is `default_executor`, `senior_executor`, `tester`, `doc-writer`,
   `companion`, `investigator`, and `closure_steward`.
 - `companion.toml` gives the persistent Luna Companion a 1,050,000-token context
-  window with automatic compaction at 900,000 tokens; the override is scoped to
+  window with automatic compaction at 800,000 tokens; the override is scoped to
   that role.
 - `investigator.toml` defines the disposable read-only Luna xhigh leaf role used
   by Heavy, or by an explicitly requested Medium evidence wave.
@@ -609,7 +608,7 @@ Location: `~/.codex/`
   Companion workflow support, optional read-only evidence, and documentation
   closure; it does not delegate production implementation or verification.
 - `~/.codex/codex_workflow/companion.md` defines the read-only Companion
-  secretary/office wrapper's lifecycle, routine-task boundary, report-filtering
+  secretary/office wrapper's lifecycle, routine-task boundary, context-support
   role, memory, and director-brief contracts.
 - `~/.codex/codex_workflow/investigation_team.md` defines the shared dispatch,
   evidence, main-agent context, and root-cause gates.

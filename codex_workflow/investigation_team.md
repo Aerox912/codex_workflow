@@ -42,12 +42,9 @@ security or performance boundaries, official documentation and source history,
 and clearly labeled technical-forum or prior-art searches.
 
 Select the useful lanes before dispatch and treat them as one investigation
-wave. Register one batch ID, the expected investigator task names, and the
-escalation boundary with Companion. Include Companion's canonical task name and
-the batch ID in each investigator lane brief. Investigators deliver detailed
-terminal evidence directly to Companion and return only a compact terminal
-receipt to the main agent. Wait once for Companion's brief; do not analyze,
-acknowledge, or answer each completion separately.
+wave. Each investigator returns one concise terminal evidence package directly
+to the main agent. Wait for the complete wave; do not analyze, acknowledge, or
+answer each routine completion separately.
 
 Use investigators when the installed agent type is available. Keep Companion's
 live slot and one slot for Closure Steward within the fixed concurrency ceiling.
@@ -56,16 +53,12 @@ minimization.
 
 ## Evidence and Root-Cause Gate
 
-Companion receives the parent-defined terminal batch without becoming its
-manager. It deduplicates evidence, reconciles routine discrepancies, identifies
-conflicts and missing proof, resolves bounded factual questions, and returns one
-director brief. If direct investigator-to-Companion delivery is unavailable,
-the main agent passes the compact reports and artifact references once after the
-wave. The main agent retains access to every underlying report and reference.
-
-The main agent owns adjudication. It reviews the director brief, compares only
-material competing hypotheses, directly opens the decisive local sources and
-evidence, and records whether the cause is confirmed, probable, or unresolved.
+The main agent owns adjudication. It reviews the complete set of concise lane
+reports together, compares only material competing hypotheses, directly opens
+the decisive local sources and evidence, and records whether the cause is
+confirmed, probable, or unresolved. Companion may separately answer an assigned
+bounded read-only context question, but it does not receive or filter worker
+terminal reports.
 Do not package or implement a production fix until the main agent can state the
 causal chain, affected contract, fix boundary, residual uncertainty, and
 acceptance test. If that gate is not met, reuse the relevant investigator thread

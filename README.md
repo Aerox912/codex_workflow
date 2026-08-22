@@ -6,9 +6,10 @@
 
 Built for maximum token efficiency: Heavy-route swarm execution with the main
 agent as the knowledge director, plus a persistent Companion that handles
-routine read-only work and directly filters worker-report batches. Medium keeps
-implementation and verification in the main agent while retaining the same
-built-in context and progress management across sessions.
+routine read-only context work. Workers return one concise terminal report
+directly to the main agent. Medium keeps implementation and verification in the
+main agent while retaining the same built-in context and progress management
+across sessions.
 
 > ⭐ For lightweight tasks, it won’t overdo things. Light route is default.
 
@@ -77,8 +78,8 @@ filter information, and close the deployment around it.
 
 | Role or mechanism | Responsibility | Boundary |
 | --- | --- | --- |
-| Main agent | Reads task-critical context, identifies the defect, chooses the plan, and owns acceptance. | Delegation reduces token use without outsourcing judgment. |
-| Companion | Handles bounded read-only work and turns detailed worker-report batches into one decision-ready brief. | Does not make director-level decisions. |
+| Main agent | Reads task-critical context, identifies the defect, chooses the plan, and defines and evaluates acceptance gates. | Workers execute operational checks; gate ownership does not require the main agent to rerun their evidence. |
+| Companion | Handles bounded read-only context work and returns decision-ready briefs. | Does not receive worker terminal reports or make director-level decisions. |
 | Investigators | Explore independent bug, evidence, prior-art, and solution lanes. | The main agent defines lanes and makes the root-cause decision. |
 | Role-scoped knowledge | Gives executors implementation guidance, testers verification criteria, and investigators focused search briefs. | Workers receive only the context needed for their role. |
 | Executor–tester loop | `default_executor` performs normal production work; the tester verifies it independently. | Routine defects and repair evidence move directly between the paired workers. |
@@ -87,13 +88,16 @@ filter information, and close the deployment around it.
 | Closure Steward | Reconciles project documentation and prepares the final handoff after acceptance. | Stays outside the implementation loop. |
 
 Together, these refinements address the coordination problems that make large
-agent deployments expensive and fragile. Direct worker-to-Companion reporting
-and the executor–tester repair loop prevent repeated relaying and prefix reads
-from causing cached-input explosion; Companion's batch synthesis and the clear
-ownership boundaries keep the main agent's context clean, coherent, and less
-fragmented. Role-scoped capsules distribute and diffuse the main agent's
-architectural knowledge, constraints, rationale, and acceptance model into the
-workers without giving up its direct understanding or decision authority. If a
+agent deployments expensive and fragile. Concise direct terminal reports avoid
+duplicate reporting and batch-routing turns, while the executor–tester repair
+loop keeps routine repair traffic out of the main-agent loop. Companion handles
+separately assigned read-only context work. Role-scoped capsules distribute and
+diffuse the main agent's architectural knowledge, constraints, rationale, and
+acceptance model into the workers without giving up its direct understanding or
+decision authority. Operational failures return to the responsible worker, and
+any genuinely non-delegable main-agent checks are combined into one bounded tool
+turn so small diagnostic loops do not repeatedly reload the growing main
+context. If a
 default executor stalls, evidence-driven repair attempts, focused escalation,
 and worker replacement keep the deployment moving; when the work itself
 exceeds the default executor's reasoning capacity, the limited

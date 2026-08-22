@@ -21,17 +21,34 @@ automatic deployment closure; it does not stage or commit changes.
 
 The main agent directly reads and understands task-critical project context and
 owns defect identification and root-cause decisions. Companion handles routine
-read-only work and is the default wrapper for coherent operational-report
-batches. Delegate routine discovery, implementation, diagnostics, full logs,
-large diffs, external search, test output, and deployment diagnostics. Main
-consumes Companion's director brief instead of reviewing every routine report,
-but directly inspects source or evidence that determines architecture, scope, a
-root cause, or a high-risk boundary.
+read-only context work. Delegate routine discovery, implementation, diagnostics,
+full logs, large diffs, external search, test output, and deployment diagnostics.
+Workers return one concise terminal report directly to the main agent, which
+integrates those reports and directly inspects evidence that determines
+architecture, scope, a root cause, or a high-risk boundary.
 
 Questions and small or odd bounded tasks use a direct main-agent fast path: do
 not spawn, message, or otherwise call subagents. Do not create work merely to
 use a worker. This fast path also skips Closure Steward and worker statistics
 entirely.
+
+## Main-Agent Execution Boundary
+
+For a substantive Heavy deployment, the main agent's own tool use is limited to
+task-critical source or evidence inspection, architecture and scope decisions,
+orchestration, and the smallest integration check that cannot safely be
+delegated. Owning acceptance and integration gates means defining each gate,
+assigning its execution, evaluating returned evidence, and deciding acceptance;
+it does not mean rerunning an executor's or tester's evidenced checks.
+
+Assign deployment state, public endpoints, uploads, browser or screenshot work,
+external search, routine Git or status collation, tool or API discovery, and
+operational diagnostics to the responsible worker. If a genuinely
+non-delegable main-agent check remains, resolve its exact operation first and
+batch all already-known independent reads and checks into one bounded tool turn.
+Unless an existing escalation gate applies, a failure or ambiguous result
+returns to the responsible worker with the new evidence; it does not authorize
+a main-agent diagnostic loop.
 
 ## Investigation and Planning
 
@@ -44,17 +61,15 @@ operational discovery.
 
 For serious or ambiguous issues, follow `investigation_team.md` before
 allocating implementation packages. The main agent frames independent lanes,
-registers the expected batch with Companion, and names Companion in every lane
-brief. Investigators send detailed terminal evidence directly to Companion;
-the main agent receives compact receipts and one director brief, then alone identifies the actual defect after inspecting decisive project sources. Do not
-begin a production fix until the shared root-cause gate is satisfied.
+receives each investigator's concise terminal evidence directly, evaluates the
+wave together, and alone identifies the actual defect after inspecting decisive
+project sources. Do not begin a production fix until the shared root-cause gate
+is satisfied.
 
-For each coherent worker group, register one Companion batch and include its
-canonical task name in the dispatch envelopes. Workers send detailed terminal reports
-directly to Companion and only compact terminal receipts to the main agent.
-Companion returns one director or knowledge-delta brief after resolving routine
-matters. If direct delivery is unavailable, pass compact reports and artifact
-references once; never relay or invoke Companion per completion.
+For each coherent worker group, wait for terminal reports without acknowledging
+or analyzing routine completions one by one. Integrate the group once all
+expected workers are terminal. Use Companion separately only for an explicitly
+assigned read-only context task; do not route worker reports through it.
 
 When the user asks to plan an implementation, persist and begin it unless they
 request planning only. For durable work, the main agent may update
@@ -71,8 +86,7 @@ independent. Keep one child slot available for Closure Steward.
 
 Every initial worker uses `fork_turns="none"` and receives only a minimal
 dispatch envelope: task ID and outcome; scope and protected areas; exact starting
-references; escalation conditions; return format; and, when applicable, the
-report-batch ID plus Companion's canonical task name. This envelope is routing
+references; escalation conditions; and return format. This envelope is routing
 metadata, not a copy of the main agent's project knowledge.
 
 Only executors receive an implementation capsule. It adds ownership and edit
@@ -118,7 +132,7 @@ Brief the remaining roles as follows:
 
 | Role | Required guidance |
 | --- | --- |
-| Companion | Session goal, escalation boundaries, routine task or coherent report batch, and director-brief format |
+| Companion | Session goal, escalation boundaries, bounded read-only context task, and director-brief format |
 | Investigator | One bounded question or hypothesis, boundaries, sources, exact references, and evidence format |
 | Doc-writer | Verified facts, changed behavior, audience, terminology, limitations |
 
@@ -173,12 +187,12 @@ Assumptions invalidated | Verification evidence | Residual risks
 Decision required | Exact references
 ```
 
-Use `Decision required: none` explicitly. For a registered coherent group,
-workers send this detailed package to Companion and return only a compact
-terminal receipt to the main agent. Main integrates Companion's brief rather
-than reviewing every report independently. Open artifacts only for conflict,
-material uncertainty, or integration risk. Reject evidence-free reports; do not
-rerun checks unless later changes or conflicting evidence invalidate them.
+Use `Decision required: none` explicitly. For a coherent group,
+each worker returns this single detailed package directly to the main agent.
+Integrate the reports together after the group is terminal instead of creating
+per-completion coordination turns. Open artifacts only for conflict, material
+uncertainty, or integration risk. Reject evidence-free reports; do not rerun
+checks unless later changes or conflicting evidence invalidate them.
 
 ## Gates, Failure, and Waiting
 

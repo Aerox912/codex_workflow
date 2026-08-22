@@ -251,7 +251,12 @@ def plan_project_install(package: PackageLayout, project: ProjectPaths) -> Opera
         "workflow_version": package.version,
         "enabled": enabled,
     }
-    mutations.append(json_mutation(project.state, project_state))
+    state_mutation = json_mutation(project.state, project_state)
+    if (
+        not project.state.is_file()
+        or project.state.read_bytes() != state_mutation.content
+    ):
+        mutations.append(state_mutation)
     gitignore_mutation = _plan_gitignore(project)
     if gitignore_mutation is not None:
         mutations.append(gitignore_mutation)
