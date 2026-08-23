@@ -1,5 +1,5 @@
 <!-- codex-workflow-user-id: viettran-edgeAI/codex_workflow -->
-<!-- codex-workflow-version: 1.1.3-patch.1 -->
+<!-- codex-workflow-version: 1.1.3-patch.2 -->
 <!-- codex-workflow-user-managed-start -->
 # AGENTS.md
 
