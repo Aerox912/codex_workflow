@@ -77,6 +77,7 @@ def _patch_section(lines: list[str], section: str, values: dict[str, str]) -> li
 
 
 _LEGACY_OWNED_KEYS: dict[str, set[str]] = {
+    "agents": {"max_threads"},
     "features.multi_agent_v2": {
         "enabled",
         "max_concurrent_threads_per_session",
@@ -90,9 +91,9 @@ _LEGACY_OWNED_KEYS: dict[str, set[str]] = {
 
 
 _OWNED_KEYS: dict[str, set[str]] = {
-    "agents": {"enabled", "max_concurrent_threads_per_session"},
+    "agents": {"enabled", "max_concurrent_threads_per_session", "max_threads"},
     "features": {"multi_agent"},
-    **_LEGACY_OWNED_KEYS,
+    "features.multi_agent_v2": set(_LEGACY_OWNED_KEYS["features.multi_agent_v2"]),
 }
 
 
