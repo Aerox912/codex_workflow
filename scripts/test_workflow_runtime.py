@@ -94,7 +94,8 @@ class MarkerTests(unittest.TestCase):
             "AGENTS.md",
             "medium_route.md",
             "heavy_route.md",
-            "companion.md",
+            "medium_companion.md",
+            "heavy_companion.md",
             "investigation_team.md",
         )
         policies = {
@@ -108,28 +109,37 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("recommended approach", heavy.lower())
         self.assertIn("canonical task names", heavy)
         self.assertIn("Decision required: none", heavy)
-        self.assertIn("When the assigned worker is `default_executor`", heavy)
-        self.assertIn("ordered implementation sequence", heavy)
-        self.assertIn("Do not add this Execution Guide requirement", heavy)
-        self.assertIn("not spawn, message, or otherwise call subagents", heavy)
-        self.assertIn("skips Closure Steward and worker statistics", heavy)
+        self.assertIn("Generic execution, repair", heavy)
+        self.assertIn("ordered reference/change/rationale/check steps", heavy)
+        self.assertIn("still distributes the main agent's implementation", heavy)
+        self.assertIn("not call subagents or create work merely to use one", heavy)
+        self.assertIn("fast path also skips\nClosure Steward", heavy)
         self.assertIn("before the final response", heavy)
         self.assertIn("automatic handoff context fork", heavy)
-        self.assertIn("sends routine production defects directly", heavy)
-        self.assertIn("does not relay, acknowledge, or rediagnose", heavy)
+        self.assertIn("without an extra main-agent dispatch rollout", heavy)
+        self.assertIn("Do not issue a separate Companion request", heavy)
+        self.assertIn("calls `followup_task`", heavy)
+        self.assertIn("focused evidence with `send_message`", heavy)
+        self.assertIn("does\nnot relay or rediagnose", heavy)
+        self.assertIn("repair_routing_blocked", heavy)
         self.assertIn("follow `investigation_team.md`", heavy)
         self.assertIn("alone identifies the actual defect", heavy)
         self.assertIn("directly reads and understands task-critical", heavy)
-        self.assertIn("one concise terminal report directly", heavy)
-        self.assertIn("do not route worker reports through it", heavy)
-        self.assertIn("receives only a minimal\ndispatch envelope", heavy)
+        self.assertIn("one small knowledge delta directly", heavy)
+        self.assertIn("Do not route worker reports through Companion", heavy)
+        self.assertIn("receives a minimal envelope", heavy)
         self.assertIn("Only executors receive an implementation capsule", heavy)
         self.assertIn("Testers receive a verification capsule instead", heavy)
-        self.assertIn("Other roles receive only the short brief", heavy)
+        self.assertIn("Other roles receive only\nthe short brief", heavy)
         self.assertIn("Owning acceptance and integration gates means", heavy)
         self.assertIn("does not mean rerunning", heavy)
         self.assertIn("one bounded tool turn", heavy)
         self.assertIn("does not authorize\na main-agent diagnostic loop", heavy)
+        self.assertIn("soft evidence budget", heavy)
+        self.assertIn("`heavy_companion.md`", heavy)
+        self.assertIn("verification_ledger.py", heavy)
+        self.assertIn("Prose test counts are not authoritative", heavy)
+        self.assertIn("routine success is at most 120", heavy)
         self.assertNotIn("compact ledger", heavy)
 
         medium = policies["medium_route.md"]
@@ -137,29 +147,45 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("do not call `closure_steward`", medium)
         self.assertIn("Before the final response", medium)
         self.assertIn("complete documentation framework", medium)
+        self.assertIn("`$deployment-token-report`", medium)
+        self.assertIn("Do not issue a separate Companion request", medium)
         self.assertIn("follow\n`investigation_team.md`", medium)
         self.assertIn("terminal report each directly to the main agent", medium)
         self.assertIn("alone\npasses the root-cause gate", medium)
+        self.assertIn("`medium_companion.md`", medium)
         self.assertNotIn("usage ledger", medium)
 
         agents_policy = policies["AGENTS.md"]
         self.assertIn("handoff is not a user command", agents_policy)
+        self.assertIn("`$deployment-token-report` request", agents_policy)
+        self.assertIn("do not spend a separate main-agent rollout", agents_policy)
         self.assertNotIn("session-model requirement", agents_policy)
         self.assertIn("read-only investigators", agents_policy)
         self.assertIn("directly reads task-critical", agents_policy)
-        self.assertIn("Workers return one concise terminal report directly", agents_policy)
+        self.assertIn("Workers return one small knowledge delta directly", agents_policy)
         self.assertIn("one bounded tool turn", agents_policy)
+        self.assertIn("soft budget", agents_policy)
+        self.assertIn("verification ledger", agents_policy)
+        self.assertIn('agent_type="companion"', agents_policy)
+        self.assertIn("codex-workflow-deployment-start", agents_policy)
+        self.assertIn("explicit transition", agents_policy)
+        self.assertIn("previous route-specific duties become inactive", agents_policy)
         self.assertNotIn("compact receipts", agents_policy)
 
-        companion = policies["companion.md"]
-        self.assertIn("Office-Wrapper Role", companion)
-        self.assertIn("routine read-only context work", companion)
-        self.assertIn("director brief", companion)
-        self.assertIn("knowledge-delta brief", companion)
-        self.assertIn("distinct task names", companion)
-        self.assertIn("workers report directly to\nthe main agent", companion)
-        self.assertIn("does not receive or relay their terminal reports", companion)
-        self.assertIn("project-wide judgment", companion)
+        medium_companion = policies["medium_companion.md"]
+        self.assertIn("persistent read-only secretary", medium_companion)
+        self.assertIn("main agent plans, diagnoses, implements, and verifies", medium_companion)
+        self.assertIn("does not perform package-distribution", medium_companion)
+        self.assertIn("director-brief or knowledge-delta", medium_companion)
+
+        heavy_companion = policies["heavy_companion.md"]
+        self.assertIn("read-only orchestration secretary", heavy_companion)
+        self.assertIn("soft evidence budget", heavy_companion)
+        self.assertIn("Distribution audit", heavy_companion)
+        self.assertIn("Readiness audit", heavy_companion)
+        self.assertIn("Workers report directly to the main agent", heavy_companion)
+        self.assertIn("never receives worker reports", heavy_companion)
+        self.assertIn("or decides readiness", heavy_companion)
 
         investigation = policies["investigation_team.md"]
         self.assertIn("Core Context Set", investigation)
@@ -184,16 +210,17 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("Do not call a second documentation worker", handoff_contract)
         self.assertNotIn('fork_turns="none"', handoff_contract)
         self.assertNotIn("compact usage ledger", handoff_contract)
-        self.assertIn(
-            "| Worker name | Quantity | Number of calls |", handoff_worker
-        )
-        self.assertIn(
-            "`Quantity` is the number of distinct task names", handoff_worker
-        )
-        self.assertIn("turn-starting initial assignments", handoff_worker)
+        self.assertNotIn("| Worker name | Quantity | Number of calls |", handoff_worker)
+        self.assertIn("Companion", handoff_worker)
+        self.assertIn("`$deployment-token-report`", handoff_worker)
+        self.assertIn("single `followup_task`", handoff_worker)
+        self.assertIn("persistent Companion target", handoff_worker)
+        self.assertIn("Do not wait for Companion", handoff_worker)
         self.assertIn("read the complete existing", handoff_worker)
-        self.assertIn("Do not delegate or create another worker", handoff_worker)
-        self.assertIn("the parent does not supply or maintain a ledger", handoff_worker)
+        self.assertIn("Do not create another worker", handoff_worker)
+        self.assertIn("not derive or report worker statistics", handoff_worker)
+        self.assertIn("never edit outside `agent_docs/`", handoff_worker)
+        self.assertIn("verification ledger's `summarize`", handoff_worker)
         for framework_file in (
             "project_overview.md",
             "project_core_tech.md",
@@ -230,13 +257,17 @@ class MarkerTests(unittest.TestCase):
         investigator = (PACKAGE / "agents" / "investigator.toml").read_text(
             encoding="utf-8"
         )
-        self.assertIn("send a compact defect packet directly", tester)
-        self.assertIn("Do not involve\n  the parent in routine repair traffic", tester)
-        self.assertIn("return the result\n  directly to that tester", executor)
-        self.assertIn("Keep the parent out of routine repair", executor)
-        self.assertIn("Execution Guide as the primary work sequence", executor)
-        self.assertIn("Track the completion checklist internally", executor)
-        self.assertNotIn("Execution Guide as the primary work sequence", senior)
+        self.assertIn("call `followup_task`", tester)
+        self.assertIn("Do not become terminal", tester)
+        self.assertIn("repair_routing_blocked", tester)
+        self.assertIn("calls `send_message`", tester)
+        self.assertIn("A tester reactivates you", executor)
+        self.assertIn("call `send_message`", executor)
+        self.assertNotIn("Execution Guide", executor)
+        self.assertNotIn("Execution Guide", senior)
+        for worker in (executor, senior, tester):
+            self.assertIn("verification_ledger.py", worker)
+            self.assertIn("≤120 words", worker)
         self.assertIn('model = "gpt-5.6-luna"', executor)
         self.assertIn('model = "gpt-5.6-sol"', senior)
         self.assertFalse((PACKAGE / "agents" / "executor_terra.toml").exists())
@@ -246,6 +277,11 @@ class MarkerTests(unittest.TestCase):
         )
         self.assertIn("secretary and office", companion_worker)
         self.assertIn("complete routine read-only context work", companion_worker)
+        self.assertIn("Required Post-Deployment Token Report", companion_worker)
+        self.assertIn("six-column", companion_worker)
+        self.assertIn("explicit route-transition request", companion_worker)
+        self.assertIn("In Medium, perform routine context support", companion_worker)
+        self.assertIn("In Heavy, perform a distribution or ledger-readiness", companion_worker)
         self.assertNotIn("report-batch", companion_worker)
         self.assertNotIn("sent directly\nby those workers", companion_worker)
         self.assertIn('model = "gpt-5.6-luna"', investigator)
@@ -253,16 +289,21 @@ class MarkerTests(unittest.TestCase):
         self.assertIn('sandbox_mode = "read-only"', investigator)
         self.assertIn("never declare the authoritative", investigator.lower())
         self.assertIn("Do not modify source", investigator)
-        self.assertIn("Terminal report to the parent (<=180 words)", investigator)
+        self.assertIn("Terminal report to the parent (<=120 words", investigator)
         self.assertIn("Do not\n  emit routine progress", investigator)
         for worker_policy in (executor, senior, tester, doc_writer, investigator):
-            self.assertIn("report to the parent", worker_policy)
+            self.assertTrue(
+                "parent report" in worker_policy or "report to the parent" in worker_policy
+            )
             self.assertNotIn("terminal receipt", worker_policy)
             self.assertNotIn("report-batch", worker_policy)
         self.assertIn("always contains one required", bootstrap)
-        self.assertIn("explicitly labeled bootstrap/project-install action", doc_writer)
+        self.assertIn("explicitly labeled bootstrap or", doc_writer)
         self.assertIn("assignment brief", doc_writer)
         self.assertNotIn("task capsule", doc_writer)
+        self.assertIn("outside `agent_docs/`", doc_writer)
+        self.assertIn("Closure Steward alone reconciles", doc_writer)
+        self.assertTrue((PACKAGE / "verification_ledger.py").is_file())
         for required_context in (
             "project_structure.md",
             "project_overview.md",
@@ -313,6 +354,18 @@ class MarkerTests(unittest.TestCase):
             with self.assertRaisesRegex(
                 ValidationError, "package worker set is incomplete"
             ):
+                PackageLayout.resolve(root)
+
+    def test_package_requires_builtin_skill(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "codex_workflow"
+            shutil.copytree(
+                PACKAGE,
+                root,
+                ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+            )
+            shutil.rmtree(root / "skills" / "deployment-token-report")
+            with self.assertRaisesRegex(ValidationError, "package skill set"):
                 PackageLayout.resolve(root)
 
     def test_update_help_does_not_publish_local_source_option(self) -> None:
@@ -543,6 +596,16 @@ class ReleaseTests(unittest.TestCase):
                 ):
                     verify_archive(self._archive_without(missing))
 
+    def test_archive_requires_verification_ledger(self) -> None:
+        with self.assertRaisesRegex(PackageReleaseError, "archive is missing"):
+            verify_archive(self._archive_without("verification_ledger.py"))
+
+    def test_archive_requires_route_companion_guides(self) -> None:
+        for guide in ("medium_companion.md", "heavy_companion.md"):
+            with self.subTest(guide=guide):
+                with self.assertRaisesRegex(PackageReleaseError, "archive is missing"):
+                    verify_archive(self._archive_without(guide))
+
     def test_archive_verification_rejects_duplicate_members(self) -> None:
         archive = self._archive_without("not-present")
         with zipfile.ZipFile(archive, "a", compression=zipfile.ZIP_DEFLATED) as bundle:
@@ -748,6 +811,23 @@ class LifecycleIntegrationTests(unittest.TestCase):
         self.assertFalse((self.runtime.agents / "executor_terra.toml").exists())
         self.assertTrue((self.runtime.agents / "closure_steward.toml").is_file())
         self.assertTrue((self.runtime.agents / "companion.toml").is_file())
+        self.assertTrue(
+            (
+                self.runtime.skills
+                / "deployment-token-report"
+                / "scripts"
+                / "report_tokens.py"
+            ).is_file()
+        )
+        self.assertTrue(
+            (
+                self.runtime.runtime
+                / "templates"
+                / "skills"
+                / "deployment-token-report"
+                / "SKILL.md"
+            ).is_file()
+        )
         self.assertIn(
             "max_concurrent_threads_per_session = 20",
             self.runtime.config_toml.read_text(encoding="utf-8"),
@@ -782,6 +862,16 @@ class LifecycleIntegrationTests(unittest.TestCase):
             set(repeated.agent_actions[0]["recovery_files"]),
             set(repeated.agent_actions[0]["framework"]),
         )
+
+    def test_bootstrap_rejects_unowned_skill_collision(self) -> None:
+        collision = self.runtime.skills / "deployment-token-report"
+        collision.mkdir(parents=True)
+        (collision / "SKILL.md").write_text(
+            "---\nname: deployment-token-report\ndescription: local\n---\n",
+            encoding="utf-8",
+        )
+        with self.assertRaisesRegex(ValidationError, "unowned skill directory"):
+            plan_bootstrap(self.package, self.runtime, self.project)
 
     def test_bootstrap_cleans_project_staging_and_updates_gitignore(self) -> None:
         staging = self.project_root / "Codex_Workflow"
@@ -851,6 +941,7 @@ class LifecycleIntegrationTests(unittest.TestCase):
             )
         state = json.loads((self.runtime.runtime / "install_state.json").read_text())
         self.assertEqual(set(state["owned_workers"]), self.package.worker_names)
+        self.assertEqual(set(state["owned_skills"]), self.package.skill_names)
 
     def test_personalize_and_enable_disable_preserve_regions(self) -> None:
         self.bootstrap(existing_agents="Local policy.\n")
@@ -902,12 +993,12 @@ class LifecycleIntegrationTests(unittest.TestCase):
         )
         incoming_root = self.root / "incoming" / "codex_workflow"
         shutil.copytree(PACKAGE, incoming_root, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
-        (incoming_root / "VERSION").write_text("1.1.7\n", encoding="utf-8")
+        (incoming_root / "VERSION").write_text("1.1.8\n", encoding="utf-8")
         user_agents = (incoming_root / "user_AGENTS.md").read_text(encoding="utf-8")
         (incoming_root / "user_AGENTS.md").write_text(
             user_agents.replace(
                 f"codex-workflow-version: {PACKAGE_VERSION}",
-                "codex-workflow-version: 1.1.7",
+                "codex-workflow-version: 1.1.8",
             ),
             encoding="utf-8",
         )
@@ -915,12 +1006,67 @@ class LifecycleIntegrationTests(unittest.TestCase):
         plan_update(incoming, self.runtime, self.project).apply()
         entry = self.project.active.read_text(encoding="utf-8")
         self.assertEqual(extract(entry, PROJECT_LOCAL), "Local policy.")
-        self.assertEqual((self.runtime.runtime / "VERSION").read_text(), "1.1.7\n")
+        self.assertEqual((self.runtime.runtime / "VERSION").read_text(), "1.1.8\n")
         self.assertNotIn(
             "local worker override",
             (self.runtime.agents / "default_executor.toml").read_text(encoding="utf-8"),
         )
+        installed_skill = self.runtime.skills / "deployment-token-report"
+        self.assertEqual(
+            (installed_skill / "SKILL.md").read_text(encoding="utf-8"),
+            (PACKAGE / "skills" / "deployment-token-report" / "SKILL.md").read_text(
+                encoding="utf-8"
+            ),
+        )
         self.assertTrue(any((self.runtime.runtime / ".backups").iterdir()))
+
+    def test_update_replaces_combined_companion_guide(self) -> None:
+        self.bootstrap()
+        combined = self.runtime.runtime / "companion.md"
+        combined.write_text("# Legacy combined guide\n", encoding="utf-8")
+        state_path = self.runtime.runtime / "install_state.json"
+        state = json.loads(state_path.read_text(encoding="utf-8"))
+        state["owned_runtime_files"].append("companion.md")
+        state_path.write_text(json.dumps(state) + "\n", encoding="utf-8")
+
+        incoming = self.incoming_package("companion-split-incoming", "1.2.0")
+        plan_update(incoming, self.runtime, self.project).apply()
+
+        self.assertFalse(combined.exists())
+        self.assertTrue((self.runtime.runtime / "medium_companion.md").is_file())
+        self.assertTrue((self.runtime.runtime / "heavy_companion.md").is_file())
+
+    def test_update_restores_owned_skill_and_removes_stale_skill_files(self) -> None:
+        self.bootstrap()
+        installed_skill = self.runtime.skills / "deployment-token-report"
+        (installed_skill / "SKILL.md").write_text(
+            (installed_skill / "SKILL.md")
+            .read_text(encoding="utf-8")
+            .replace("Compile per-agent", "Locally changed per-agent"),
+            encoding="utf-8",
+        )
+        stale = installed_skill / "stale.txt"
+        stale.write_text("stale", encoding="utf-8")
+        incoming = self.incoming_package("skill-update-incoming", "1.2.0")
+        plan = plan_update(incoming, self.runtime, self.project)
+        backup = Path(plan.details["backup"])
+        plan.apply()
+        self.assertEqual(
+            (installed_skill / "SKILL.md").read_text(encoding="utf-8"),
+            (incoming.skill_templates / "deployment-token-report" / "SKILL.md").read_text(
+                encoding="utf-8"
+            ),
+        )
+        self.assertFalse(stale.exists())
+        self.assertTrue(
+            (
+                backup
+                / "user"
+                / "skills"
+                / "deployment-token-report"
+                / "SKILL.md"
+            ).is_file()
+        )
 
     def test_projects_update_against_their_recorded_historical_sources(self) -> None:
         self.bootstrap()
@@ -961,6 +1107,10 @@ class LifecycleIntegrationTests(unittest.TestCase):
                 f"# codex-workflow-worker: {legacy_worker}\n",
                 encoding="utf-8",
             )
+            (self.runtime.runtime / "templates" / "agents" / f"{legacy_worker}.toml").write_text(
+                f"# codex-workflow-worker: {legacy_worker}\n",
+                encoding="utf-8",
+            )
             state["owned_workers"].append(legacy_worker)
         state_path.write_text(json.dumps(state) + "\n", encoding="utf-8")
 
@@ -974,6 +1124,15 @@ class LifecycleIntegrationTests(unittest.TestCase):
             "end_of_session",
         ):
             self.assertFalse((self.runtime.agents / f"{legacy_worker}.toml").exists())
+            self.assertFalse(
+                (
+                    self.runtime.runtime
+                    / "templates"
+                    / "agents"
+                    / f"{legacy_worker}.toml"
+                ).exists()
+            )
+        PackageLayout.resolve(self.runtime.runtime)
 
     def test_cli_install_reports_enabled_disabled_and_stale_states(self) -> None:
         self.bootstrap()
@@ -1088,6 +1247,15 @@ class LifecycleIntegrationTests(unittest.TestCase):
 
     def test_remove_requires_second_confirmation_and_cleans_owned_files(self) -> None:
         self.bootstrap(existing_agents="Local policy.\n")
+        ledger_record = (
+            self.project.hidden_dir
+            / "deployments"
+            / "feature_a"
+            / "verification"
+            / "record.json"
+        )
+        ledger_record.parent.mkdir(parents=True)
+        ledger_record.write_text("{}\n", encoding="utf-8")
         user_agents = self.runtime.user_agents.read_text(encoding="utf-8")
         self.runtime.user_agents.write_text(
             "# Keep this user policy.\n\n" + user_agents,
@@ -1108,6 +1276,12 @@ class LifecycleIntegrationTests(unittest.TestCase):
         )
         unrelated_worker = self.runtime.agents / "unrelated.toml"
         unrelated_worker.write_text('model = "keep"\n', encoding="utf-8")
+        unrelated_skill = self.runtime.skills / "unrelated-skill"
+        unrelated_skill.mkdir(parents=True)
+        (unrelated_skill / "SKILL.md").write_text(
+            "---\nname: unrelated-skill\ndescription: keep\n---\n",
+            encoding="utf-8",
+        )
 
         command = [
             sys.executable,
@@ -1125,6 +1299,9 @@ class LifecycleIntegrationTests(unittest.TestCase):
         planned_summary = json.loads(planned.stdout)
         self.assertFalse(planned_summary["applied"])
         self.assertTrue(planned_summary["confirmation_required"])
+        self.assertTrue(
+            any("verification ledger" in warning for warning in planned_summary["warnings"])
+        )
         self.assertTrue(self.project.active.is_file())
         self.assertTrue(self.runtime.runtime.is_dir())
 
@@ -1141,6 +1318,10 @@ class LifecycleIntegrationTests(unittest.TestCase):
         self.assertTrue((self.project.docs / "project_overview.md").is_file())
         self.assertFalse(self.runtime.runtime.exists())
         self.assertTrue(unrelated_worker.is_file())
+        self.assertTrue((unrelated_skill / "SKILL.md").is_file())
+        self.assertFalse(
+            (self.runtime.skills / "deployment-token-report").exists()
+        )
         self.assertEqual(
             self.runtime.user_agents.read_text(encoding="utf-8"),
             "# Keep this user policy.\n",
@@ -1176,6 +1357,19 @@ class LifecycleIntegrationTests(unittest.TestCase):
                 self.project,
             )
         self.assertTrue(outside.is_file())
+
+    def test_update_rejects_unsafe_owned_skill_state(self) -> None:
+        self.bootstrap()
+        state_path = self.runtime.runtime / "install_state.json"
+        state = json.loads(state_path.read_text(encoding="utf-8"))
+        state["owned_skills"] = ["../../outside"]
+        state_path.write_text(json.dumps(state) + "\n", encoding="utf-8")
+        with self.assertRaisesRegex(ValidationError, "unsafe name"):
+            plan_update(
+                self.incoming_package("unsafe-skill-state-incoming"),
+                self.runtime,
+                self.project,
+            )
 
     def test_legacy_entry_with_edits_requires_reviewed_local_instructions(self) -> None:
         self.bootstrap()
@@ -1226,12 +1420,12 @@ class LifecycleIntegrationTests(unittest.TestCase):
             incoming_root,
             ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
         )
-        (incoming_root / "VERSION").write_text("1.1.7\n", encoding="utf-8")
+        (incoming_root / "VERSION").write_text("1.1.8\n", encoding="utf-8")
         user_agents = (incoming_root / "user_AGENTS.md").read_text(encoding="utf-8")
         (incoming_root / "user_AGENTS.md").write_text(
             user_agents.replace(
                 f"codex-workflow-version: {PACKAGE_VERSION}",
-                "codex-workflow-version: 1.1.7",
+                "codex-workflow-version: 1.1.8",
             ),
             encoding="utf-8",
         )
@@ -1255,7 +1449,7 @@ class LifecycleIntegrationTests(unittest.TestCase):
         )
         self.assertEqual(completed.returncode, 0, completed.stderr)
         summary = json.loads(completed.stdout)
-        self.assertEqual(summary["details"]["to_version"], "1.1.7")
+        self.assertEqual(summary["details"]["to_version"], "1.1.8")
         self.assertTrue(summary["applied"])
 
     def test_external_update_delegates_before_launcher_validation(self) -> None:
@@ -1266,7 +1460,7 @@ class LifecycleIntegrationTests(unittest.TestCase):
             incoming_root,
             ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
         )
-        (incoming_root / "VERSION").write_text("1.1.7\n", encoding="utf-8")
+        (incoming_root / "VERSION").write_text("1.1.8\n", encoding="utf-8")
 
         argv = [
             str(PACKAGE / "workflow.py"),

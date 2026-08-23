@@ -463,6 +463,19 @@ def plan_project_remove(
         if path.is_file():
             mutations.append(Mutation(path, None))
 
+    deployments = hidden_dir / "deployments"
+    if deployments.is_symlink() or (deployments.exists() and not deployments.is_dir()):
+        raise ValidationError(f"verification ledger path is not a directory: {deployments}")
+    if deployments.is_dir():
+        warnings.append("project verification ledger records will be permanently deleted")
+        for path in sorted(deployments.rglob("*")):
+            if path.is_symlink():
+                raise ValidationError(f"refusing to remove symlink in verification ledger: {path}")
+            if path.is_file():
+                mutations.append(Mutation(path, None))
+            elif not path.is_dir():
+                raise ValidationError(f"verification ledger contains a non-file entry: {path}")
+
     cleanup_dirs: list[Path] = []
     if hidden_dir.is_dir():
         for path in sorted(hidden_dir.rglob("*")):

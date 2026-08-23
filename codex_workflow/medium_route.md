@@ -9,7 +9,8 @@ You are the main agent.
 The main agent performs planning, root-cause analysis, implementation, and
 verification. Do not delegate those responsibilities or create production
 executor/tester packages in Medium. For a substantive deployment, Companion is
-the workflow-mode secretary and office wrapper defined by `companion.md`.
+the workflow-mode secretary and office wrapper defined by
+`medium_companion.md`.
 Medium may use disposable read-only investigators under
 `investigation_team.md` only when an independent evidence wave is materially
 useful; that support does not transfer root-cause or implementation authority.
@@ -34,7 +35,7 @@ main-agent evidence work only when safe and report the limitation.
 
 Questions and small or odd bounded tasks use the direct main-agent fast path:
 do not initialize Companion or investigators; do not call `closure_steward`; omit
-worker statistics. Keep process proportional; this
+the deployment token report. Keep process proportional; this
 path does not become a deployment merely because Medium remains selected.
 
 ## Execution
@@ -76,8 +77,12 @@ input. Never present partial work as complete.
 
 Before the final response that completes, pauses, or blocks the deployment,
 follow `~/.codex/codex_workflow/closure_steward.md` exactly once and wait for its
-fresh worker. Pass only the route, a unique deployment ID, and closure state;
-the automatic handoff context fork supplies the main-agent history. Relay its
-result; do not duplicate its documentation, status, Git-status, or statistics work. A
-later substantive deployment receives a new ID and handoff, even in the same
-session.
+fresh worker. Pass only the route, a unique deployment ID, closure state, and
+the persistent Companion target. The automatic handoff context fork supplies
+the main-agent history. Closure Steward triggers Companion's
+`$deployment-token-report` request as its last tool action. Wait for both
+workers, relay the closure result without duplicating its documentation, status,
+or Git-status work, and print Companion's exact six-column table defined in
+the deployment-token-report contract. Do not issue a separate Companion request.
+A later substantive
+deployment receives a new ID, handoff, and report, even in the same session.

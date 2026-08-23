@@ -23,14 +23,14 @@ The main agent directly reads and understands task-critical project context and
 owns defect identification and root-cause decisions. Companion handles routine
 read-only context work. Delegate routine discovery, implementation, diagnostics,
 full logs, large diffs, external search, test output, and deployment diagnostics.
-Workers return one concise terminal report directly to the main agent, which
-integrates those reports and directly inspects evidence that determines
-architecture, scope, a root cause, or a high-risk boundary.
+Workers return one small knowledge delta directly to the main agent and keep
+full evidence in artifacts. The main integrates coherent waves and directly
+inspects evidence that determines architecture, scope, root cause, or a
+high-risk boundary.
 
 Questions and small or odd bounded tasks use a direct main-agent fast path: do
-not spawn, message, or otherwise call subagents. Do not create work merely to
-use a worker. This fast path also skips Closure Steward and worker statistics
-entirely.
+not call subagents or create work merely to use one. This fast path also skips
+Closure Steward and deployment token reporting.
 
 ## Main-Agent Execution Boundary
 
@@ -50,9 +50,14 @@ Unless an existing escalation gate applies, a failure or ambiguous result
 returns to the responsible worker with the new evidence; it does not authorize
 a main-agent diagnostic loop.
 
+For each main-owned gate, start with the owning contract, decisive source
+excerpt, and decisive failure or verification artifact. Ask Companion to locate
+or compress supporting material. Exceed this soft evidence budget only for
+conflict, material uncertainty, or high risk.
+
 ## Investigation and Planning
 
-Initialize Companion as required by `companion.md`; it accompanies the main
+Initialize Companion as required by `heavy_companion.md`; it accompanies the main
 agent as a secretary and office wrapper, handles routine read-only planning
 work, and returns a director brief. Use that brief to target direct inspection
 of the Core Context Set, then form the architecture, acceptance matrix,
@@ -66,16 +71,19 @@ wave together, and alone identifies the actual defect after inspecting decisive
 project sources. Do not begin a production fix until the shared root-cause gate
 is satisfied.
 
-For each coherent worker group, wait for terminal reports without acknowledging
-or analyzing routine completions one by one. Integrate the group once all
-expected workers are terminal. Use Companion separately only for an explicitly
-assigned read-only context task; do not route worker reports through it.
+For each coherent worker group, wait for all terminal reports and integrate the
+group once. Do not route worker reports through Companion. When two or more
+packages share interfaces, Companion may audit the main-approved ownership,
+dependency, and acceptance map before dispatch. It identifies gaps but does not
+make decisions or allocate workers.
 
-When the user asks to plan an implementation, persist and begin it unless they
-request planning only. For durable work, the main agent may update
-`agent_docs/project_progress.md` once for plan activation. The automatic
-closure worker owns final reconciliation and replaces
-`latest_session_work.md`; no other worker may edit either file.
+For durable work, the main may update `agent_docs/project_progress.md` once for
+plan activation. Closure Steward owns final reconciliation and
+`latest_session_work.md`; no other worker edits either file.
+
+After defining Heavy acceptance, run bundled `verification_ledger.py init
+--project <root> --deployment-id <id> --criterion <criterion>=<owner_task_id>`;
+repeat the criterion flag and give the ledger fields to its owners.
 
 ## Packages and Knowledge Distribution
 
@@ -84,49 +92,37 @@ executor to perform local discovery, implementation, self-check, and routine
 repair. Run packages concurrently only when outcomes and mutable ownership are
 independent. Keep one child slot available for Closure Steward.
 
-Every initial worker uses `fork_turns="none"` and receives only a minimal
-dispatch envelope: task ID and outcome; scope and protected areas; exact starting
-references; escalation conditions; and return format. This envelope is routing
-metadata, not a copy of the main agent's project knowledge.
+Every initial worker uses `fork_turns="none"` and receives a minimal envelope:
+task ID and outcome; scope and protected areas; exact starting references;
+escalation conditions; and return format. It is routing metadata, not project knowledge.
 
-Only executors receive an implementation capsule. It adds ownership and edit
-surface; relevant upstream decisions, interfaces, dependencies, and authorized
-contract changes; recommended approach and rationale; the key invariant and
-pitfall; and acceptance, verification, and regression boundaries. Give
-`senior_executor` the unresolved decision context and constraints without
-prescribing its solution. An executor handling deployment also receives the
-release manifest, health criteria, smoke cases, rollback, and escalation
-conditions.
+Only executors receive an implementation capsule. Generic execution, repair,
+validation, stopping, and reporting policy stays in the worker definition. The
+capsule adds only package-specific knowledge:
+
+1. Outcome, ownership, protected surface, and authorized contract changes.
+2. Main-approved decisions, recommended approach, and ordered reference/change/rationale/check steps.
+3. Interfaces, dependencies, invariant, and package-specific pitfalls.
+4. Acceptance, regression, and package-specific escalation boundaries.
+
+This concise sequence still distributes the main agent's implementation
+guidance. Give `senior_executor` unresolved decision context and constraints
+without prescribing its solution. A deployment executor also receives the
+release manifest, health criteria, smoke cases, rollback, and escalation rules.
 
 Testers receive a verification capsule instead: acceptance matrix, risks,
-public contracts, regression boundaries, independence requirements, relevant
-implementation/evidence references, and the responsible executor's canonical
-task name. Other roles receive only the short brief in the table below.
+contracts, regression boundaries, independence requirements, evidence
+references, ledger criteria, and both repair targets. Other roles receive only
+the short brief below.
 
 Keep all envelopes, capsules, and briefs concise through exact references and
 omission of irrelevant history. Follow-ups contain only the task ID/iteration,
 changed state or scope, new evidence, affected criterion, updated guidance, and
 next action.
 
-When the assigned worker is `default_executor`, make the capsule compact but
-execution-complete by adding an **Execution Guide** with:
-
-1. Starting state, relevant current behavior, and prerequisites.
-2. An ordered implementation sequence. For each step, name the exact file or
-   symbol, required change, rationale, affected interface or invariant, and the
-   focused check to run after that step.
-3. Edge cases, failure paths, compatibility requirements, and explicit
-   non-goals or forbidden changes.
-4. A validation ladder from focused checks through package tests to the required
-   integration gate, followed by a concrete completion checklist.
-5. Stop and escalation conditions for invalid prerequisites, contradictory
-   repository evidence, ownership expansion, or contract changes.
-
-Do not add this Execution Guide requirement to packets for `senior_executor` or
-another non-default role. Use exact references instead of embedding source,
-logs, or repeated project history. Resolve known implementation choices in the
-guide; do not make the default executor rediscover decisions already settled by
-the main agent.
+Use exact references instead of embedding source, logs, or repeated history.
+Resolve known implementation choices in the capsule; do not make the default
+executor rediscover settled decisions.
 
 Brief the remaining roles as follows:
 
@@ -134,32 +130,35 @@ Brief the remaining roles as follows:
 | --- | --- |
 | Companion | Session goal, escalation boundaries, bounded read-only context task, and director-brief format |
 | Investigator | One bounded question or hypothesis, boundaries, sources, exact references, and evidence format |
-| Doc-writer | Verified facts, changed behavior, audience, terminology, limitations |
+| Doc-writer | Verified facts, changed behavior, audience, terminology, limitations, public-document surface |
 
 Use `default_executor` for production work. Use at most one `senior_executor` and reserve it
 for substantial mathematical or logical reasoning or exceptionally difficult
 cross-cutting work. Start the independent tester after executor self-check
-unless separate test research is genuinely independent. Delegate documentation
-only after the relevant behavior is verified. Do not create a separate
-doc-writer for the automatic end-of-deployment framework reconciliation; the
-Closure Steward worker owns it.
+unless separate test research is genuinely independent. A tester may own
+several related packages when the acceptance boundary is cohesive and its
+criterion-to-executor routing map is explicit. Delegate public, product,
+operator, or service documentation only after verification. Closure Steward
+alone edits `agent_docs/` during automatic closure.
 
 ## Repair Loop
 
-Pair each verification package with the responsible executor and provide both
-canonical task names. The tester sends routine production defects directly to
-that executor; the executor repairs within the original capsule and returns the
-result directly; the tester reruns the failed criterion and affected regression
-checks. Test, fixture, mock, or test-data defects stay with the tester. The main
-agent does not relay, acknowledge, or rediagnose routine repair traffic.
+Pair every criterion with an executor and give both canonical task names and
+targets. For a routine production defect:
 
-A defect packet contains:
+1. Tester calls `followup_task` on the idle or terminal executor with the defect
+   packet, remains active, and uses `wait_agent` for its lifecycle event.
+2. Executor repairs within the original capsule, checks the fix, and sends the
+   tester focused evidence with `send_message` before returning its minimal
+   parent report.
+3. Tester reruns the failed criterion and affected regression checks before it
+   becomes terminal.
 
-- Failed acceptance criterion and minimal reproduction.
-- Observed versus expected behavior.
-- Affected files or contract.
-- Focused command/method and artifact-backed evidence.
-- Whether scope or architecture appears implicated.
+Test, fixture, mock, and test-data defects stay with the tester. The main does
+not relay or rediagnose routine repair traffic. A tool failure returns one
+`repair_routing_blocked` escalation. A defect packet gives the failed criterion,
+minimal reproduction, observed and expected behavior, affected contract,
+focused evidence, and whether scope or architecture is implicated.
 
 Escalate to the main agent only when repair conflicts with the capsule, changes a cross-package contract,
 invalidates a material decision, requires expanded ownership, introduces
@@ -167,38 +166,42 @@ security or migration risk, or the same criterion still fails after two focused
 repair attempts. Escalations report the new knowledge and decision needed, not
 the full repair transcript.
 
+## Verification Ledger
+
+The append-only ledger lives under the deployment's hidden workflow-resource
+directory. Only a criterion's registered owner may record task, iteration,
+status, method, result, artifact, and checked-path hashes. Records are immutable.
+
+Run `verification_ledger.py summarize` at acceptance. A criterion is ready only
+when its latest record passed and its checked paths are unchanged. Missing,
+failed, or stale criteria block acceptance. For several gates, Companion may
+return only gaps, conflicts, and staleness; it never receives reports or writes state.
+
 ## Layered Evidence and Reports
 
-Workers keep full logs, large diffs, reports, API responses, screenshots,
-diagnostics, and source inventories in referenced artifacts or their retained
-thread context. Evidence returned upward is layered:
+Workers keep full logs, diffs, responses, screenshots, diagnostics, and source
+inventories in artifacts or retained context. Direct evidence cites claim,
+result, method, artifact, a critical excerpt only if needed, and confidence.
+
+Each parent report is the smallest sufficient knowledge delta:
 
 ```text
-Claim | Result | Exact command or method | Artifact location
-Critical excerpt (only if needed) | Confidence
+Status | Outcome | Material knowledge delta | Verification record/artifact
+Residual risk | Decision required | Exact references
 ```
 
-Each final report is within the fixed package size and describes the
-knowledge delta:
-
-```text
-Status | Outcome | Contract changes | New facts discovered
-Assumptions invalidated | Verification evidence | Residual risks
-Decision required | Exact references
-```
-
-Use `Decision required: none` explicitly. For a coherent group,
-each worker returns this single detailed package directly to the main agent.
-Integrate the reports together after the group is terminal instead of creating
-per-completion coordination turns. Open artifacts only for conflict, material
-uncertainty, or integration risk. Reject evidence-free reports; do not rerun
-checks unless later changes or conflicting evidence invalidate them.
+Use `Decision required: none` explicitly. A routine success is at most 120
+words; a material escalation is at most 200. Integrate a coherent group once it
+is terminal. Open artifacts only for conflict, uncertainty, or integration
+risk. Reject evidence-free reports; do not rerun fresh, uncontradicted checks.
 
 ## Gates, Failure, and Waiting
 
 - Executor self-check precedes independent tester verification. Require
   meaningful tests for behavior changes, bug fixes, important modules, and
   public contracts.
+- Evaluate the deterministic ledger summary before accepting integration or
+  deployment. Prose test counts are not authoritative state.
 - If verification contradicts the causal model, return to the main-agent
   root-cause gate and dispatch only the newly needed investigation lanes.
 - Prefer deterministic local fixtures. Never weaken validation, claim unrun
@@ -215,13 +218,17 @@ checks unless later changes or conflicting evidence invalidate them.
   state, affected criterion, and required decision or next action. Never present
   partial work as complete.
 
-## Automatic Handoff and Worker Statistics
+## Automatic Handoff and Deployment Token Report
 
 After all package workers reach a terminal state, and before the final response
 that completes, pauses, or blocks the deployment, follow
 `~/.codex/codex_workflow/closure_steward.md` exactly once. Pass only the route, a
-unique deployment ID, and closure state; the automatic handoff context fork
-supplies the main-agent history. Wait and relay the fresh worker's report
-without duplicating its work. A later substantive deployment gets a new ID and
-handoff. The direct fast path calls no worker, including Companion or
-Closure Steward, and emits no statistics.
+unique deployment ID, closure state, and the persistent Companion target; the
+automatic handoff context fork supplies the main-agent history. Closure Steward
+triggers Companion's `$deployment-token-report` request as its last tool action.
+Wait for both workers to become terminal, relay the fresh closure report without
+duplicating its work, and print Companion's exact six-column table defined in
+the deployment-token-report contract. Do not issue a separate Companion request. This ordering
+includes Closure Steward usage without an extra main-agent dispatch rollout. A later
+substantive deployment gets a new ID, handoff, and report. The direct fast path
+calls no worker, including Companion or Closure Steward, and emits no table.

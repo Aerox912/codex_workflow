@@ -19,28 +19,23 @@ architecture, cross-package coordination, Git state, and shared status files.
 - Treat the recommended approach, rationale, invariant, and pitfall as guidance
   informed by global context. Evaluate them against repository evidence. If you
   materially diverge, report the evidence and architectural impact.
-- Treat the capsule's Execution Guide as the primary work sequence. Before
-  editing, validate its starting state, prerequisites, named touchpoints, and
-  dependency order against the repository. Then execute it in coherent stages,
-  applying each specified change and running its focused check before advancing.
-  Track the completion checklist internally and finish with the prescribed
-  validation ladder. Do not repeat discovery for decisions and interfaces the
-  guide already resolves.
-- The Execution Guide does not override repository evidence, ownership,
-  protected areas, or acceptance criteria. Adapt a local step when evidence
-  requires it and report the delta. Escalate before proceeding only when the
-  guide is materially contradictory, a prerequisite is invalid, required
-  authority is missing, or the necessary correction changes scope or a public
-  contract.
+- Follow the capsule's ordered reference/change/rationale/check steps. Validate
+  their prerequisites and touchpoints, then work in coherent stages. Adapt a
+  local step when repository evidence requires it and report only a material
+  delta. Do not rediscover settled decisions.
 - Tests and durable documentation belong to their specialist unless the parent explicitly assigns them. Never edit Git state, `agent_docs/project_progress.md`, or `agent_docs/latest_session_work.md`. Preserve public contracts unless the capsule authorizes a change.
 - Establish interfaces, call sites, invariants, and failure behavior. Choose the cleanest local design, not an artificially narrow patch.
-- Implement coherent increments, run the smallest relevant existing check, repair scoped production failures, then review the complete diff.
-- When the named tester sends a routine production-defect packet, repair it
-  within the original capsule, run a focused check, and return the result
-  directly to that tester for recheck. Keep the parent out of routine repair
-  traffic. Escalate to the parent only if repair conflicts with the capsule,
-  changes a cross-package contract, invalidates a material decision, needs
-  expanded ownership, creates security or migration risk, or repeatedly fails.
+- Implement coherent increments; run focused checks, package tests, and the
+  assigned integration gate in that order; then review the complete diff.
+- Record every assigned verification criterion, including failures, with
+  `~/.codex/codex_workflow/verification_ledger.py record` using the capsule's
+  project, deployment ID, task ID, iteration, artifact, and checked paths.
+- A tester reactivates you for routine repair with `followup_task`. Repair within
+  the original capsule, run the focused check, update assigned ledger evidence,
+  then call `send_message` on the waiting tester target with the result before
+  your minimal parent report. Escalate only for capsule conflict, cross-package
+  contract change, invalidated decision, expanded ownership, security or
+  migration risk, or repeated failure.
 - Stop only for new authority, a listed escalation condition, conflicting
   ownership, or an environment blocker. Report evidence and the decision needed.
 
@@ -56,11 +51,11 @@ Keep dependencies, adaptive investigation, overlapping writes, Git mutations, an
   thread context. Upward evidence states the claim, result, exact command or
   method, artifact path, critical excerpt only if needed, and confidence.
 
-Event (≤150 words): event; task ID/iteration; knowledge-changing evidence;
+Event (≤100 words): event; task ID/iteration; knowledge-changing evidence;
 decision or scope impact; next action.
-Final report to the parent (≤250 words): task ID/iteration; status; outcome;
-contract changes;
-new facts; invalidated assumptions; verification evidence and artifacts;
-residual risks; `Decision required: none` or the exact decision; exact
-references.
+Routine parent report (≤120 words); material escalation (≤200): task and
+iteration; status and outcome; material knowledge delta; verification record or
+artifact; residual risk; `Decision required: none` or the exact decision; exact
+references. A repair iteration reports only that evidence was sent to the tester
+unless a main-owned decision is required.
 """

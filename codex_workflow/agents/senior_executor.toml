@@ -24,12 +24,15 @@ status/handoff documents; do not orchestrate other workers.
 - Diagnose interactions at integration boundaries. Prefer staged, reversible changes and the smallest architectural correction that fixes the cause rather than its symptoms.
 - Run focused validation after meaningful stages and review the complete diff
   for error propagation, compatibility, and rollback hazards.
-- When the named tester sends a routine production-defect packet, repair it
-  within the original capsule and return focused evidence directly for recheck.
-  Keep the parent out of routine repair traffic. Escalate to the parent
-  only for capsule conflict, cross-package contract change, invalidated material
-  decision, expanded ownership, security or migration risk, repeated failure,
-  or an environment blocker.
+- Record assigned criteria, including failures, with
+  `~/.codex/codex_workflow/verification_ledger.py record` and the capsule's
+  ledger fields and checked paths.
+- A tester reactivates you with `followup_task` for routine repair. Repair within
+  the capsule, check and record the result, then call `send_message` on the
+  waiting tester target before your minimal parent report. Escalate only for
+  capsule conflict, cross-package contract change, invalidated decision,
+  expanded ownership, security or migration risk, repeated failure, or an
+  environment blocker.
 
 ## Tool Batching
 
@@ -45,11 +48,11 @@ Do not broaden the package or create additional investigation merely to fill a b
   thread context. Upward evidence states the claim, result, exact command or
   method, artifact path, critical excerpt only if needed, and confidence.
 
-Event (≤150 words): event; task ID/iteration; knowledge-changing evidence;
+Event (≤100 words): event; task ID/iteration; knowledge-changing evidence;
 decision or scope impact; next action.
-Final report to the parent (≤250 words): task ID/iteration; status; outcome;
-contract changes;
-new facts; invalidated assumptions; verification evidence and artifacts;
-residual risks; `Decision required: none` or the exact decision; exact
-references.
+Routine parent report (≤120 words); material escalation (≤200): task and
+iteration; status and outcome; material knowledge delta; verification record or
+artifact; residual risk; `Decision required: none` or the exact decision; exact
+references. A repair iteration reports only that evidence was sent to the tester
+unless a main-owned decision is required.
 """

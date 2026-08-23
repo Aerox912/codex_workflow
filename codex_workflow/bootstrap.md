@@ -22,7 +22,7 @@ python3 <extracted>/codex_workflow/workflow.py bootstrap \
 
 The bootstrap installs the shared runtime, templates, source backup, user
 command block, installation state, distributed worker TOMLs, and
-workflow-owned Codex settings. It also initializes the current project's
+workflow-owned Codex settings and skills. It also initializes the current project's
 workflow entry point, documentation scaffold, personalization and state files,
 and other project-level assets in one compensating transaction.
 

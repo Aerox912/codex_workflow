@@ -40,6 +40,7 @@ BUILTIN_WORKERS = frozenset(
         "closure_steward",
     }
 )
+BUILTIN_SKILLS = frozenset({"deployment-token-report"})
 
 
 class ReleaseError(ValueError):
@@ -291,10 +292,12 @@ def _verify_member_names(names: Iterable[str]) -> list[str]:
         f"{PACKAGE_DIR_NAME}/update.md",
         f"{PACKAGE_DIR_NAME}/check_update.md",
         f"{PACKAGE_DIR_NAME}/remove.md",
-        f"{PACKAGE_DIR_NAME}/companion.md",
+        f"{PACKAGE_DIR_NAME}/heavy_companion.md",
+        f"{PACKAGE_DIR_NAME}/medium_companion.md",
         f"{PACKAGE_DIR_NAME}/closure_steward.md",
         f"{PACKAGE_DIR_NAME}/investigation_team.md",
         f"{PACKAGE_DIR_NAME}/workflow.py",
+        f"{PACKAGE_DIR_NAME}/verification_ledger.py",
         f"{PACKAGE_DIR_NAME}/runtime/__init__.py",
         f"{PACKAGE_DIR_NAME}/runtime/_toml.py",
         f"{PACKAGE_DIR_NAME}/runtime/backup.py",
@@ -314,6 +317,14 @@ def _verify_member_names(names: Iterable[str]) -> list[str]:
     required.update(
         f"{PACKAGE_DIR_NAME}/agents/{worker}.toml" for worker in BUILTIN_WORKERS
     )
+    for skill in BUILTIN_SKILLS:
+        required.update(
+            {
+                f"{PACKAGE_DIR_NAME}/skills/{skill}/SKILL.md",
+                f"{PACKAGE_DIR_NAME}/skills/{skill}/agents/openai.yaml",
+                f"{PACKAGE_DIR_NAME}/skills/{skill}/scripts/report_tokens.py",
+            }
+        )
     missing = sorted(required.difference(normalized))
     if missing:
         raise ReleaseError("archive is missing: " + ", ".join(missing))
@@ -343,6 +354,18 @@ def _verify_member_names(names: Iterable[str]) -> list[str]:
         raise ReleaseError(
             "archive contains unsupported worker roles: "
             + ", ".join(unexpected_workers)
+        )
+    present_skills = {
+        parts[2]
+        for name in normalized
+        if name.startswith(f"{PACKAGE_DIR_NAME}/skills/")
+        for parts in [name.split("/")]
+        if len(parts) > 3
+    }
+    unexpected_skills = sorted(present_skills - BUILTIN_SKILLS)
+    if unexpected_skills:
+        raise ReleaseError(
+            "archive contains unsupported skills: " + ", ".join(unexpected_skills)
         )
     return normalized
 
@@ -421,7 +444,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output-dir", type=Path, default=repository_root() / "dist", help="asset directory"
     )
-    parser.add_argument("--release-tag", help="validate a release tag such as v1.1.6")
+    parser.add_argument("--release-tag", help="validate a release tag such as v1.1.7")
     parser.add_argument("--version", help="validate an expected package version")
     parser.add_argument(
         "--verify",

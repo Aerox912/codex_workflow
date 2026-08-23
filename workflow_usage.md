@@ -156,11 +156,12 @@ There are three execution routes:
   workflow overhead.
 - **Medium route** — the main agent performs root-cause analysis,
   implementation, and verification without delegated production executor or
-  tester packages. Companion acts as the workflow-mode secretary and office
-  wrapper. An explicitly requested read-only evidence wave may assist, but it
-  never owns implementation, verification, or the root-cause decision.
+  tester packages. Medium Companion handles routine context support. An
+  explicitly requested read-only evidence wave may assist, but it never owns
+  implementation, verification, or the root-cause decision.
 - **Heavy route** — the main agent orchestrates fixed worker subagents for
-  larger deployment-state tasks.
+  larger deployment-state tasks. Heavy Companion adds evidence compression and
+  conditional distribution/readiness audits.
 
 For ordinary questions and small tasks, no route command is needed. To select
 a route for a task or plan, include one of these instructions in the prompt:
@@ -172,14 +173,20 @@ use heavy route. [task description]
 
 The selected route is session-scoped: it remains active until the user changes it
 or the session ends. New sessions default to Light unless a route is selected
-again. Each substantive Medium or Heavy deployment automatically creates a
+again. Medium and Heavy reuse one Companion; a route change sends it an explicit
+transition brief and deactivates its previous route-specific duties. Each
+substantive Medium or Heavy deployment automatically creates a
 workflow-owned documentation handoff before its final response. Its fresh Luna
 xhigh worker receives the fixed finite handoff context and alone reconciles the
 complete `agent_docs/` framework, reports read-only Git status and handoff
-information, and returns the final three-column worker-statistics table. It does
-not stage or commit automatically. No manual closure prompt, main-agent summary,
-usage ledger, or second documentation worker is required. Questions and small or
-odd bounded tasks use the direct worker-free path and emit no table.
+information. As its final action, it triggers Companion to invoke the installed
+`$deployment-token-report` skill after confirming closure is terminal. Companion
+returns a six-column table for every used worker role and the main agent:
+quantity, rollouts, cached input, total input, and output tokens. The main agent
+waits for both reports and prints the table without a separate dispatch rollout. No worker
+stages or commits automatically, and no main-maintained usage ledger is
+required. Questions and small or odd bounded tasks use the direct worker-free
+path and emit no table.
 
 ## Part 2 — Installed-file map
 
@@ -204,6 +211,11 @@ and the current project as follows:
 │   ├── companion.toml
 │   ├── investigator.toml
 │   └── closure_steward.toml
+├── skills/
+│   └── deployment-token-report/
+│       ├── SKILL.md                        # Companion reporting procedure
+│       ├── agents/openai.yaml              # skill UI metadata
+│       └── scripts/report_tokens.py        # read-only rollout parser
 └── codex_workflow/
     ├── VERSION                             # installed workflow version
     ├── user_AGENTS.md                      # managed command interface
@@ -214,7 +226,8 @@ and the current project as follows:
     ├── install_state.json                  # ownership and version
     ├── heavy_route.md                      # Heavy-route orchestration rules
     ├── medium_route.md                     # Medium-route rules
-    ├── companion.md                        # persistent secretary/office-wrapper contract
+    ├── medium_companion.md                 # Medium secretary contract
+    ├── heavy_companion.md                  # Heavy orchestration-secretary contract
     ├── investigation_team.md               # Heavy or explicitly requested Medium evidence and root-cause gates
     ├── closure_steward.md                   # shared closure spawn contract
     ├── bootstrap.md                        # initial user/project bootstrap procedure
@@ -228,7 +241,8 @@ and the current project as follows:
     ├── templates/
     │   ├── AGENTS.md                       # project entry-point template
     │   ├── agents/*.toml                    # all distributed worker templates
-    │   └── project_docs/*.md                # six Project Documentation templates
+    │   ├── project_docs/*.md                # six Project Documentation templates
+    │   └── skills/deployment-token-report/  # canonical installed skill template
     ├── .source_backup/<version>/            # complete installed release source backup
     └── .backups/<old-version>-<timestamp>/ # update backups, created when needed
 
@@ -347,27 +361,26 @@ contracts, and worker definitions still agree.
 ## Part 4 — Workflow-mode support and Heavy execution
 
 Medium keeps planning, root-cause analysis, implementation, and verification in
-the main agent. Its workflow mode activates one persistent Companion
-secretary/office wrapper for routine read-only context work; it does not create
-delegated production packages. If the user
+the main agent. Its route guide activates one persistent Companion for routine
+read-only context work; it does not create delegated production packages. If the user
 explicitly requests independent evidence lanes, read-only investigators may
 assist, but the main agent still opens decisive evidence and owns the root-cause
-decision. Heavy adds the delegated production and testing packages after that
-gate.
+decision. Heavy's route guide reuses that worker as an orchestration secretary
+and adds delegated production and testing packages after that gate.
 
 The Heavy route is an orchestrated deployment-state workflow. It is selected
 explicitly by the user; Light remains the default for small tasks. The Heavy
 route does not mean that every prompt must spawn workers: common questions and
 small tasks use a direct main-agent fast path and must not call subagents. When
 that fast path calls no subagent, its final response also omits the worker
-statistics table.
+token table.
 
 ### Coordination flowchart
 
 ```mermaid
 flowchart LR
     I["Investigator swarm<br/>independent read-only evidence lanes"]
-    C["Companion<br/>read-only secretary"]
+    C["Companion<br/>route-aware read-only secretary"]
     M(("Main agent<br/>core context, root cause,<br/>plan and acceptance"))
     D["default_executor<br/>normal production work"]
     S["senior_executor<br/>exceptionally difficult work"]
@@ -398,7 +411,9 @@ flowchart LR
     W -->|concise documentation report| M
 
     M -->|route + deployment ID<br/>+ closure state| X
-    X -->|final report + statistics| M
+    X -->|trigger token report| C
+    X -->|final handoff report| M
+    C -->|six-column rollout token table| M
 
     classDef center fill:#172554,color:#fff,stroke:#60a5fa,stroke-width:3px;
     classDef wrapper fill:#ecfeff,stroke:#0891b2,stroke-width:2px;
@@ -423,11 +438,11 @@ The fixed role set is:
 | Main agent | Knowledge architect: chooses scope and architecture, defines and evaluates gates, distributes guidance, and integrates knowledge | Only for decision-critical inspection or exceptional scoped takeover, not routine Heavy implementation or operational verification |
 | `default_executor` | Package discovery, production implementation, self-check, and routine repair | Yes, within its work package |
 | `senior_executor` | Complex core reasoning or exceptionally difficult cross-cutting implementation | Yes, within its work package; fixed to at most one instance |
-| `tester` | Independent focused tests and failure analysis | Test/fixture scope; production defects return to the executor |
-| `doc-writer` | Assigned documentation during implementation and required installation initialization; not automatic deployment closure | Documentation scope; installation may authorize listed new or still-template-marked recovery files |
-| Companion | Single persistent secretary and office wrapper that solves routine read-only context tasks, retains operational context, and returns director briefs | No |
+| `tester` | Independent tests, ledger evidence, and failure analysis | Test/fixture scope; waits through routine executor repair |
+| `doc-writer` | Verified public/product/operator/service docs and required installation initialization | Outside `agent_docs/`, except listed bootstrap recovery files |
+| Companion | Medium context secretary or Heavy orchestration secretary; token-report skill | No; one persistent route-aware worker |
 | `investigator` | Disposable Luna leaf agent for one bounded code, evidence, dependency, documentation, log, or external-solution lane | No |
-| `closure_steward` | Inherited-context reconciliation of the complete documentation framework, read-only Git status/handoff, and statistics | `agent_docs/` plus read-only Git inspection during automatic closure; no automatic staging or commit |
+| `closure_steward` | Reconciles `agent_docs/`, verification freshness, and Git status/handoff | No edits outside `agent_docs/`; no Git mutation |
 
 The role names are stable while their model bindings live only in the worker
 TOMLs. The package settings, route contracts, and worker definitions jointly
@@ -439,30 +454,23 @@ When Heavy is selected for a deployment-state task, the main agent:
 
 1. reads the project entry point, route instructions, and task-critical project
    documentation, source paths, contracts, and failure evidence directly;
-2. initializes one read-only Companion secretary/office wrapper and asks it to
-   solve routine planning or peripheral context work and return a director
-   brief;
+2. initializes one read-only Heavy Companion and asks it to solve routine
+   planning or peripheral context work and return a director brief;
 3. for a serious or ambiguous issue, dispatches orthogonal read-only
    investigator lanes under the shared investigation contract;
 4. waits for one concise terminal report from each investigator, evaluates the
    evidence wave together, then opens decisive sources and identifies the actual
    defect through the main-owned root-cause gate;
-5. forms the architecture, bounded plan, acceptance matrix, ownership,
-   dependencies, and verification gates for the responsible workers to execute,
-   without replaying raw discovery;
-6. sends only the role-specific package needed by each worker.
+5. forms architecture, ownership, and acceptance, then initializes the
+   append-only verification ledger;
+6. optionally asks Companion to audit shared package boundaries, then sends only
+   role-specific packages.
 
-Every worker gets a minimal dispatch envelope containing identity, outcome,
-scope, starting references, escalation conditions, and return routing. Only
-executors receive the main agent's implementation knowledge: relevant project
-context, decisions, interfaces, dependencies, recommendation and rationale,
-invariants, pitfalls, and acceptance boundaries. `senior_executor` receives the
-unresolved decision context without a prescribed solution. Testers receive a
-verification capsule containing the acceptance matrix, risks, public contracts,
-regression boundaries, evidence references, and repair counterpart. Companion,
-investigators, and doc-writers receive short role briefs rather than project-wide
-knowledge capsules. Final reports use exact references and describe knowledge
-changes rather than file activity.
+Every worker gets a minimal routing envelope. Executor capsules add only
+package-specific decisions, ordered guidance, interfaces, invariants, risks,
+and acceptance; generic policy stays in the worker definition. Testers receive
+criteria, checked paths, risks, evidence, and both repair targets. Other roles
+receive short briefs. Full evidence stays in artifacts.
 
 The normal implementation and verification loop is:
 
@@ -490,7 +498,7 @@ Executor implements one coherent increment and self-validates
         ▼
 Tester independently runs focused checks when testing is warranted
         │
-        ├── routine defect ──► direct executor repair ─► tester recheck
+        ├── routine defect ──► follow-up/wait/reply ──► tester recheck
         ├── proof ─────────► concise terminal report to main
         └── decision defect ─► main agent re-scopes or decides
         │
@@ -498,23 +506,20 @@ Tester independently runs focused checks when testing is warranted
 Main integrates verified package outcomes
         │
         ▼
+Ledger summary confirms fresh acceptance evidence
+        │
+        ▼
 Fresh Luna xhigh worker automatically closes the deployment before the final response
 ```
 
-The tester and responsible executor are identified by canonical task name and
-exchange routine defect and repair packets directly, as in the previous Heavy
-coordination design. The main agent is involved only for capsule conflict,
-cross-package contract change, an invalidated decision, expanded ownership,
-security or migration risk, or repeated failure. Test and fixture defects stay
-with the tester.
+The tester reactivates its named executor with `followup_task`, remains active
+with `wait_agent`, receives repair evidence through `send_message`, and rechecks
+before terminating. Routing failure or a material/repeated defect escalates
+once. Test and fixture defects stay with the tester.
 
-Workers keep raw logs, large diffs, reports, responses, and diagnostics in
-artifacts or retained thread context. Upward reports give the outcome, contract
-changes, new facts, invalidated assumptions, verification reference, residual
-risk, decision required, and exact evidence location. The main agent may accept
-routine operational proof without reopening its artifact, but it directly
-inspects any project source or evidence that determines the root cause,
-architecture, scope, or another high-risk decision.
+Workers keep raw output in artifacts and return small direct knowledge deltas.
+At each gate, the main starts with the owning contract, decisive source, and
+decisive failure or verification artifact, expanding only for risk or conflict.
 
 In Heavy, owning acceptance and integration gates means defining the gate,
 assigning its execution, evaluating the returned evidence, and deciding
@@ -541,21 +546,14 @@ Medium evidence support is explicitly requested. Both routes keep one
 child-agent slot available for the fresh Closure Steward worker and must not
 exceed the fixed role or worker limits.
 
-Worker communication is event-driven and knowledge-aware. Named executor-tester
-pairs exchange routine repair packets directly. Every worker returns one concise
-terminal report directly to the main agent. The main waits for a coherent group
-and integrates its reports together rather than acknowledging each completion.
-A worker that returns no concrete evidence gets one short retry; repeated
-evidence-free work triggers replacement or a narrowly scoped, explicit
-main-agent takeover.
+Worker communication is event-driven. Named executor–tester pairs use the
+explicit repair handshake; every worker returns one small direct delta. The main
+integrates coherent groups once. Evidence-free work gets one retry, then
+replacement or a narrowly scoped main-agent takeover.
 
-Task workers must not edit Git state or the shared status documents. Worker
-terminal reports and decision escalations go directly to the main agent. During
-automatic closure, `closure_steward` alone reconciles the complete documentation
-framework and reports Git status/handoff; it does not invoke another
-documentation worker or mutate Git state. Companion and investigators remain
-read-only. Companion is persistent and secretarial; investigators are disposable
-leaf workers and do not direct one another or decide the root cause.
+Task workers do not edit Git state or shared status documents. Public-doc
+workers stay outside `agent_docs/`; Closure Steward alone edits `agent_docs/`
+and reports read-only Git state. Companion and investigators remain read-only.
 
 ### Cross-session continuity
 
@@ -567,26 +565,28 @@ deployment remains recorded concisely instead of clearing both files.
 Before each substantive Medium or Heavy deployment returns its final response,
 the route automatically creates a fresh, uniquely named `closure_steward` worker
 with the handoff contract's finite context fork. This preserves its Luna xhigh
-model while inheriting recent main-agent context. Without a parent-built capsule
-or usage ledger, it reconciles every core and module-specific
-`agent_docs/` file against verified deployment facts, performs compact closing
-checks, reports Git status and any commit decision still requiring explicit user
-authorization, and returns the final report. It never stages or commits
-automatically. The report ends
-with exactly three statistics columns:
-`Worker name`, `Quantity` (distinct task names), and `Number of calls`
-(turn-starting assignments and follow-ups). Companion has no closure
-responsibility. Direct questions and small or odd bounded tasks create no
-worker, handoff, or statistics table.
+model while inheriting recent main-agent context. Without a parent-built capsule,
+it reconciles `agent_docs/`, consumes Heavy's deterministic verification
+summary, performs compact checks, and reports read-only Git state. It never
+edits public docs or Git. As its last tool action, Closure Steward triggers Companion,
+which waits for Closure Steward to become terminal and invokes the installed
+`$deployment-token-report` skill for the same deployment ID. The skill resolves
+the Companion's parent thread and deployment boundary from rollout metadata and
+returns exactly six columns: `Agent`, `Quantity` (distinct task names),
+`Rollouts`, `Cached input`, `Input`, and `Output`. The main agent prints the
+table without a separate main-agent dispatch rollout. Companion has no
+documentation-closure responsibility; Closure Steward only triggers and has no
+token-reporting responsibility. Direct questions and small or odd
+bounded tasks create no worker, handoff, or table.
 
 ## Part 5 — Component hierarchy and ownership
 
 The original design grouped the system into five logical blocks across two
 geographical levels. That model remains useful, but some paths need a precise
-distinction: `agent_docs/` is project documentation, while personalization is
-private under `.codex_workflow_hidden_resources/`; worker TOMLs are materialized
-runtime definitions, while `install_state.json` tracks lifecycle ownership and
-version.
+distinction: `agent_docs/` is project documentation, while personalization and
+verification state are private under `.codex_workflow_hidden_resources/`;
+worker TOMLs are materialized runtime definitions, while `install_state.json`
+tracks lifecycle ownership and version.
 
 The five blocks are:
 
@@ -597,6 +597,9 @@ Location: `~/.codex/`
 - `~/.codex/agents/` contains all distributed worker TOMLs. The fixed role set
   is `default_executor`, `senior_executor`, `tester`, `doc-writer`,
   `companion`, `investigator`, and `closure_steward`.
+- `~/.codex/skills/deployment-token-report/` contains the workflow-owned skill
+  and deterministic read-only rollout parser. Bootstrap, update, backup, and
+  removal track it separately from unrelated personal skills.
 - `companion.toml` gives the persistent Luna Companion a 1,050,000-token context
   window with automatic compaction at 800,000 tokens; the override is scoped to
   that role.
@@ -607,9 +610,10 @@ Location: `~/.codex/`
 - `~/.codex/codex_workflow/medium_route.md` defines main-agent execution with
   Companion workflow support, optional read-only evidence, and documentation
   closure; it does not delegate production implementation or verification.
-- `~/.codex/codex_workflow/companion.md` defines the read-only Companion
-  secretary/office wrapper's lifecycle, routine-task boundary, context-support
-  role, memory, and director-brief contracts.
+- `~/.codex/codex_workflow/medium_companion.md` defines routine Medium context
+  support; `heavy_companion.md` adds Heavy evidence compression, distribution,
+  and readiness audits. Shared lifecycle and authority stay in `AGENTS.md` and
+  `companion.toml`.
 - `~/.codex/codex_workflow/investigation_team.md` defines the shared dispatch,
   evidence, main-agent context, and root-cause gates.
 - `~/.codex/codex_workflow/closure_steward.md` defines the shared spawn contract;
