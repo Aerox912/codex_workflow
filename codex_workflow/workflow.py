@@ -222,6 +222,7 @@ def main() -> int:
                     "valid": True,
                     "version": package.version,
                     "workers": sorted(package.worker_names),
+                    "skills": sorted(package.skill_names),
                 },
                 compact=args.json,
             )

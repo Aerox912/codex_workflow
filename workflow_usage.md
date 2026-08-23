@@ -176,10 +176,14 @@ again. Each substantive Medium or Heavy deployment automatically creates a
 workflow-owned documentation handoff before its final response. Its fresh Luna
 xhigh worker receives the fixed finite handoff context and alone reconciles the
 complete `agent_docs/` framework, reports read-only Git status and handoff
-information, and returns the final three-column worker-statistics table. It does
-not stage or commit automatically. No manual closure prompt, main-agent summary,
-usage ledger, or second documentation worker is required. Questions and small or
-odd bounded tasks use the direct worker-free path and emit no table.
+information. As its final action, it triggers Companion to invoke the installed
+`$deployment-token-report` skill after confirming closure is terminal. Companion
+returns a six-column table for every used worker role and the main agent:
+quantity, rollouts, cached input, total input, and output tokens. The main agent
+waits for both reports and prints the table without a separate dispatch rollout. No worker
+stages or commits automatically, and no main-maintained usage ledger is
+required. Questions and small or odd bounded tasks use the direct worker-free
+path and emit no table.
 
 ## Part 2 — Installed-file map
 
@@ -204,6 +208,11 @@ and the current project as follows:
 │   ├── companion.toml
 │   ├── investigator.toml
 │   └── closure_steward.toml
+├── skills/
+│   └── deployment-token-report/
+│       ├── SKILL.md                        # Companion reporting procedure
+│       ├── agents/openai.yaml              # skill UI metadata
+│       └── scripts/report_tokens.py        # read-only rollout parser
 └── codex_workflow/
     ├── VERSION                             # installed workflow version
     ├── user_AGENTS.md                      # managed command interface
@@ -228,7 +237,8 @@ and the current project as follows:
     ├── templates/
     │   ├── AGENTS.md                       # project entry-point template
     │   ├── agents/*.toml                    # all distributed worker templates
-    │   └── project_docs/*.md                # six Project Documentation templates
+    │   ├── project_docs/*.md                # six Project Documentation templates
+    │   └── skills/deployment-token-report/  # canonical installed skill template
     ├── .source_backup/<version>/            # complete installed release source backup
     └── .backups/<old-version>-<timestamp>/ # update backups, created when needed
 
@@ -360,7 +370,7 @@ explicitly by the user; Light remains the default for small tasks. The Heavy
 route does not mean that every prompt must spawn workers: common questions and
 small tasks use a direct main-agent fast path and must not call subagents. When
 that fast path calls no subagent, its final response also omits the worker
-statistics table.
+token table.
 
 ### Coordination flowchart
 
@@ -398,7 +408,9 @@ flowchart LR
     W -->|concise documentation report| M
 
     M -->|route + deployment ID<br/>+ closure state| X
-    X -->|final report + statistics| M
+    X -->|trigger token report| C
+    X -->|final handoff report| M
+    C -->|six-column rollout token table| M
 
     classDef center fill:#172554,color:#fff,stroke:#60a5fa,stroke-width:3px;
     classDef wrapper fill:#ecfeff,stroke:#0891b2,stroke-width:2px;
@@ -425,9 +437,9 @@ The fixed role set is:
 | `senior_executor` | Complex core reasoning or exceptionally difficult cross-cutting implementation | Yes, within its work package; fixed to at most one instance |
 | `tester` | Independent focused tests and failure analysis | Test/fixture scope; production defects return to the executor |
 | `doc-writer` | Assigned documentation during implementation and required installation initialization; not automatic deployment closure | Documentation scope; installation may authorize listed new or still-template-marked recovery files |
-| Companion | Single persistent secretary and office wrapper that solves routine read-only context tasks, retains operational context, and returns director briefs | No |
+| Companion | Single persistent secretary and office wrapper that solves routine read-only context tasks, retains operational context, returns director briefs, and invokes the post-deployment token-report skill | No |
 | `investigator` | Disposable Luna leaf agent for one bounded code, evidence, dependency, documentation, log, or external-solution lane | No |
-| `closure_steward` | Inherited-context reconciliation of the complete documentation framework, read-only Git status/handoff, and statistics | `agent_docs/` plus read-only Git inspection during automatic closure; no automatic staging or commit |
+| `closure_steward` | Inherited-context reconciliation of the complete documentation framework and read-only Git status/handoff | `agent_docs/` plus read-only Git inspection during automatic closure; no automatic staging or commit |
 
 The role names are stable while their model bindings live only in the worker
 TOMLs. The package settings, route contracts, and worker definitions jointly
@@ -572,12 +584,16 @@ or usage ledger, it reconciles every core and module-specific
 `agent_docs/` file against verified deployment facts, performs compact closing
 checks, reports Git status and any commit decision still requiring explicit user
 authorization, and returns the final report. It never stages or commits
-automatically. The report ends
-with exactly three statistics columns:
-`Worker name`, `Quantity` (distinct task names), and `Number of calls`
-(turn-starting assignments and follow-ups). Companion has no closure
-responsibility. Direct questions and small or odd bounded tasks create no
-worker, handoff, or statistics table.
+automatically. As its last tool action, Closure Steward triggers Companion,
+which waits for Closure Steward to become terminal and invokes the installed
+`$deployment-token-report` skill for the same deployment ID. The skill resolves
+the Companion's parent thread and deployment boundary from rollout metadata and
+returns exactly six columns: `Agent`, `Quantity` (distinct task names),
+`Rollouts`, `Cached input`, `Input`, and `Output`. The main agent prints the
+table without a separate main-agent dispatch rollout. Companion has no
+documentation-closure responsibility; Closure Steward only triggers and has no
+token-reporting responsibility. Direct questions and small or odd
+bounded tasks create no worker, handoff, or table.
 
 ## Part 5 — Component hierarchy and ownership
 
@@ -597,6 +613,9 @@ Location: `~/.codex/`
 - `~/.codex/agents/` contains all distributed worker TOMLs. The fixed role set
   is `default_executor`, `senior_executor`, `tester`, `doc-writer`,
   `companion`, `investigator`, and `closure_steward`.
+- `~/.codex/skills/deployment-token-report/` contains the workflow-owned skill
+  and deterministic read-only rollout parser. Bootstrap, update, backup, and
+  removal track it separately from unrelated personal skills.
 - `companion.toml` gives the persistent Luna Companion a 1,050,000-token context
   window with automatic compaction at 800,000 tokens; the override is scoped to
   that role.
@@ -609,7 +628,7 @@ Location: `~/.codex/`
   closure; it does not delegate production implementation or verification.
 - `~/.codex/codex_workflow/companion.md` defines the read-only Companion
   secretary/office wrapper's lifecycle, routine-task boundary, context-support
-  role, memory, and director-brief contracts.
+  role, memory, director-brief contracts, and token-report handoff.
 - `~/.codex/codex_workflow/investigation_team.md` defines the shared dispatch,
   evidence, main-agent context, and root-cause gates.
 - `~/.codex/codex_workflow/closure_steward.md` defines the shared spawn contract;

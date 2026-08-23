@@ -40,6 +40,7 @@ BUILTIN_WORKERS = frozenset(
         "closure_steward",
     }
 )
+BUILTIN_SKILLS = frozenset({"deployment-token-report"})
 
 
 class ReleaseError(ValueError):
@@ -314,6 +315,14 @@ def _verify_member_names(names: Iterable[str]) -> list[str]:
     required.update(
         f"{PACKAGE_DIR_NAME}/agents/{worker}.toml" for worker in BUILTIN_WORKERS
     )
+    for skill in BUILTIN_SKILLS:
+        required.update(
+            {
+                f"{PACKAGE_DIR_NAME}/skills/{skill}/SKILL.md",
+                f"{PACKAGE_DIR_NAME}/skills/{skill}/agents/openai.yaml",
+                f"{PACKAGE_DIR_NAME}/skills/{skill}/scripts/report_tokens.py",
+            }
+        )
     missing = sorted(required.difference(normalized))
     if missing:
         raise ReleaseError("archive is missing: " + ", ".join(missing))
@@ -343,6 +352,18 @@ def _verify_member_names(names: Iterable[str]) -> list[str]:
         raise ReleaseError(
             "archive contains unsupported worker roles: "
             + ", ".join(unexpected_workers)
+        )
+    present_skills = {
+        parts[2]
+        for name in normalized
+        if name.startswith(f"{PACKAGE_DIR_NAME}/skills/")
+        for parts in [name.split("/")]
+        if len(parts) > 3
+    }
+    unexpected_skills = sorted(present_skills - BUILTIN_SKILLS)
+    if unexpected_skills:
+        raise ReleaseError(
+            "archive contains unsupported skills: " + ", ".join(unexpected_skills)
         )
     return normalized
 

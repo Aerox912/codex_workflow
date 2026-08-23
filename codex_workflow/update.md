@@ -26,8 +26,8 @@ python3 ~/.codex/codex_workflow/workflow.py update --project <project>
 For migration from a pre-script installation, run the incoming package's
 `workflow.py` instead of an older installed launcher.
 
-The script replaces installed routes and worker TOMLs with the incoming
-release's fixed definitions. It preserves unrelated Codex settings,
+The script replaces installed routes, worker TOMLs, and workflow-owned skills
+with the incoming release's fixed definitions. It preserves unrelated Codex settings and skills,
 project documents, personalization, project-local instructions, source backups,
 and the project's enabled/disabled state. For projects that still use an older
 workflow version, it validates their

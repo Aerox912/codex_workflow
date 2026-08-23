@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from .layout import ProjectPaths, RuntimePaths
+from .layout import USER_STATE, ProjectPaths, RuntimePaths
+from .plan import read_json, read_string_list
 from .transaction import Mutation
 
 
@@ -29,6 +30,13 @@ def append_backup_mutations(
         )
     if runtime.agents.is_dir():
         targets.extend(path for path in runtime.agents.glob("*.toml") if path.is_file())
+    state = read_json(runtime.runtime / USER_STATE, default={})
+    for skill in read_string_list(state, "owned_skills"):
+        if not skill or Path(skill).name != skill:
+            continue
+        skill_root = runtime.skills / skill
+        if skill_root.is_dir():
+            targets.extend(path for path in skill_root.rglob("*") if path.is_file())
     targets.extend(
         path
         for path in (

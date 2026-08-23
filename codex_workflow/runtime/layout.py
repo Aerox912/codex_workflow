@@ -19,6 +19,9 @@ from .personalization import materialize_personalization
 PROJECT_ID = "<!-- codex-workflow-id: viettran-edgeAI/codex_workflow -->"
 USER_ID = "<!-- codex-workflow-user-id: viettran-edgeAI/codex_workflow -->"
 WORKER_MARKER = re.compile(r"^# codex-workflow-worker: ([A-Za-z0-9_-]+)$", re.MULTILINE)
+SKILL_MARKER = re.compile(
+    r"^<!-- codex-workflow-skill: ([a-z0-9-]+) -->$", re.MULTILINE
+)
 PROJECT_STATE = "state.json"
 USER_STATE = "install_state.json"
 BUILTIN_WORKERS = frozenset(
@@ -32,6 +35,7 @@ BUILTIN_WORKERS = frozenset(
         "closure_steward",
     }
 )
+BUILTIN_SKILLS = frozenset({"deployment-token-report"})
 
 
 @dataclass(frozen=True)
@@ -40,6 +44,7 @@ class PackageLayout:
     project_template: Path
     agent_templates: Path
     project_docs: Path
+    skill_templates: Path
 
     @classmethod
     def resolve(cls, root: Path, *, allow_legacy: bool = False) -> "PackageLayout":
@@ -56,9 +61,16 @@ class PackageLayout:
                 root / "templates" / "AGENTS.md",
                 root / "templates" / "agents",
                 root / "templates" / "project_docs",
+                root / "templates" / "skills",
             )
         else:
-            layout = cls(root, root / "AGENTS.md", root / "agents", root / "project_docs")
+            layout = cls(
+                root,
+                root / "AGENTS.md",
+                root / "agents",
+                root / "project_docs",
+                root / "skills",
+            )
         layout.validate(allow_legacy=allow_legacy)
         return layout
 
@@ -161,6 +173,28 @@ class PackageLayout:
                     encoding="utf-8"
                 )
             )
+            skills = self.skill_names
+            if skills != BUILTIN_SKILLS:
+                raise ValidationError(
+                    "package skill set is incomplete or unsupported; "
+                    f"missing={sorted(BUILTIN_SKILLS - skills)}, "
+                    f"unexpected={sorted(skills - BUILTIN_SKILLS)}"
+                )
+            for skill in skills:
+                skill_root = self.skill_templates / skill
+                required_skill_files = (
+                    skill_root / "SKILL.md",
+                    skill_root / "agents" / "openai.yaml",
+                    skill_root / "scripts" / "report_tokens.py",
+                )
+                if not all(path.is_file() for path in required_skill_files):
+                    raise ValidationError(f"package skill files are incomplete: {skill}")
+                entry = skill_root / "SKILL.md"
+                match = SKILL_MARKER.search(entry.read_text(encoding="utf-8"))
+                if match is None or match.group(1) != skill:
+                    raise ValidationError(
+                        f"skill ownership marker missing or wrong: {skill}"
+                    )
 
     @property
     def version(self) -> str:
@@ -172,6 +206,16 @@ class PackageLayout:
     @property
     def worker_names(self) -> set[str]:
         return {path.stem for path in self.agent_templates.glob("*.toml") if path.is_file()}
+
+    @property
+    def skill_names(self) -> set[str]:
+        if not self.skill_templates.is_dir():
+            return set()
+        return {
+            path.name
+            for path in self.skill_templates.iterdir()
+            if path.is_dir() and (path / "SKILL.md").is_file()
+        }
 
     @property
     def default_personalization(self) -> Path:
@@ -189,6 +233,10 @@ class RuntimePaths:
     @property
     def agents(self) -> Path:
         return self.codex_home / "agents"
+
+    @property
+    def skills(self) -> Path:
+        return self.codex_home / "skills"
 
     @property
     def config_toml(self) -> Path:

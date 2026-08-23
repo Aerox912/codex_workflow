@@ -29,7 +29,7 @@ architecture, scope, a root cause, or a high-risk boundary.
 
 Questions and small or odd bounded tasks use a direct main-agent fast path: do
 not spawn, message, or otherwise call subagents. Do not create work merely to
-use a worker. This fast path also skips Closure Steward and worker statistics
+use a worker. This fast path also skips Closure Steward and deployment token reporting
 entirely.
 
 ## Main-Agent Execution Boundary
@@ -215,13 +215,17 @@ checks unless later changes or conflicting evidence invalidate them.
   state, affected criterion, and required decision or next action. Never present
   partial work as complete.
 
-## Automatic Handoff and Worker Statistics
+## Automatic Handoff and Deployment Token Report
 
 After all package workers reach a terminal state, and before the final response
 that completes, pauses, or blocks the deployment, follow
 `~/.codex/codex_workflow/closure_steward.md` exactly once. Pass only the route, a
-unique deployment ID, and closure state; the automatic handoff context fork
-supplies the main-agent history. Wait and relay the fresh worker's report
-without duplicating its work. A later substantive deployment gets a new ID and
-handoff. The direct fast path calls no worker, including Companion or
-Closure Steward, and emits no statistics.
+unique deployment ID, closure state, and the persistent Companion target; the
+automatic handoff context fork supplies the main-agent history. Closure Steward
+triggers Companion's `$deployment-token-report` request as its last tool action.
+Wait for both workers to become terminal, relay the fresh closure report without
+duplicating its work, and print Companion's exact six-column table defined in
+`companion.md`. Do not issue a separate Companion request. This ordering
+includes Closure Steward usage without an extra main-agent dispatch rollout. A later
+substantive deployment gets a new ID, handoff, and report. The direct fast path
+calls no worker, including Companion or Closure Steward, and emits no table.

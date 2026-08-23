@@ -112,9 +112,11 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("ordered implementation sequence", heavy)
         self.assertIn("Do not add this Execution Guide requirement", heavy)
         self.assertIn("not spawn, message, or otherwise call subagents", heavy)
-        self.assertIn("skips Closure Steward and worker statistics", heavy)
+        self.assertIn("skips Closure Steward and deployment token reporting", heavy)
         self.assertIn("before the final response", heavy)
         self.assertIn("automatic handoff context fork", heavy)
+        self.assertIn("without an extra main-agent dispatch rollout", heavy)
+        self.assertIn("Do not issue a separate Companion request", heavy)
         self.assertIn("sends routine production defects directly", heavy)
         self.assertIn("does not relay, acknowledge, or rediagnose", heavy)
         self.assertIn("follow `investigation_team.md`", heavy)
@@ -137,6 +139,8 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("do not call `closure_steward`", medium)
         self.assertIn("Before the final response", medium)
         self.assertIn("complete documentation framework", medium)
+        self.assertIn("`$deployment-token-report`", medium)
+        self.assertIn("Do not issue a separate Companion request", medium)
         self.assertIn("follow\n`investigation_team.md`", medium)
         self.assertIn("terminal report each directly to the main agent", medium)
         self.assertIn("alone\npasses the root-cause gate", medium)
@@ -144,6 +148,8 @@ class MarkerTests(unittest.TestCase):
 
         agents_policy = policies["AGENTS.md"]
         self.assertIn("handoff is not a user command", agents_policy)
+        self.assertIn("`$deployment-token-report` request", agents_policy)
+        self.assertIn("do not spend a separate main-agent rollout", agents_policy)
         self.assertNotIn("session-model requirement", agents_policy)
         self.assertIn("read-only investigators", agents_policy)
         self.assertIn("directly reads task-critical", agents_policy)
@@ -157,6 +163,9 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("director brief", companion)
         self.assertIn("knowledge-delta brief", companion)
         self.assertIn("distinct task names", companion)
+        self.assertIn("Closure Steward sends Companion", companion)
+        self.assertIn("does not spend a separate rollout", companion)
+        self.assertIn("agent lifecycle state", companion)
         self.assertIn("workers report directly to\nthe main agent", companion)
         self.assertIn("does not receive or relay their terminal reports", companion)
         self.assertIn("project-wide judgment", companion)
@@ -184,16 +193,15 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("Do not call a second documentation worker", handoff_contract)
         self.assertNotIn('fork_turns="none"', handoff_contract)
         self.assertNotIn("compact usage ledger", handoff_contract)
-        self.assertIn(
-            "| Worker name | Quantity | Number of calls |", handoff_worker
-        )
-        self.assertIn(
-            "`Quantity` is the number of distinct task names", handoff_worker
-        )
-        self.assertIn("turn-starting initial assignments", handoff_worker)
+        self.assertNotIn("| Worker name | Quantity | Number of calls |", handoff_worker)
+        self.assertIn("Companion", handoff_worker)
+        self.assertIn("`$deployment-token-report`", handoff_worker)
+        self.assertIn("single `followup_task`", handoff_worker)
+        self.assertIn("persistent Companion target", handoff_worker)
+        self.assertIn("Do not wait for Companion", handoff_worker)
         self.assertIn("read the complete existing", handoff_worker)
-        self.assertIn("Do not delegate or create another worker", handoff_worker)
-        self.assertIn("the parent does not supply or maintain a ledger", handoff_worker)
+        self.assertIn("Do not create another worker", handoff_worker)
+        self.assertIn("not derive or report worker statistics", handoff_worker)
         for framework_file in (
             "project_overview.md",
             "project_core_tech.md",
@@ -246,6 +254,8 @@ class MarkerTests(unittest.TestCase):
         )
         self.assertIn("secretary and office", companion_worker)
         self.assertIn("complete routine read-only context work", companion_worker)
+        self.assertIn("Required Post-Deployment Token Report", companion_worker)
+        self.assertIn("six-column", companion_worker)
         self.assertNotIn("report-batch", companion_worker)
         self.assertNotIn("sent directly\nby those workers", companion_worker)
         self.assertIn('model = "gpt-5.6-luna"', investigator)
@@ -313,6 +323,18 @@ class MarkerTests(unittest.TestCase):
             with self.assertRaisesRegex(
                 ValidationError, "package worker set is incomplete"
             ):
+                PackageLayout.resolve(root)
+
+    def test_package_requires_builtin_skill(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "codex_workflow"
+            shutil.copytree(
+                PACKAGE,
+                root,
+                ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+            )
+            shutil.rmtree(root / "skills" / "deployment-token-report")
+            with self.assertRaisesRegex(ValidationError, "package skill set"):
                 PackageLayout.resolve(root)
 
     def test_update_help_does_not_publish_local_source_option(self) -> None:
@@ -748,6 +770,23 @@ class LifecycleIntegrationTests(unittest.TestCase):
         self.assertFalse((self.runtime.agents / "executor_terra.toml").exists())
         self.assertTrue((self.runtime.agents / "closure_steward.toml").is_file())
         self.assertTrue((self.runtime.agents / "companion.toml").is_file())
+        self.assertTrue(
+            (
+                self.runtime.skills
+                / "deployment-token-report"
+                / "scripts"
+                / "report_tokens.py"
+            ).is_file()
+        )
+        self.assertTrue(
+            (
+                self.runtime.runtime
+                / "templates"
+                / "skills"
+                / "deployment-token-report"
+                / "SKILL.md"
+            ).is_file()
+        )
         self.assertIn(
             "max_concurrent_threads_per_session = 20",
             self.runtime.config_toml.read_text(encoding="utf-8"),
@@ -782,6 +821,16 @@ class LifecycleIntegrationTests(unittest.TestCase):
             set(repeated.agent_actions[0]["recovery_files"]),
             set(repeated.agent_actions[0]["framework"]),
         )
+
+    def test_bootstrap_rejects_unowned_skill_collision(self) -> None:
+        collision = self.runtime.skills / "deployment-token-report"
+        collision.mkdir(parents=True)
+        (collision / "SKILL.md").write_text(
+            "---\nname: deployment-token-report\ndescription: local\n---\n",
+            encoding="utf-8",
+        )
+        with self.assertRaisesRegex(ValidationError, "unowned skill directory"):
+            plan_bootstrap(self.package, self.runtime, self.project)
 
     def test_bootstrap_cleans_project_staging_and_updates_gitignore(self) -> None:
         staging = self.project_root / "Codex_Workflow"
@@ -851,6 +900,7 @@ class LifecycleIntegrationTests(unittest.TestCase):
             )
         state = json.loads((self.runtime.runtime / "install_state.json").read_text())
         self.assertEqual(set(state["owned_workers"]), self.package.worker_names)
+        self.assertEqual(set(state["owned_skills"]), self.package.skill_names)
 
     def test_personalize_and_enable_disable_preserve_regions(self) -> None:
         self.bootstrap(existing_agents="Local policy.\n")
@@ -920,7 +970,46 @@ class LifecycleIntegrationTests(unittest.TestCase):
             "local worker override",
             (self.runtime.agents / "default_executor.toml").read_text(encoding="utf-8"),
         )
+        installed_skill = self.runtime.skills / "deployment-token-report"
+        self.assertEqual(
+            (installed_skill / "SKILL.md").read_text(encoding="utf-8"),
+            (PACKAGE / "skills" / "deployment-token-report" / "SKILL.md").read_text(
+                encoding="utf-8"
+            ),
+        )
         self.assertTrue(any((self.runtime.runtime / ".backups").iterdir()))
+
+    def test_update_restores_owned_skill_and_removes_stale_skill_files(self) -> None:
+        self.bootstrap()
+        installed_skill = self.runtime.skills / "deployment-token-report"
+        (installed_skill / "SKILL.md").write_text(
+            (installed_skill / "SKILL.md")
+            .read_text(encoding="utf-8")
+            .replace("Compile per-agent", "Locally changed per-agent"),
+            encoding="utf-8",
+        )
+        stale = installed_skill / "stale.txt"
+        stale.write_text("stale", encoding="utf-8")
+        incoming = self.incoming_package("skill-update-incoming", "1.2.0")
+        plan = plan_update(incoming, self.runtime, self.project)
+        backup = Path(plan.details["backup"])
+        plan.apply()
+        self.assertEqual(
+            (installed_skill / "SKILL.md").read_text(encoding="utf-8"),
+            (incoming.skill_templates / "deployment-token-report" / "SKILL.md").read_text(
+                encoding="utf-8"
+            ),
+        )
+        self.assertFalse(stale.exists())
+        self.assertTrue(
+            (
+                backup
+                / "user"
+                / "skills"
+                / "deployment-token-report"
+                / "SKILL.md"
+            ).is_file()
+        )
 
     def test_projects_update_against_their_recorded_historical_sources(self) -> None:
         self.bootstrap()
@@ -961,6 +1050,10 @@ class LifecycleIntegrationTests(unittest.TestCase):
                 f"# codex-workflow-worker: {legacy_worker}\n",
                 encoding="utf-8",
             )
+            (self.runtime.runtime / "templates" / "agents" / f"{legacy_worker}.toml").write_text(
+                f"# codex-workflow-worker: {legacy_worker}\n",
+                encoding="utf-8",
+            )
             state["owned_workers"].append(legacy_worker)
         state_path.write_text(json.dumps(state) + "\n", encoding="utf-8")
 
@@ -974,6 +1067,15 @@ class LifecycleIntegrationTests(unittest.TestCase):
             "end_of_session",
         ):
             self.assertFalse((self.runtime.agents / f"{legacy_worker}.toml").exists())
+            self.assertFalse(
+                (
+                    self.runtime.runtime
+                    / "templates"
+                    / "agents"
+                    / f"{legacy_worker}.toml"
+                ).exists()
+            )
+        PackageLayout.resolve(self.runtime.runtime)
 
     def test_cli_install_reports_enabled_disabled_and_stale_states(self) -> None:
         self.bootstrap()
@@ -1108,6 +1210,12 @@ class LifecycleIntegrationTests(unittest.TestCase):
         )
         unrelated_worker = self.runtime.agents / "unrelated.toml"
         unrelated_worker.write_text('model = "keep"\n', encoding="utf-8")
+        unrelated_skill = self.runtime.skills / "unrelated-skill"
+        unrelated_skill.mkdir(parents=True)
+        (unrelated_skill / "SKILL.md").write_text(
+            "---\nname: unrelated-skill\ndescription: keep\n---\n",
+            encoding="utf-8",
+        )
 
         command = [
             sys.executable,
@@ -1141,6 +1249,10 @@ class LifecycleIntegrationTests(unittest.TestCase):
         self.assertTrue((self.project.docs / "project_overview.md").is_file())
         self.assertFalse(self.runtime.runtime.exists())
         self.assertTrue(unrelated_worker.is_file())
+        self.assertTrue((unrelated_skill / "SKILL.md").is_file())
+        self.assertFalse(
+            (self.runtime.skills / "deployment-token-report").exists()
+        )
         self.assertEqual(
             self.runtime.user_agents.read_text(encoding="utf-8"),
             "# Keep this user policy.\n",
@@ -1176,6 +1288,19 @@ class LifecycleIntegrationTests(unittest.TestCase):
                 self.project,
             )
         self.assertTrue(outside.is_file())
+
+    def test_update_rejects_unsafe_owned_skill_state(self) -> None:
+        self.bootstrap()
+        state_path = self.runtime.runtime / "install_state.json"
+        state = json.loads(state_path.read_text(encoding="utf-8"))
+        state["owned_skills"] = ["../../outside"]
+        state_path.write_text(json.dumps(state) + "\n", encoding="utf-8")
+        with self.assertRaisesRegex(ValidationError, "unsafe name"):
+            plan_update(
+                self.incoming_package("unsafe-skill-state-incoming"),
+                self.runtime,
+                self.project,
+            )
 
     def test_legacy_entry_with_edits_requires_reviewed_local_instructions(self) -> None:
         self.bootstrap()

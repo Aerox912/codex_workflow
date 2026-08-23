@@ -11,7 +11,13 @@ director-level knowledge or decisions.
   `agent_type="companion"`, `task_name="companion"`, and
   `fork_turns="none"`.
 - Brief it with the goal, route, known decisions and constraints, escalation
-  boundaries, preferred authoritative sources, and required evidence format.
+  boundaries, preferred authoritative sources, required evidence format, and a
+  unique lowercase underscore-safe deployment ID. Include this exact standalone
+  line in the first brief for every deployment:
+
+  ```text
+  codex-workflow-deployment-start: <deployment_id>
+  ```
 - Reuse its thread across Medium and Heavy for the session. Do not create a
   second Companion or work merely to keep it active. If unavailable, continue
   only when safe and report the limitation.
@@ -55,6 +61,33 @@ not an investigator-swarm manager: receiving main-provided context does not
 authorize it to allocate, redirect, retry, or respond to workers. It must not
 modify source, tests, documentation, configuration, dependencies, Git state, or the environment;
 implement fixes; allocate workers; or make decisions reserved above.
+
+## Post-Deployment Token Report
+
+As its final action after completing each substantive Medium or Heavy closure,
+Closure Steward sends Companion one turn-starting request naming the deployment
+ID and its closure task name. The main agent does not spend a separate rollout
+dispatching the report. Companion confirms from agent lifecycle state that the
+named Closure Steward is terminal, using only bounded waiting and rechecks, then
+invokes `$deployment-token-report` for the same deployment ID. It reads the
+installed skill, runs its deterministic bundled parser against Codex rollout
+records, and returns the generated Markdown table directly to the main agent.
+It does not infer missing values, calculate prices, maintain a usage ledger, or
+inspect message prose beyond locating the exact deployment marker.
+
+The table has exactly six columns:
+
+| Agent | Quantity | Rollouts | Cached input | Input | Output |
+| --- | ---: | ---: | ---: | ---: | ---: |
+
+`Quantity` is distinct task names for a worker role and `1` for the main agent.
+`Rollouts` is the number of model generations with recorded per-rollout usage.
+`Input` includes the cached-input subset. Capture stops when the parser starts,
+so it excludes Companion's post-tool report and the main agent's final response.
+If Closure Steward cannot trigger Companion, lifecycle state cannot be
+confirmed, or the skill fails or reports incomplete evidence, return the
+limitation instead of a guessed table. The main agent waits for both terminal
+handoffs and prints the table without issuing a second Companion request.
 
 ## Brief Contracts
 

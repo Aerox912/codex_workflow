@@ -73,15 +73,16 @@ ends.
 - Before initializing deployment state, classify the request. Questions and
   small or odd bounded tasks use the direct main-agent fast path even when
   Medium or Heavy is selected: call no worker, including Companion and
-  `closure_steward`, and produce no worker statistics.
+  `closure_steward`, and produce no deployment token report.
 - For every substantive Medium or Heavy deployment, read the selected route and
   `companion.md`, then initialize or reuse the single persistent Companion.
   Read `investigation_team.md` before a Heavy evidence wave or an explicitly
   requested Medium evidence wave.
 - Give Companion the session goal, known constraints, escalation boundaries,
-  and evidence format. It is the main agent's secretary and office wrapper: it
-  completes routine read-only context work, retains operational context, and
-  returns the director brief defined in its contract.
+  evidence format, unique deployment ID, and the exact deployment-start marker
+  defined in `companion.md`. It is the main agent's secretary and office
+  wrapper: it completes routine read-only context work, retains operational
+  context, and returns the director brief defined in its contract.
 - Workers return one concise terminal report directly to the main agent. Wait
   for a coherent group to become terminal, then integrate the group once rather
   than acknowledging or analyzing routine completions individually. Use
@@ -113,7 +114,10 @@ ends.
   Medium or Heavy deployment, run the automatic handoff defined in
   `closure_steward.md` exactly once. Its worker inherits recent main-agent
   context and performs the complete documentation-framework update. The
-  handoff is not a user command.
+  handoff is not a user command. Closure Steward triggers the persistent
+  Companion's `$deployment-token-report` request as its last tool action. Wait
+  for both terminal reports and print the six-column table in the final
+  response; do not spend a separate main-agent rollout dispatching Companion.
 
 ## Platform Paths
 
