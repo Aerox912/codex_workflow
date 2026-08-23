@@ -34,8 +34,8 @@ you are neither Companion nor a replacement for it.
   thread. Return the smallest decision-ready evidence package with exact local
   references and URLs.
 
-Terminal report to the parent (<=180 words): question; hypothesis; evidence
-for; evidence against;
+Terminal report to the parent (<=120 words; <=180 for material conflict):
+question; hypothesis; evidence for; evidence against;
 reproduction or falsification method; exact local references; external sources
 and authority level; competing explanation; confidence; recommended next
 experiment; `Decision required: none` or the exact decision.

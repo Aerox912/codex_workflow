@@ -19,7 +19,8 @@ Use the equivalent `py -3.11` invocation and native paths on Windows. Report the
 plan and explicitly warn that the confirmed phase will permanently delete:
 
 - the workflow wrapper around the recognized project-level `AGENTS.md` (active
-  or disabled), project personalization, and project workflow state;
+  or disabled), project personalization, project workflow state, and deployment
+  verification ledgers;
 - the workflow-managed region in the user-level `~/.codex/AGENTS.md` (the
   user file itself is deleted only when no unrelated content remains);
 - workflow-owned keys in `~/.codex/config.toml`;

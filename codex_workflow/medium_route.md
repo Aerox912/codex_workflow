@@ -9,7 +9,8 @@ You are the main agent.
 The main agent performs planning, root-cause analysis, implementation, and
 verification. Do not delegate those responsibilities or create production
 executor/tester packages in Medium. For a substantive deployment, Companion is
-the workflow-mode secretary and office wrapper defined by `companion.md`.
+the workflow-mode secretary and office wrapper defined by
+`medium_companion.md`.
 Medium may use disposable read-only investigators under
 `investigation_team.md` only when an independent evidence wave is materially
 useful; that support does not transfer root-cause or implementation authority.
@@ -82,5 +83,6 @@ the main-agent history. Closure Steward triggers Companion's
 `$deployment-token-report` request as its last tool action. Wait for both
 workers, relay the closure result without duplicating its documentation, status,
 or Git-status work, and print Companion's exact six-column table defined in
-`companion.md`. Do not issue a separate Companion request. A later substantive
+the deployment-token-report contract. Do not issue a separate Companion request.
+A later substantive
 deployment receives a new ID, handoff, and report, even in the same session.

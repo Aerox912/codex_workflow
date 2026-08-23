@@ -74,16 +74,24 @@ ends.
   small or odd bounded tasks use the direct main-agent fast path even when
   Medium or Heavy is selected: call no worker, including Companion and
   `closure_steward`, and produce no deployment token report.
-- For every substantive Medium or Heavy deployment, read the selected route and
-  `companion.md`, then initialize or reuse the single persistent Companion.
+- For every substantive deployment, read the selected route and its Companion
+  guide: `medium_companion.md` for Medium or `heavy_companion.md` for Heavy.
   Read `investigation_team.md` before a Heavy evidence wave or an explicitly
   requested Medium evidence wave.
-- Give Companion the session goal, known constraints, escalation boundaries,
-  evidence format, unique deployment ID, and the exact deployment-start marker
-  defined in `companion.md`. It is the main agent's secretary and office
-  wrapper: it completes routine read-only context work, retains operational
-  context, and returns the director brief defined in its contract.
-- Workers return one concise terminal report directly to the main agent. Wait
+- Initialize one persistent Companion with `agent_type="companion"`,
+  `task_name="companion"`, and `fork_turns="none"`, or reuse that target. Its
+  first brief for each deployment gives the goal, route, constraints,
+  escalation boundaries, evidence format, lowercase underscore-safe deployment
+  ID, and this exact standalone marker:
+
+  ```text
+  codex-workflow-deployment-start: <deployment_id>
+  ```
+- If the selected route changes, send the same Companion an explicit transition
+  brief naming the new route; previous route-specific duties become inactive.
+  Never create a second Companion merely because the route changed.
+- If Companion is unavailable, continue only when safe and report the limitation.
+- Workers return one small knowledge delta directly to the main agent. Wait
   for a coherent group to become terminal, then integrate the group once rather
   than acknowledging or analyzing routine completions individually. Use
   Companion separately for assigned read-only context work; it is not a
@@ -91,6 +99,9 @@ ends.
 - The main agent directly reads task-critical project documentation, relevant
   source paths and contracts, and decisive failure evidence. It owns defect
   identification, root-cause adjudication, architecture, scope, and final claims.
+  At each gate, start with the owning contract, decisive source excerpt, and
+  decisive failure or verification artifact; exceed that soft budget only when
+  conflict, uncertainty, or risk requires it.
 - For serious or ambiguous issues with independent search lanes, Heavy may use
   read-only investigators under `investigation_team.md`; Medium may use them
   only as explicitly requested evidence support. Investigators gather evidence;
@@ -99,6 +110,8 @@ ends.
 - In Heavy, main-agent ownership of acceptance and integration gates means
   defining the gates, assigning their execution, evaluating returned evidence,
   and deciding acceptance. It does not mean rerunning evidenced worker checks.
+  Initialize the Heavy verification ledger after defining acceptance criteria;
+  its deterministic summary, not prose test counts, owns freshness state.
   Delegate deployment state, endpoints, uploads, browser or screenshot work,
   external search, routine Git or status collation, tool or API discovery, and
   operational diagnostics to the responsible worker.

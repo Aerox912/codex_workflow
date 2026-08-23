@@ -104,9 +104,11 @@ class PackageLayout:
         if not allow_legacy:
             required = [
                 "workflow.py",
+                "verification_ledger.py",
                 "heavy_route.md",
                 "medium_route.md",
-                "companion.md",
+                "heavy_companion.md",
+                "medium_companion.md",
                 "investigation_team.md",
                 "closure_steward.md",
                 "install.md",

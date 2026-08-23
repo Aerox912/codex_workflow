@@ -6,10 +6,9 @@
 
 Built for maximum token efficiency: Heavy-route swarm execution with the main
 agent as the knowledge director, plus a persistent Companion that handles
-routine read-only context work. Workers return one concise terminal report
-directly to the main agent. Medium keeps implementation and verification in the
-main agent while retaining the same built-in context and progress management
-across sessions.
+routine read-only context work. Workers keep operational evidence in artifacts
+and return small knowledge deltas. Medium keeps implementation and verification
+in the main agent while retaining cross-session workflow support.
 
 > ⭐ For lightweight tasks, it won’t overdo things. Light route is default.
 
@@ -79,31 +78,21 @@ filter information, and close the deployment around it.
 | Role or mechanism | Responsibility | Boundary |
 | --- | --- | --- |
 | Main agent | Reads task-critical context, identifies the defect, chooses the plan, and defines and evaluates acceptance gates. | Workers execute operational checks; gate ownership does not require the main agent to rerun their evidence. |
-| Companion | Handles bounded read-only context work and returns decision-ready briefs. | Does not receive worker terminal reports or make director-level decisions. |
+| Companion | Medium provides routine context support; Heavy adds distribution and readiness audits. | One persistent read-only worker; route changes replace its active duties, not its identity. |
 | Investigators | Explore independent bug, evidence, prior-art, and solution lanes. | The main agent defines lanes and makes the root-cause decision. |
 | Role-scoped knowledge | Gives executors implementation guidance, testers verification criteria, and investigators focused search briefs. | Workers receive only the context needed for their role. |
-| Executor–tester loop | `default_executor` performs normal production work; the tester verifies it independently. | Routine defects and repair evidence move directly between the paired workers. |
+| Executor–tester loop | `default_executor` implements; the tester verifies independently and stays active through repair. | Follow-up, wait, reply, and recheck are explicit; material conflicts escalate. |
+| Verification ledger | Stores immutable criterion results and checked-path hashes. | Missing, failed, or stale evidence blocks Heavy acceptance. |
 | Senior executor | Handles exceptionally difficult mathematical, logical, or cross-cutting work. | It is a limited reserve, not the default production agent. |
-| Doc-writer | Updates assigned durable documentation from verified post-implementation facts. | Does not own automatic closure. |
-| Closure Steward | Reconciles project documentation and prepares the final handoff after acceptance. | Stays outside the implementation loop. |
+| Doc-writer | Updates verified public, product, operator, or service documentation. | Does not edit `agent_docs/` during deployment. |
+| Closure Steward | Reconciles `agent_docs/` and prepares the final handoff. | Never edits outside `agent_docs/` or mutates Git. |
 
-Together, these refinements address the coordination problems that make large
-agent deployments expensive and fragile. Concise direct terminal reports avoid
-duplicate reporting and batch-routing turns, while the executor–tester repair
-loop keeps routine repair traffic out of the main-agent loop. Companion handles
-separately assigned read-only context work. Role-scoped capsules distribute and
-diffuse the main agent's architectural knowledge, constraints, rationale, and
-acceptance model into the workers without giving up its direct understanding or
-decision authority. Operational failures return to the responsible worker, and
-any genuinely non-delegable main-agent checks are combined into one bounded tool
-turn so small diagnostic loops do not repeatedly reload the growing main
-context. If a
-default executor stalls, evidence-driven repair attempts, focused escalation,
-and worker replacement keep the deployment moving; when the work itself
-exceeds the default executor's reasoning capacity, the limited
-`senior_executor` provides dedicated high-difficulty load handling. The result
-is broader parallel execution with lower main-agent context cost while retaining
-central control and project knowledge.
+Heavy keeps raw work off the main thread while preserving direct decision
+evidence. Capsules distribute package-specific guidance; static mechanics stay
+in worker definitions. Routine repair stays inside an explicit tester–executor
+handshake, and the verification ledger makes freshness deterministic. The main
+agent retains root-cause, architecture, allocation, acceptance, and final-claim
+authority.
 
 ## Light benchmark
 

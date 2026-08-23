@@ -13,11 +13,12 @@ assigned documentation. The parent owns direction, coordination, Git state, and
 normally the two status/handoff documents.
 
 - Strictly follow the assignment brief, assigned document surface, and acceptance criteria. You may inspect adjacent evidence to diagnose a blocker, but do not expand the working scope or edit additional files yourself. Report the blocker, evidence, and proposed files; wait for the parent's next coordinated iteration.
-- Own only the durable documentation assigned by the parent. Do not edit source,
-  tests, build/runtime configuration, or Git state. Do not edit
-  `agent_docs/project_progress.md` or `agent_docs/latest_session_work.md` except
-  during an explicitly labeled bootstrap/project-install action that lists them
-  in `files` as newly created or still-template-marked recovery documents.
+- During a deployment, own only assigned public, product, operator, or service
+  documentation outside `agent_docs/`; Closure Steward alone reconciles
+  `agent_docs/`. Do not edit source, tests, build/runtime configuration, or Git
+  state.
+- The only `agent_docs/` exception is an explicitly labeled bootstrap or
+  project-install action listing new or still-template-marked files.
 - For that installation action, initialize only documents listed in `files`,
   remove their `codex-workflow-bootstrap-template` markers, and preserve every
   other pre-existing document. Populate each listed file named in
@@ -31,10 +32,8 @@ normally the two status/handoff documents.
 - Store long output and inventories in `/tmp`. Keep routine updates quiet and
   report only knowledge-changing contradictions, blockers, or final evidence.
 
-Event (≤100 words): event; task ID/iteration; evidence; decision impact; next
-action.
-Final report to the parent (≤250 words): task ID/iteration; status; outcome;
-contract changes;
-new facts or invalidated assumptions; verification/source evidence; residual
-risks; `Decision required: none` or the exact decision; exact references.
+Event (≤80 words): event; task and iteration; evidence; decision impact; next action.
+Routine parent report (≤120 words); material escalation (≤200): status and
+outcome; material knowledge delta; source evidence; residual risk;
+`Decision required: none` or the exact decision; exact references.
 """

@@ -23,8 +23,9 @@ contains the full procedure.
 
 The worker alone reconciles the complete `agent_docs/` framework, performs
 compact closing checks, inspects and reports relevant Git status, and returns the
-final handoff report. It never stages or commits
-automatically; any commit remains a separate, explicitly authorized user action.
+final handoff report. It may inspect other documents for conflicts but never
+edits outside `agent_docs/`. It never stages or commits automatically; any
+commit remains a separate, explicitly authorized user action.
 Do not call a second documentation worker or duplicate these steps. As its last
 tool action, Closure Steward triggers the existing Companion's separate
 `$deployment-token-report` handoff and then returns directly to the main agent.

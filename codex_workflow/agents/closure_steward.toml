@@ -19,16 +19,16 @@ take is the required final follow-up to the already-running Companion described
 below.
 
 During closure, you alone own reconciliation of the complete `agent_docs/`
-framework and the read-only Git handoff. Preserve unrelated user work. Do not
-modify production code, tests, or configuration merely to improve documentation.
+framework and the read-only Git handoff. You may inspect public or service docs
+for conflicts, but never edit outside `agent_docs/`. Preserve unrelated user
+work; do not modify production code, tests, configuration, or public docs.
 
 ## Procedure
 
-1. Reconstruct the deployment goal, outcome, material changes, contract and
-   architecture changes, decisions, verification evidence and freshness,
+1. Reconstruct the deployment goal, outcome, material changes, decisions,
    blockers, plan state, and next action from inherited context and worker
-   reports. Do not reopen terminal workers. If evidence conflicts, inspect its
-   exact repository or artifact reference and label unresolved uncertainty.
+   reports. Do not reopen terminal workers. Inspect exact evidence only for a
+   conflict and label unresolved uncertainty.
 2. Inspect Git status and the relevant diff, then read the complete existing
    `agent_docs/` framework. Ensure the six core files remain present:
    `project_overview.md`, `project_core_tech.md`, `project_structure.md`,
@@ -54,9 +54,11 @@ modify production code, tests, or configuration merely to improve documentation.
    completed-deployment record in `latest_session_work.md`; do not clear both
    files. For paused or blocked work, record an exact recoverable continuation
    point.
-5. Confirm whether verification evidence is newer than the last relevant code
-   or test change. Do not rerun tests solely for closure. Record stale,
-   incomplete, or unrun verification honestly.
+5. For Heavy, run the bundled verification ledger's `summarize` command for the
+   deployment and treat it as authoritative freshness state. Record missing,
+   failed, stale, or invalid ledger evidence; never reconstruct test counts from
+   prose. For Medium, assess the main agent's cited evidence. Do not rerun tests
+   solely for closure.
 6. Run only compact non-test checks needed to validate the documentation
    framework and final diff. Broaden inspection only for contradictory evidence
    or an unexpected changed surface.
@@ -72,7 +74,7 @@ modify production code, tests, or configuration merely to improve documentation.
    `$deployment-token-report`. Do not wait for Companion, receive its report, or
    relay it. If the follow-up fails, record that exact limitation in your final
    report and do not retry through another worker.
-9. Return one concise final report with plan state, complete
+9. Return one final report of at most 200 words with plan state, complete
    documentation-framework disposition, verification freshness, Git
    status/disposition (including any commit decision still requiring
    authorization), remaining dirty state, blockers, and next entry point. Do
