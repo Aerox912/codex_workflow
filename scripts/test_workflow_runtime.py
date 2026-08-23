@@ -425,6 +425,20 @@ class PlatformSettingsTests(unittest.TestCase):
         )[0]
         self.assertNotIn("enabled = true", v2_section)
 
+    def test_toml_patch_removes_legacy_agents_alias(self) -> None:
+        original = (
+            "[agents]\n"
+            "max_threads = 8\n"
+            "max_depth = 1\n"
+            "job_max_runtime_seconds = 1800\n"
+        )
+        rendered = patch_codex_settings(original)
+        self.assertNotIn("max_threads", rendered)
+        self.assertIn("max_depth = 1", rendered)
+        self.assertIn("job_max_runtime_seconds = 1800", rendered)
+        self.assertEqual(rendered.count("max_concurrent_threads_per_session"), 1)
+        self.assertIn("max_concurrent_threads_per_session = 20", rendered)
+
     def test_toml_patch_removes_owned_v2_gate(self) -> None:
         rendered = patch_codex_settings(
             "[features.multi_agent_v2]\nenabled = false\n"
@@ -888,12 +902,12 @@ class LifecycleIntegrationTests(unittest.TestCase):
         )
         incoming_root = self.root / "incoming" / "codex_workflow"
         shutil.copytree(PACKAGE, incoming_root, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
-        (incoming_root / "VERSION").write_text("1.1.6\n", encoding="utf-8")
+        (incoming_root / "VERSION").write_text("1.1.7\n", encoding="utf-8")
         user_agents = (incoming_root / "user_AGENTS.md").read_text(encoding="utf-8")
         (incoming_root / "user_AGENTS.md").write_text(
             user_agents.replace(
                 f"codex-workflow-version: {PACKAGE_VERSION}",
-                "codex-workflow-version: 1.1.6",
+                "codex-workflow-version: 1.1.7",
             ),
             encoding="utf-8",
         )
@@ -901,7 +915,7 @@ class LifecycleIntegrationTests(unittest.TestCase):
         plan_update(incoming, self.runtime, self.project).apply()
         entry = self.project.active.read_text(encoding="utf-8")
         self.assertEqual(extract(entry, PROJECT_LOCAL), "Local policy.")
-        self.assertEqual((self.runtime.runtime / "VERSION").read_text(), "1.1.6\n")
+        self.assertEqual((self.runtime.runtime / "VERSION").read_text(), "1.1.7\n")
         self.assertNotIn(
             "local worker override",
             (self.runtime.agents / "default_executor.toml").read_text(encoding="utf-8"),
@@ -1212,12 +1226,12 @@ class LifecycleIntegrationTests(unittest.TestCase):
             incoming_root,
             ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
         )
-        (incoming_root / "VERSION").write_text("1.1.6\n", encoding="utf-8")
+        (incoming_root / "VERSION").write_text("1.1.7\n", encoding="utf-8")
         user_agents = (incoming_root / "user_AGENTS.md").read_text(encoding="utf-8")
         (incoming_root / "user_AGENTS.md").write_text(
             user_agents.replace(
                 f"codex-workflow-version: {PACKAGE_VERSION}",
-                "codex-workflow-version: 1.1.6",
+                "codex-workflow-version: 1.1.7",
             ),
             encoding="utf-8",
         )
@@ -1241,7 +1255,7 @@ class LifecycleIntegrationTests(unittest.TestCase):
         )
         self.assertEqual(completed.returncode, 0, completed.stderr)
         summary = json.loads(completed.stdout)
-        self.assertEqual(summary["details"]["to_version"], "1.1.6")
+        self.assertEqual(summary["details"]["to_version"], "1.1.7")
         self.assertTrue(summary["applied"])
 
     def test_external_update_delegates_before_launcher_validation(self) -> None:
@@ -1252,7 +1266,7 @@ class LifecycleIntegrationTests(unittest.TestCase):
             incoming_root,
             ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
         )
-        (incoming_root / "VERSION").write_text("1.1.6\n", encoding="utf-8")
+        (incoming_root / "VERSION").write_text("1.1.7\n", encoding="utf-8")
 
         argv = [
             str(PACKAGE / "workflow.py"),
