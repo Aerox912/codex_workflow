@@ -33,7 +33,7 @@ The durable project documents are under `agent_docs/`:
 - `project_core_tech.md`: concise special technology or architecture notes.
 - `project_structure.md`: layout, modules, components, and ownership.
 - `project_progress.md`: goal, overall progress, current position, next milestone.
-- `project_diary.md`: lasting decisions, discarded approaches, and lessons.
+- `project_diary.md`: lasting decisions, discarded approaches, and lessons. This is experience accumulated during the project development process.
 - `latest_session_work.md`: detailed handoff evidence and continuation point.
 - Module-specific documents, when present.
 
@@ -127,10 +127,10 @@ ends.
   Medium or Heavy deployment, run the automatic handoff defined in
   `closure_steward.md` exactly once. Its worker inherits recent main-agent
   context and performs the complete documentation-framework update. The
-  handoff is not a user command. Closure Steward triggers the persistent
-  Companion's `$deployment-token-report` request as its last tool action. Wait
-  for both terminal reports and print the six-column table in the final
-  response; do not spend a separate main-agent rollout dispatching Companion.
+  handoff is not a user command. Closure Steward seals its closure work, invokes
+  `$deployment-token-report` directly, and returns its handoff with the
+  six-column table. Wait for that one worker and print both results in the final
+  response; do not dispatch Companion for reporting.
 
 ## Platform Paths
 

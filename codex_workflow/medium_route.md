@@ -77,12 +77,11 @@ input. Never present partial work as complete.
 
 Before the final response that completes, pauses, or blocks the deployment,
 follow `~/.codex/codex_workflow/closure_steward.md` exactly once and wait for its
-fresh worker. Pass only the route, a unique deployment ID, closure state, and
-the persistent Companion target. The automatic handoff context fork supplies
-the main-agent history. Closure Steward triggers Companion's
-`$deployment-token-report` request as its last tool action. Wait for both
-workers, relay the closure result without duplicating its documentation, status,
-or Git-status work, and print Companion's exact six-column table defined in
-the deployment-token-report contract. Do not issue a separate Companion request.
+fresh worker. Pass only the route, a unique deployment ID, and closure state.
+The automatic handoff context fork supplies the main-agent history. Closure
+Steward seals its closure work, invokes `$deployment-token-report` directly,
+and returns the exact six-column table with its handoff. Relay both without
+duplicating its documentation, status, Git-status, or reporting work. Do not
+dispatch Companion for the report.
 A later substantive
 deployment receives a new ID, handoff, and report, even in the same session.

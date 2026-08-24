@@ -179,14 +179,13 @@ substantive Medium or Heavy deployment automatically creates a
 workflow-owned documentation handoff before its final response. Its fresh Luna
 xhigh worker receives the fixed finite handoff context and alone reconciles the
 complete `agent_docs/` framework, reports read-only Git status and handoff
-information. As its final action, it triggers Companion to invoke the installed
-`$deployment-token-report` skill after confirming closure is terminal. Companion
-returns a six-column table for every used worker role and the main agent:
-quantity, rollouts, cached input, total input, and output tokens. The main agent
-waits for both reports and prints the table without a separate dispatch rollout. No worker
-stages or commits automatically, and no main-maintained usage ledger is
-required. Questions and small or odd bounded tasks use the direct worker-free
-path and emit no table.
+information, then directly invokes the installed `$deployment-token-report`
+skill. Closure Steward returns a six-column table for every used worker role
+and the main agent: quantity, rollouts, cached input, total input, and output
+tokens. The main agent waits for that single handoff and prints the table
+without another dispatch. No worker stages or commits automatically, and no
+main-maintained usage ledger is required. Questions and small or odd bounded
+tasks use the direct worker-free path and emit no table.
 
 ## Part 2 — Installed-file map
 
@@ -213,7 +212,7 @@ and the current project as follows:
 │   └── closure_steward.toml
 ├── skills/
 │   └── deployment-token-report/
-│       ├── SKILL.md                        # Companion reporting procedure
+│       ├── SKILL.md                        # Closure reporting procedure
 │       ├── agents/openai.yaml              # skill UI metadata
 │       └── scripts/report_tokens.py        # read-only rollout parser
 └── codex_workflow/
@@ -411,9 +410,7 @@ flowchart LR
     W -->|concise documentation report| M
 
     M -->|route + deployment ID<br/>+ closure state| X
-    X -->|trigger token report| C
-    X -->|final handoff report| M
-    C -->|six-column rollout token table| M
+    X -->|final handoff + token table| M
 
     classDef center fill:#172554,color:#fff,stroke:#60a5fa,stroke-width:3px;
     classDef wrapper fill:#ecfeff,stroke:#0891b2,stroke-width:2px;
@@ -440,9 +437,9 @@ The fixed role set is:
 | `senior_executor` | Complex core reasoning or exceptionally difficult cross-cutting implementation | Yes, within its work package; fixed to at most one instance |
 | `tester` | Independent tests, ledger evidence, and failure analysis | Test/fixture scope; waits through routine executor repair |
 | `doc-writer` | Verified public/product/operator/service docs and required installation initialization | Outside `agent_docs/`, except listed bootstrap recovery files |
-| Companion | Medium context secretary or Heavy orchestration secretary; token-report skill | No; one persistent route-aware worker |
+| Companion | Medium context secretary or Heavy orchestration secretary | No; one persistent route-aware worker |
 | `investigator` | Disposable Luna leaf agent for one bounded code, evidence, dependency, documentation, log, or external-solution lane | No |
-| `closure_steward` | Reconciles `agent_docs/`, verification freshness, and Git status/handoff | No edits outside `agent_docs/`; no Git mutation |
+| `closure_steward` | Reconciles `agent_docs/`, verification freshness, Git status/handoff, and token report | No edits outside `agent_docs/`; no Git mutation |
 
 The role names are stable while their model bindings live only in the worker
 TOMLs. The package settings, route contracts, and worker definitions jointly
@@ -568,16 +565,15 @@ with the handoff contract's finite context fork. This preserves its Luna xhigh
 model while inheriting recent main-agent context. Without a parent-built capsule,
 it reconciles `agent_docs/`, consumes Heavy's deterministic verification
 summary, performs compact checks, and reports read-only Git state. It never
-edits public docs or Git. As its last tool action, Closure Steward triggers Companion,
-which waits for Closure Steward to become terminal and invokes the installed
-`$deployment-token-report` skill for the same deployment ID. The skill resolves
-the Companion's parent thread and deployment boundary from rollout metadata and
-returns exactly six columns: `Agent`, `Quantity` (distinct task names),
+edits public docs or Git. After sealing that work, it directly invokes the
+installed `$deployment-token-report` skill for the same deployment ID. The
+skill resolves the Steward's parent thread and the exact Companion deployment
+marker from rollout metadata and returns exactly six columns: `Agent`,
+`Quantity` (distinct task names),
 `Rollouts`, `Cached input`, `Input`, and `Output`. The main agent prints the
-table without a separate main-agent dispatch rollout. Companion has no
-documentation-closure responsibility; Closure Steward only triggers and has no
-token-reporting responsibility. Direct questions and small or odd
-bounded tasks create no worker, handoff, or table.
+table without another dispatch. The cutoff is when the parser starts, so the
+Steward's short final response is intentionally outside the totals. Direct
+questions and small or odd bounded tasks create no worker, handoff, or table.
 
 ## Part 5 — Component hierarchy and ownership
 

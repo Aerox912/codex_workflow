@@ -80,24 +80,14 @@ inactive while retained facts remain available.
   environment; implement fixes; edit tests or documentation; or make final
   decisions. Do not allocate, direct, retry, or reply to workers.
 
-## Required Post-Deployment Token Report
+## Deployment Boundary Marker
 
 The first brief for every deployment contains the exact standalone marker
 `codex-workflow-deployment-start: <deployment_id>`. Retain it.
 
-After completing its closure work, Closure Steward sends one request naming the
-deployment ID and its closure task name. The parent does not dispatch this
-request. Confirm with agent lifecycle state that the named Closure Steward is
-terminal before invoking `$deployment-token-report`; if it is still running,
-use bounded waiting and recheck, never open-ended polling. Read the installed
-skill completely, run its bundled deterministic parser, and return its
-six-column Markdown table verbatim directly to the parent. This read-only skill
-call is required for every substantive Medium or Heavy deployment, including
-complete, paused, and blocked closures. It does not apply to the direct fast
-path. Do not infer missing values, calculate prices, maintain a parallel ledger,
-inspect message prose beyond the exact marker, or reformat the generated table.
-If closure terminality cannot be confirmed or the parser fails or warns that
-evidence is incomplete, return that limitation instead of guessed statistics.
+Closure Steward uses that marker to scope the deterministic post-deployment
+token report. Do not invoke `$deployment-token-report`, calculate parallel
+statistics, or accept a post-closure reporting request from the main agent.
 
 For a director-brief request return at most 160 words: outcome; matters resolved; only material
 facts, contract changes, conflicts, risks, or missing proof; recommendation;

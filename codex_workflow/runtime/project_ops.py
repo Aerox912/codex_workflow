@@ -439,6 +439,8 @@ def plan_project_remove(
         local_instructions = extract(current, PROJECT_LOCAL)
         if local_instructions:
             mutations.append(text_mutation(project.active, local_instructions.rstrip() + "\n"))
+            if entry == project.disabled:
+                mutations.append(Mutation(entry, None))
             warnings.append(
                 f"workflow wrapper will be removed and project-local instructions restored to {project.active}"
             )

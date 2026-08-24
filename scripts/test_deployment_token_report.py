@@ -106,6 +106,7 @@ class DeploymentTokenReportTests(unittest.TestCase):
         self.sessions.mkdir(parents=True)
         self.root_id = "root-session"
         self.companion_id = "companion-session"
+        self.closure_id = "closure"
 
     def tearDown(self) -> None:
         self.temporary.cleanup()
@@ -193,10 +194,10 @@ class DeploymentTokenReportTests(unittest.TestCase):
             ],
         )
         self.write_session(
-            "closure",
+            self.closure_id,
             [
                 metadata(
-                    "closure",
+                    self.closure_id,
                     "2026-08-23T10:04:30Z",
                     parent=self.root_id,
                     task="/root/closure_steward_major_task",
@@ -228,7 +229,7 @@ class DeploymentTokenReportTests(unittest.TestCase):
                 "--sessions-root",
                 str(self.sessions.parents[2]),
                 "--caller-session-id",
-                self.companion_id,
+                self.closure_id,
                 "--end-time",
                 "2026-08-23T10:06:00Z",
                 *extra,
@@ -293,7 +294,7 @@ class DeploymentTokenReportTests(unittest.TestCase):
                 "--sessions-root",
                 str(self.sessions.parents[2]),
                 "--caller-session-id",
-                self.companion_id,
+                self.closure_id,
                 "--end-time",
                 "2026-08-23T10:06:00Z",
             ],
@@ -304,6 +305,27 @@ class DeploymentTokenReportTests(unittest.TestCase):
         self.assertEqual(completed.returncode, 2)
         self.assertIn("was not found", completed.stderr)
         self.assertEqual(completed.stdout, "")
+
+    def test_companion_cannot_run_the_closure_owned_report(self) -> None:
+        self.build_fixture()
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                str(SCRIPT),
+                "--deployment-id",
+                "major_task",
+                "--sessions-root",
+                str(self.sessions.parents[2]),
+                "--caller-session-id",
+                self.companion_id,
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(completed.returncode, 2)
+        self.assertIn("not a spawned Closure Steward", completed.stderr)
 
     def test_direct_root_mode_supports_deterministic_diagnostics(self) -> None:
         self.build_fixture()

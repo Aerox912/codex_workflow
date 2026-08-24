@@ -223,12 +223,10 @@ risk. Reject evidence-free reports; do not rerun fresh, uncontradicted checks.
 After all package workers reach a terminal state, and before the final response
 that completes, pauses, or blocks the deployment, follow
 `~/.codex/codex_workflow/closure_steward.md` exactly once. Pass only the route, a
-unique deployment ID, closure state, and the persistent Companion target; the
-automatic handoff context fork supplies the main-agent history. Closure Steward
-triggers Companion's `$deployment-token-report` request as its last tool action.
-Wait for both workers to become terminal, relay the fresh closure report without
-duplicating its work, and print Companion's exact six-column table defined in
-the deployment-token-report contract. Do not issue a separate Companion request. This ordering
-includes Closure Steward usage without an extra main-agent dispatch rollout. A later
-substantive deployment gets a new ID, handoff, and report. The direct fast path
-calls no worker, including Companion or Closure Steward, and emits no table.
+unique deployment ID, and closure state; the automatic handoff context fork
+supplies the main-agent history. Closure Steward seals its closure work, invokes
+`$deployment-token-report` directly, and returns the exact six-column table with
+its handoff. Relay both without duplicating the work; do not dispatch Companion
+for the report. A later substantive deployment gets a new ID, handoff, and report. The
+direct fast path calls no worker, including Companion or Closure Steward, and
+emits no table.

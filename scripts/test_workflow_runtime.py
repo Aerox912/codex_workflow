@@ -116,8 +116,8 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("fast path also skips\nClosure Steward", heavy)
         self.assertIn("before the final response", heavy)
         self.assertIn("automatic handoff context fork", heavy)
-        self.assertIn("without an extra main-agent dispatch rollout", heavy)
-        self.assertIn("Do not issue a separate Companion request", heavy)
+        self.assertIn("Closure Steward seals its closure work", heavy)
+        self.assertIn("do not dispatch Companion", heavy)
         self.assertIn("calls `followup_task`", heavy)
         self.assertIn("focused evidence with `send_message`", heavy)
         self.assertIn("does\nnot relay or rediagnose", heavy)
@@ -148,7 +148,8 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("Before the final response", medium)
         self.assertIn("complete documentation framework", medium)
         self.assertIn("`$deployment-token-report`", medium)
-        self.assertIn("Do not issue a separate Companion request", medium)
+        self.assertIn("Closure\nSteward seals its closure work", medium)
+        self.assertIn("Do not\ndispatch Companion", medium)
         self.assertIn("follow\n`investigation_team.md`", medium)
         self.assertIn("terminal report each directly to the main agent", medium)
         self.assertIn("alone\npasses the root-cause gate", medium)
@@ -157,8 +158,9 @@ class MarkerTests(unittest.TestCase):
 
         agents_policy = policies["AGENTS.md"]
         self.assertIn("handoff is not a user command", agents_policy)
-        self.assertIn("`$deployment-token-report` request", agents_policy)
-        self.assertIn("do not spend a separate main-agent rollout", agents_policy)
+        self.assertIn("`$deployment-token-report` directly", agents_policy)
+        self.assertIn("Closure Steward seals its closure work", agents_policy)
+        self.assertIn("do not dispatch Companion", agents_policy)
         self.assertNotIn("session-model requirement", agents_policy)
         self.assertIn("read-only investigators", agents_policy)
         self.assertIn("directly reads task-critical", agents_policy)
@@ -212,13 +214,16 @@ class MarkerTests(unittest.TestCase):
         self.assertNotIn("compact usage ledger", handoff_contract)
         self.assertNotIn("| Worker name | Quantity | Number of calls |", handoff_worker)
         self.assertIn("Companion", handoff_worker)
-        self.assertIn("`$deployment-token-report`", handoff_worker)
-        self.assertIn("single `followup_task`", handoff_worker)
-        self.assertIn("persistent Companion target", handoff_worker)
-        self.assertIn("Do not wait for Companion", handoff_worker)
+        self.assertIn("`$deployment-token-report`", handoff_contract)
+        self.assertIn("final deterministic token report", handoff_worker)
+        self.assertIn("seal the closure state", handoff_worker)
+        self.assertIn("Never\n   derive worker statistics yourself or trigger Companion", handoff_worker)
+        self.assertNotIn("single `followup_task`", handoff_worker)
+        self.assertNotIn("persistent Companion target", handoff_worker)
+        self.assertNotIn("Do not wait for Companion", handoff_worker)
         self.assertIn("read the complete existing", handoff_worker)
         self.assertIn("Do not create another worker", handoff_worker)
-        self.assertIn("not derive or report worker statistics", handoff_worker)
+        self.assertIn("preserve its exact six-column table", handoff_worker)
         self.assertIn("never edit outside `agent_docs/`", handoff_worker)
         self.assertIn("verification ledger's `summarize`", handoff_worker)
         for framework_file in (
@@ -277,8 +282,9 @@ class MarkerTests(unittest.TestCase):
         )
         self.assertIn("secretary and office", companion_worker)
         self.assertIn("complete routine read-only context work", companion_worker)
-        self.assertIn("Required Post-Deployment Token Report", companion_worker)
-        self.assertIn("six-column", companion_worker)
+        self.assertIn("Deployment Boundary Marker", companion_worker)
+        self.assertIn("Closure Steward uses that marker", companion_worker)
+        self.assertIn("Do not invoke `$deployment-token-report`", companion_worker)
         self.assertIn("explicit route-transition request", companion_worker)
         self.assertIn("In Medium, perform routine context support", companion_worker)
         self.assertIn("In Heavy, perform a distribution or ledger-readiness", companion_worker)
@@ -932,6 +938,21 @@ class LifecycleIntegrationTests(unittest.TestCase):
         ):
             self.assertNotIn(entry, remaining_gitignore)
 
+    def test_remove_restores_project_local_instructions_from_disabled_entry(self) -> None:
+        self.bootstrap(existing_agents="# Original project instructions\nKeep this.\n")
+        plan_enable(self.project, enable=False).apply()
+        self.assertFalse(self.project.active.exists())
+        self.assertTrue(self.project.disabled.exists())
+
+        plan_remove(self.runtime, self.project).apply()
+
+        self.assertEqual(
+            self.project.active.read_text(encoding="utf-8"),
+            "# Original project instructions\nKeep this.\n",
+        )
+        self.assertFalse(self.project.disabled.exists())
+        self.assertFalse(self.project.workflow_dir.exists())
+
     def test_unactivated_workers_are_materialized_for_codex(self) -> None:
         self.bootstrap()
         for worker in self.package.worker_names:
@@ -993,12 +1014,12 @@ class LifecycleIntegrationTests(unittest.TestCase):
         )
         incoming_root = self.root / "incoming" / "codex_workflow"
         shutil.copytree(PACKAGE, incoming_root, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
-        (incoming_root / "VERSION").write_text("1.1.8\n", encoding="utf-8")
+        (incoming_root / "VERSION").write_text("1.1.9\n", encoding="utf-8")
         user_agents = (incoming_root / "user_AGENTS.md").read_text(encoding="utf-8")
         (incoming_root / "user_AGENTS.md").write_text(
             user_agents.replace(
                 f"codex-workflow-version: {PACKAGE_VERSION}",
-                "codex-workflow-version: 1.1.8",
+                "codex-workflow-version: 1.1.9",
             ),
             encoding="utf-8",
         )
@@ -1006,7 +1027,7 @@ class LifecycleIntegrationTests(unittest.TestCase):
         plan_update(incoming, self.runtime, self.project).apply()
         entry = self.project.active.read_text(encoding="utf-8")
         self.assertEqual(extract(entry, PROJECT_LOCAL), "Local policy.")
-        self.assertEqual((self.runtime.runtime / "VERSION").read_text(), "1.1.8\n")
+        self.assertEqual((self.runtime.runtime / "VERSION").read_text(), "1.1.9\n")
         self.assertNotIn(
             "local worker override",
             (self.runtime.agents / "default_executor.toml").read_text(encoding="utf-8"),
@@ -1420,12 +1441,12 @@ class LifecycleIntegrationTests(unittest.TestCase):
             incoming_root,
             ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
         )
-        (incoming_root / "VERSION").write_text("1.1.8\n", encoding="utf-8")
+        (incoming_root / "VERSION").write_text("1.1.9\n", encoding="utf-8")
         user_agents = (incoming_root / "user_AGENTS.md").read_text(encoding="utf-8")
         (incoming_root / "user_AGENTS.md").write_text(
             user_agents.replace(
                 f"codex-workflow-version: {PACKAGE_VERSION}",
-                "codex-workflow-version: 1.1.8",
+                "codex-workflow-version: 1.1.9",
             ),
             encoding="utf-8",
         )
@@ -1449,7 +1470,7 @@ class LifecycleIntegrationTests(unittest.TestCase):
         )
         self.assertEqual(completed.returncode, 0, completed.stderr)
         summary = json.loads(completed.stdout)
-        self.assertEqual(summary["details"]["to_version"], "1.1.8")
+        self.assertEqual(summary["details"]["to_version"], "1.1.9")
         self.assertTrue(summary["applied"])
 
     def test_external_update_delegates_before_launcher_validation(self) -> None:
@@ -1460,7 +1481,7 @@ class LifecycleIntegrationTests(unittest.TestCase):
             incoming_root,
             ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
         )
-        (incoming_root / "VERSION").write_text("1.1.8\n", encoding="utf-8")
+        (incoming_root / "VERSION").write_text("1.1.9\n", encoding="utf-8")
 
         argv = [
             str(PACKAGE / "workflow.py"),

@@ -172,19 +172,20 @@ def record_time(record: dict[str, Any], *, path: Path) -> datetime:
 
 
 def find_boundary(
-    caller: Session,
+    marker_sources: Iterable[Session],
     root: Session,
     deployment_id: str,
     warnings: list[str],
 ) -> datetime:
     marker = f"{MARKER_PREFIX} {deployment_id}"
     marker_times: set[datetime] = set()
-    for record in iter_jsonl(caller.path, warnings):
-        if any(marker in text.splitlines() for text in user_texts(record)):
-            marker_times.add(record_time(record, path=caller.path))
+    for source in marker_sources:
+        for record in iter_jsonl(source.path, warnings):
+            if any(marker in text.splitlines() for text in user_texts(record)):
+                marker_times.add(record_time(record, path=source.path))
     if not marker_times:
         raise ReportError(
-            f"deployment marker {marker!r} was not found in Companion rollout"
+            f"deployment marker {marker!r} was not found in a Companion rollout"
         )
     if len(marker_times) != 1:
         raise ReportError(f"deployment marker {marker!r} is ambiguous")
@@ -403,12 +404,21 @@ def main(argv: list[str] | None = None) -> int:
             caller = index.get(caller_id)
             if caller is None:
                 raise ReportError(f"caller session was not found: {caller_id}")
-            if caller.parent_id is None:
-                raise ReportError("the caller is not a spawned Companion session")
+            if caller.parent_id is None or caller.role != "closure_steward":
+                raise ReportError("the caller is not a spawned Closure Steward session")
             root = index.get(caller.parent_id)
             if root is None:
-                raise ReportError(f"parent main-agent session is missing: {caller.parent_id}")
-            start = find_boundary(caller, root, args.deployment_id, warnings)
+                raise ReportError(
+                    f"parent main-agent session is missing: {caller.parent_id}"
+                )
+            marker_sources = (
+                session
+                for session in descendants(root.session_id, index)
+                if session.role == "companion"
+            )
+            start = find_boundary(
+                marker_sources, root, args.deployment_id, warnings
+            )
         if start > end:
             raise ReportError("deployment start is after report cutoff")
         rows = compile_rows(root, index, start, end, warnings)
