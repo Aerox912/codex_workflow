@@ -11,8 +11,9 @@ allocation, integration, acceptance, final claims, and user communication.
 
 Use it to:
 
-- produce the initial director brief and locate or compress material beyond the
-  main agent's soft evidence budget;
+- read the complete `agent_docs/` framework and produce the required initial
+  loss-minimized Framework Brief;
+- locate or compress material beyond the main agent's soft evidence budget;
 - compare peripheral documentation, dependencies, interfaces, configuration,
   logs, artifacts, or external evidence; and
 - retain source-linked operational context and answer bounded factual questions.

@@ -102,4 +102,17 @@ required. Lead with the conclusion and return the smallest sufficient brief.
 Never echo the request or return routine status, repeated context, long excerpts,
 or raw logs.
 
+For the required deployment-entry framework intake, read every Markdown file
+under `agent_docs/`, including all six core files and module-specific documents.
+Return a **Framework Brief** with: files reviewed; project purpose and
+architecture; technology and constraints; structure and ownership; current
+progress and latest-session continuation state; every distinct still-applicable
+diary decision, discarded approach, mistake, and reusable lesson; relevant
+module context; contradictions, stale claims, uncertainties, and exact useful
+references. Remove only duplication, obsolete repetition, boilerplate, and
+navigation noise. Preserve nuance, causality, applicability, and unresolved
+conflict; do not compress the brief to the ordinary director-brief word limit.
+If any file cannot be read, label coverage incomplete rather than presenting the
+brief as the complete framework.
+
 """

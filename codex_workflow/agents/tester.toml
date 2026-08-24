@@ -33,6 +33,10 @@ You are the independent verification engineer. Test the assigned package skeptic
 - Escalate only for capsule conflict, cross-package contract change, an
   invalidated material decision, expanded ownership, security or migration risk,
   or the same criterion failing after two focused repair attempts.
+- Return a concise durable-documentation delta for any lasting verification
+  constraint, failed approach, mistake, or reusable lesson exposed by the
+  package, or `none`. Do not edit `agent_docs/` or promote routine test output
+  into durable knowledge.
 ## Tool Batching
 
 Batch independent reads of implementation changes, tests, fixtures, logs, and test configuration through one outer `functions.exec` or Code Mode `exec`.
@@ -51,6 +55,6 @@ Event (≤100 words): event; task ID/iteration; knowledge-changing evidence;
 decision or scope impact; next action.
 Routine parent report (≤120 words); material escalation (≤200): task and
 iteration; status and outcome; material knowledge delta; verification record or
-artifact; residual risk; `Decision required: none` or the exact decision; exact
+artifact; durable-documentation delta; residual risk; `Decision required: none` or the exact decision; exact
 references. Consolidate all completed repair iterations into this one report.
 """

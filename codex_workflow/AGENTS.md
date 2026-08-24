@@ -33,7 +33,8 @@ The durable project documents are under `agent_docs/`:
 - `project_core_tech.md`: concise special technology or architecture notes.
 - `project_structure.md`: layout, modules, components, and ownership.
 - `project_progress.md`: goal, overall progress, current position, next milestone.
-- `project_diary.md`: lasting decisions, discarded approaches, and lessons. This is experience accumulated during the project development process.
+- `project_diary.md`: distilled project experience—decisions, discarded
+  approaches, mistakes, and reusable lessons.
 - `latest_session_work.md`: detailed handoff evidence and continuation point.
 - Module-specific documents, when present.
 
@@ -46,6 +47,13 @@ framework; no other worker participates in that closure update.
 Keep raw logs, temporary reasoning, and short-lived checkpoints out of durable
 documents. Never delete a main project document without warning the user and
 receiving a second explicit confirmation.
+
+Keep the framework compact enough for mandatory deployment entry. Give each
+fact one canonical home and cross-reference it instead of repeating it. In
+particular, `project_diary.md` is distilled project experience, not a session
+log or changelog: retain distinct decisions, discarded approaches, mistakes,
+and reusable lessons that can change future work; consolidate repetition and
+remove obsolete wording without losing still-applicable knowledge.
 
 ## Route Selection
 
@@ -87,6 +95,17 @@ ends.
   ```text
   codex-workflow-deployment-start: <deployment_id>
   ```
+- Before planning or dispatch, consume the complete Project Documentation
+  Framework: all six core `agent_docs/` files and every module-specific
+  document. Normally ask Companion to read them all and return the loss-minimized
+  framework brief defined in its worker contract. That brief may remove only
+  duplication, obsolete repetition, and navigation noise; it must preserve
+  every distinct fact, decision, discarded approach, reusable lesson,
+  constraint, progress item, blocker, next action, uncertainty, and useful
+  reference. Verify its file inventory and directly read any missing,
+  contradictory, ambiguous, or decision-critical source. If Companion is
+  unavailable or its coverage is incomplete, read the complete framework
+  directly before continuing.
 - If the selected route changes, send the same Companion an explicit transition
   brief naming the new route; previous route-specific duties become inactive.
   Never create a second Companion merely because the route changed.
@@ -96,9 +115,10 @@ ends.
   than acknowledging or analyzing routine completions individually. Use
   Companion separately for assigned read-only context work; it is not a
   worker-report relay.
-- The main agent directly reads task-critical project documentation, relevant
-  source paths and contracts, and decisive failure evidence. It owns defect
-  identification, root-cause adjudication, architecture, scope, and final claims.
+- After complete framework intake, the main agent directly reads relevant
+  source paths, contracts, exact decision-critical documentation, and decisive
+  failure evidence. It owns defect identification, root-cause adjudication,
+  architecture, scope, and final claims.
   At each gate, start with the owning contract, decisive source excerpt, and
   decisive failure or verification artifact; exceed that soft budget only when
   conflict, uncertainty, or risk requires it.

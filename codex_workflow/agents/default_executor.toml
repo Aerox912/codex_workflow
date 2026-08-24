@@ -38,6 +38,10 @@ architecture, cross-package coordination, Git state, and shared status files.
   migration risk, or repeated failure.
 - Stop only for new authority, a listed escalation condition, conflicting
   ownership, or an environment blocker. Report evidence and the decision needed.
+- Return a concise durable-documentation delta: only a lasting project fact,
+  decision consequence, discarded approach, mistake, or reusable lesson that
+  should survive this package, or `none`. Do not edit `agent_docs/` or report
+  chronology and raw implementation detail as durable knowledge.
 
 ## Tool Batching
 
@@ -55,7 +59,7 @@ Event (≤100 words): event; task ID/iteration; knowledge-changing evidence;
 decision or scope impact; next action.
 Routine parent report (≤120 words); material escalation (≤200): task and
 iteration; status and outcome; material knowledge delta; verification record or
-artifact; residual risk; `Decision required: none` or the exact decision; exact
+artifact; durable-documentation delta; residual risk; `Decision required: none` or the exact decision; exact
 references. A repair iteration reports only that evidence was sent to the tester
 unless a main-owned decision is required.
 """

@@ -19,9 +19,11 @@ during automatic closure; it does not implement or verify the task.
 
 Use Companion to protect main-agent context and attention. Give it routine
 read-only questions and peripheral or unfamiliar context. It resolves bounded
-routine matters, retains supporting detail, and returns a director brief. The
-main agent directly reads the task's Core Context Set and every investigator
-terminal report, and remains responsible for source it edits, defect
+routine matters and retains supporting detail. At deployment entry, require its
+loss-minimized Framework Brief covering every `agent_docs/` document; verify the
+inventory and resolve incomplete or conflicting coverage before planning. The
+main agent then directly reads exact task-critical documentation, the rest of
+the task's Core Context Set, and every investigator terminal report, and remains responsible for source it edits, defect
 identification, material acceptance decisions, critical evidence, and final
 claims.
 

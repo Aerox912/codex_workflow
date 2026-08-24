@@ -57,12 +57,11 @@ conflict, material uncertainty, or high risk.
 
 ## Investigation and Planning
 
-Initialize Companion as required by `heavy_companion.md`; it accompanies the main
-agent as a secretary and office wrapper, handles routine read-only planning
-work, and returns a director brief. Use that brief to target direct inspection
-of the Core Context Set, then form the architecture, acceptance matrix,
-dependency order, ownership map, and package guidance without replaying raw
-operational discovery.
+Initialize Companion under `heavy_companion.md`. It first returns the
+loss-minimized Framework Brief covering every `agent_docs/` document; verify its
+inventory and resolve incomplete or conflicting coverage. Then directly inspect
+exact task-critical documentation and the rest of the Core Context Set before
+forming architecture, acceptance, dependencies, ownership, and package guidance.
 
 For serious or ambiguous issues, follow `investigation_team.md` before
 allocating implementation packages. The main agent frames independent lanes,
@@ -104,6 +103,9 @@ capsule adds only package-specific knowledge:
 2. Main-approved decisions, recommended approach, and ordered reference/change/rationale/check steps.
 3. Interfaces, dependencies, invariant, and package-specific pitfalls.
 4. Acceptance, regression, and package-specific escalation boundaries.
+5. Expected durable-documentation delta—lasting facts, decision consequences,
+   discarded approaches, reusable lessons, or `none`—for Closure Steward;
+   workers do not edit `agent_docs/`.
 
 This concise sequence still distributes the main agent's implementation
 guidance. Give `senior_executor` unresolved decision context and constraints
@@ -187,7 +189,7 @@ Each parent report is the smallest sufficient knowledge delta:
 
 ```text
 Status | Outcome | Material knowledge delta | Verification record/artifact
-Residual risk | Decision required | Exact references
+Durable documentation delta | Residual risk | Decision required | Exact references
 ```
 
 Use `Decision required: none` explicitly. A routine success is at most 120

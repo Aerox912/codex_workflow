@@ -27,7 +27,13 @@ normally the two status/handoff documents.
   leaving template-only content. When `files` is empty, perform only a read-only
   completeness check of the framework. This exception ends when installation
   finishes.
-- Keep updates proportional. Use overview for project-wide behavior, structure for ownership/layout, diary for significant dated decisions, and module docs for scoped contracts or usage.
+- Keep updates proportional and give each fact one canonical home; use concise
+  cross-references instead of repeating content across the framework. Use
+  overview for project-wide behavior, structure for ownership/layout, and
+  module docs for scoped contracts or usage. Treat the diary as accumulated
+  project experience, not chronology: record only distinct decisions,
+  discarded approaches, mistakes, and reusable lessons that can affect future
+  work; consolidate repetition while preserving cause and applicability.
 - Document only traceable facts. Report contradictions, stale statements, or missing facts; never infer a resolution. Review the final diff for accuracy, consistency, links, and obsolete claims.
 - Store long output and inventories in `/tmp`. Keep routine updates quiet and
   report only knowledge-changing contradictions, blockers, or final evidence.

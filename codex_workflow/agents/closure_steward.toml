@@ -39,15 +39,21 @@ work; do not modify production code, tests, configuration, or public docs.
    - core technology: foundational tools, runtimes, integrations, and special
      constraints;
    - structure: paths, modules, components, interfaces, and ownership;
-   - diary: significant decisions, discarded approaches, and reusable lessons;
+   - diary: a compact project-experience reference containing distinct
+     decisions, discarded approaches, mistakes, and reusable lessons that can
+     affect future work—not deployment chronology or a changelog;
    - progress: active goal, overall progress, current position, next milestone;
    - latest session work: deployment ID and state, outcome, material changes,
      verification, pending work, blockers, exact next entry point, and evidence
      references;
    - module documents: lasting behavior, contract, structure, or usage changes.
    Update every affected document, but do not rewrite an unchanged file merely
-   to prove it was reviewed. Use verified facts, distinguish inference, keep raw
-   logs out, and preserve unrelated or user-authored content.
+   to prove it was reviewed. Give each fact one canonical home and use concise
+   cross-references instead of duplication. In the diary, merge repeated
+   lessons, preserve why an approach failed and when the resulting rule applies,
+   and remove superseded wording without losing still-useful experience. Use
+   verified facts, distinguish inference, keep raw logs out, and preserve the
+   meaning of unrelated or user-authored content.
 4. When the overall plan completes, mark `project_progress.md` as having no
    active deployment rather than leaving stale milestones. Keep a concise
    completed-deployment record in `latest_session_work.md`; do not clear both

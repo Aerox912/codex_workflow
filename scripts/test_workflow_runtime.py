@@ -137,6 +137,7 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("does not authorize\na main-agent diagnostic loop", heavy)
         self.assertIn("soft evidence budget", heavy)
         self.assertIn("`heavy_companion.md`", heavy)
+        self.assertIn("Framework Brief covering every `agent_docs/`", heavy)
         self.assertIn("verification_ledger.py", heavy)
         self.assertIn("Prose test counts are not authoritative", heavy)
         self.assertIn("routine success is at most 120", heavy)
@@ -154,6 +155,7 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("terminal report each directly to the main agent", medium)
         self.assertIn("alone\npasses the root-cause gate", medium)
         self.assertIn("`medium_companion.md`", medium)
+        self.assertIn("Framework Brief covering every `agent_docs/`", medium)
         self.assertNotIn("usage ledger", medium)
 
         agents_policy = policies["AGENTS.md"]
@@ -163,7 +165,11 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("do not dispatch Companion", agents_policy)
         self.assertNotIn("session-model requirement", agents_policy)
         self.assertIn("read-only investigators", agents_policy)
-        self.assertIn("directly reads task-critical", agents_policy)
+        self.assertIn("consume the complete Project Documentation", agents_policy)
+        self.assertIn("all six core `agent_docs/` files", agents_policy)
+        self.assertIn("every module-specific", agents_policy)
+        self.assertIn("remove only", agents_policy)
+        self.assertIn("read the complete framework\n  directly", agents_policy)
         self.assertIn("Workers return one small knowledge delta directly", agents_policy)
         self.assertIn("one bounded tool turn", agents_policy)
         self.assertIn("soft budget", agents_policy)
@@ -282,6 +288,8 @@ class MarkerTests(unittest.TestCase):
         )
         self.assertIn("secretary and office", companion_worker)
         self.assertIn("complete routine read-only context work", companion_worker)
+        self.assertIn("read every Markdown file\nunder `agent_docs/`", companion_worker)
+        self.assertIn("do not compress the brief to the ordinary", companion_worker)
         self.assertIn("Deployment Boundary Marker", companion_worker)
         self.assertIn("Closure Steward uses that marker", companion_worker)
         self.assertIn("Do not invoke `$deployment-token-report`", companion_worker)
@@ -303,6 +311,14 @@ class MarkerTests(unittest.TestCase):
             )
             self.assertNotIn("terminal receipt", worker_policy)
             self.assertNotIn("report-batch", worker_policy)
+        for worker_policy in (executor, senior, tester):
+            self.assertIn("durable-documentation delta", worker_policy)
+        self.assertIn("accumulated\n  project experience", doc_writer)
+        diary_template = (PACKAGE / "project_docs" / "project_diary.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("prevents repeated mistakes", diary_template)
+        self.assertIn("Do not record\nsession chronology", diary_template)
         self.assertIn("always contains one required", bootstrap)
         self.assertIn("explicitly labeled bootstrap or", doc_writer)
         self.assertIn("assignment brief", doc_writer)

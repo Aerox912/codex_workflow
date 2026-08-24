@@ -272,7 +272,9 @@ The six files under `agent_docs/` have different ownership and purposes:
 - `project_core_tech.md` — important technologies and architectural constraints;
 - `project_structure.md` — layout, modules, ownership, and boundaries;
 - `project_progress.md` — concise overall progress and current milestone;
-- `project_diary.md` — durable decisions, discarded approaches, and lessons;
+- `project_diary.md` — compact accumulated project experience: durable
+  decisions, discarded approaches, mistakes, and reusable lessons that prevent
+  repeated errors;
 - `latest_session_work.md` — the latest deployment state, evidence, outcome,
   unfinished work when present, and continuation point.
 
@@ -449,10 +451,11 @@ encode the fixed role list and limits; no route block is generated.
 
 When Heavy is selected for a deployment-state task, the main agent:
 
-1. reads the project entry point, route instructions, and task-critical project
-   documentation, source paths, contracts, and failure evidence directly;
-2. initializes one read-only Heavy Companion and asks it to solve routine
-   planning or peripheral context work and return a director brief;
+1. reads the project entry point and route instructions, then initializes one
+   read-only Heavy Companion;
+2. consumes Companion's loss-minimized Framework Brief covering every core and
+   module-specific `agent_docs/` document, verifies its inventory, and directly
+   opens incomplete, conflicting, or decision-critical material;
 3. for a serious or ambiguous issue, dispatches orthogonal read-only
    investigator lanes under the shared investigation contract;
 4. waits for one concise terminal report from each investigator, evaluates the
@@ -475,10 +478,10 @@ The normal implementation and verification loop is:
 User selects Heavy route
         │
         ▼
-Companion solves routine planning work and returns a director brief
+Companion reads all agent_docs and returns a loss-minimized Framework Brief
         │
         ▼
-Main reads the Core Context Set and frames independent search lanes
+Main verifies complete framework intake, reads decisive context, and frames lanes
         │
         ▼
 Investigator swarm tests hypotheses and reports directly to the main agent
@@ -558,6 +561,14 @@ and reports read-only Git state. Companion and investigators remain read-only.
 and next milestone. `latest_session_work.md` carries the most recent deployment
 outcome, verification, blockers, and exact continuation point. A completed
 deployment remains recorded concisely instead of clearing both files.
+
+At the start of every substantive Medium or Heavy deployment, Companion reads
+the complete framework and returns a Framework Brief. It filters only duplicate,
+obsolete, boilerplate, or navigational text and preserves every distinct fact,
+decision, failed approach, lesson, constraint, progress item, blocker,
+uncertainty, and useful reference. The main verifies complete file coverage and
+reads exact decision-critical material directly; if the brief is incomplete,
+the main reads the missing framework documents before planning.
 
 Before each substantive Medium or Heavy deployment returns its final response,
 the route automatically creates a fresh, uniquely named `closure_steward` worker
