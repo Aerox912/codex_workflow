@@ -8,8 +8,8 @@ and orchestration support, with retained operational knowledge.
 
 model = "gpt-5.6-luna"
 model_reasoning_effort = "xhigh"
-model_context_window = 1050000
-model_auto_compact_token_limit = 800000
+# model_context_window = 520000
+# model_auto_compact_token_limit = 450000
 # service_tier = "fast"
 sandbox_mode = "read-only"
 

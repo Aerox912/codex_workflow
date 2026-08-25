@@ -22,8 +22,10 @@ codex-workflow-deployment-start: <deployment_id>
 Run the bundled `scripts/report_tokens.py` with `--deployment-id` and
 `--format markdown`. The script uses `CODEX_THREAD_ID` to identify this Closure
 Steward rollout, resolves its parent main-agent thread, finds the exact marker
-in the persistent Companion rollout, and reads only metadata and token-count
-fields beneath `~/.codex/sessions/`. It excludes guardian sessions.
+in user or assistant message text in the persistent Companion rollout (including
+when the retained marker is surrounded by Markdown or explanatory prose), and
+reads only metadata and token-count fields beneath `~/.codex/sessions/`. It
+excludes guardian sessions.
 
 Return the script's six-column Markdown table verbatim to the main agent. Do
 not add pricing, estimates, inferred usage, or another statistics table. If the

@@ -18,6 +18,8 @@ Requires Python 3.11 or newer for deterministic lifecycle operations.
 
 ### Open Codex CLI / Codex app from your project directory 
 
+Change permision to `approve for me/full access`.
+
 ▶️ Send:
 
 ```text
@@ -81,7 +83,7 @@ filter information, and close the deployment around it.
 | Companion | Medium provides routine context support; Heavy adds distribution and readiness audits. | One persistent read-only worker; route changes replace its active duties, not its identity. |
 | Investigators | Explore independent bug, evidence, prior-art, and solution lanes. | The main agent defines lanes and makes the root-cause decision. |
 | Role-scoped knowledge | Gives executors implementation guidance, testers verification criteria, and investigators focused search briefs. | Workers receive only the context needed for their role. |
-| Executor–tester loop | `default_executor` implements; the tester verifies independently and stays active through repair. | Follow-up, wait, reply, and recheck are explicit; material conflicts escalate. |
+| Executor–tester loop | `default_executor` implements; the tester verifies independently and stays active through repair. | A fresh repair child returns terminal evidence for recheck; material conflicts escalate. |
 | Verification ledger | Stores immutable criterion results and checked-path hashes. | Missing, failed, or stale evidence blocks Heavy acceptance. |
 | Senior executor | Handles exceptionally difficult mathematical, logical, or cross-cutting work. | It is a limited reserve, not the default production agent. |
 | Doc-writer | Updates verified public, product, operator, or service documentation. | Does not edit `agent_docs/` during deployment. |
@@ -90,7 +92,7 @@ filter information, and close the deployment around it.
 Heavy keeps raw work off the main thread while preserving direct decision
 evidence. Capsules distribute package-specific guidance; static mechanics stay
 in worker definitions. Routine repair stays inside an explicit tester–executor
-handshake, and the verification ledger makes freshness deterministic. The main
+child lifecycle, and the verification ledger makes freshness deterministic. The main
 agent retains root-cause, architecture, allocation, acceptance, and final-claim
 authority.
 

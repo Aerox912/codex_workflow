@@ -147,13 +147,15 @@ def build_index(sessions_root: Path, warnings: list[str]) -> dict[str, Session]:
     return result
 
 
-def user_texts(record: dict[str, Any]) -> Iterable[str]:
+def message_texts(
+    record: dict[str, Any], *, roles: frozenset[str]
+) -> Iterable[str]:
     if record.get("type") != "response_item":
         return ()
     payload = record.get("payload")
     if not isinstance(payload, dict):
         return ()
-    if payload.get("type") != "message" or payload.get("role") != "user":
+    if payload.get("type") != "message" or payload.get("role") not in roles:
         return ()
     content = payload.get("content")
     if not isinstance(content, list):
@@ -162,9 +164,13 @@ def user_texts(record: dict[str, Any]) -> Iterable[str]:
         item.get("text")
         for item in content
         if isinstance(item, dict)
-        and item.get("type") == "input_text"
+        and item.get("type") in {"input_text", "output_text"}
         and isinstance(item.get("text"), str)
     )
+
+
+def user_texts(record: dict[str, Any]) -> Iterable[str]:
+    return message_texts(record, roles=frozenset({"user"}))
 
 
 def record_time(record: dict[str, Any], *, path: Path) -> datetime:
@@ -178,18 +184,23 @@ def find_boundary(
     warnings: list[str],
 ) -> datetime:
     marker = f"{MARKER_PREFIX} {deployment_id}"
-    marker_times: set[datetime] = set()
+    marker_pattern = re.compile(re.escape(marker) + r"(?![a-z0-9_])")
+    marker_times: dict[str, datetime] = {}
     for source in marker_sources:
         for record in iter_jsonl(source.path, warnings):
-            if any(marker in text.splitlines() for text in user_texts(record)):
-                marker_times.add(record_time(record, path=source.path))
+            texts = message_texts(record, roles=frozenset({"user", "assistant"}))
+            if any(marker_pattern.search(text) for text in texts):
+                timestamp = record_time(record, path=source.path)
+                marker_times[source.session_id] = min(
+                    marker_times.get(source.session_id, timestamp), timestamp
+                )
     if not marker_times:
         raise ReportError(
             f"deployment marker {marker!r} was not found in a Companion rollout"
         )
     if len(marker_times) != 1:
         raise ReportError(f"deployment marker {marker!r} is ambiguous")
-    marker_time = next(iter(marker_times))
+    marker_time = next(iter(marker_times.values()))
 
     candidates: list[datetime] = []
     for record in iter_jsonl(root.path, warnings):

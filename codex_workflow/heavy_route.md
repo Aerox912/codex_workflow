@@ -112,10 +112,12 @@ guidance. Give `senior_executor` unresolved decision context and constraints
 without prescribing its solution. A deployment executor also receives the
 release manifest, health criteria, smoke cases, rollback, and escalation rules.
 
-Testers receive a verification capsule instead: acceptance matrix, risks,
-contracts, regression boundaries, independence requirements, evidence
-references, ledger criteria, and both repair targets. Other roles receive only
-the short brief below.
+Testers receive a verification capsule instead with acceptance, risk, contract,
+regression, independence, evidence, and ledger criteria plus one repair capsule
+per criterion. It names the executor type and original ownership, protected
+surface, decisions, recommended approach, ordered guidance, interfaces,
+invariant, pitfalls, references, and checks.
+Other roles receive only the short brief below.
 
 Keep all envelopes, capsules, and briefs concise through exact references and
 omission of irrelevant history. Follow-ups contain only the task ID/iteration,
@@ -145,22 +147,18 @@ alone edits `agent_docs/` during automatic closure.
 
 ## Repair Loop
 
-Pair every criterion with an executor and give both canonical task names and
-targets. For a routine production defect:
+Pair every criterion with an executor type, canonical task names, and a main-supplied repair capsule.
+For a routine production defect:
 
-1. Tester calls `followup_task` on the idle or terminal executor with the defect
-   packet, remains active, and uses `wait_agent` for its lifecycle event.
-2. Executor repairs within the original capsule, checks the fix, and sends the
-   tester focused evidence with `send_message` before returning its minimal
-   parent report.
-3. Tester reruns the failed criterion and affected regression checks before it
-   becomes terminal.
+1. Tester uses `spawn_agent` with `fork_turns="none"` to create a fresh repair executor child from the capsule and defect packet.
+2. Tester stays active and uses `wait_agent` for the child's single terminal report.
+3. Tester reruns the failed criterion and affected regressions before terminating.
 
 Test, fixture, mock, and test-data defects stay with the tester. The main does
-not relay or rediagnose routine repair traffic. A tool failure returns one
-`repair_routing_blocked` escalation. A defect packet gives the failed criterion,
-minimal reproduction, observed and expected behavior, affected contract,
-focused evidence, and whether scope or architecture is implicated.
+not relay or rediagnose routine repair traffic. Neither role uses `followup_task`
+or `send_message`. Dispatch or awaited-lifecycle failure returns one
+`repair_dispatch_blocked` escalation with the criterion, reproduction, observed
+and expected behavior, contract, evidence, and scope or architecture impact.
 
 Escalate to the main agent only when repair conflicts with the capsule, changes a cross-package contract,
 invalidates a material decision, requires expanded ownership, introduces
@@ -222,8 +220,10 @@ risk. Reject evidence-free reports; do not rerun fresh, uncontradicted checks.
 
 ## Automatic Handoff and Deployment Token Report
 
-After all package workers reach a terminal state, and before the final response
-that completes, pauses, or blocks the deployment, follow
+After all package workers and repair descendants reach a terminal state, use
+`list_agents` to confirm no active package work and consume delivered lifecycle
+results. Only then, before the final response that completes, pauses, or blocks
+the deployment, follow
 `~/.codex/codex_workflow/closure_steward.md` exactly once. Pass only the route, a
 unique deployment ID, and closure state; the automatic handoff context fork
 supplies the main-agent history. Closure Steward seals its closure work, invokes

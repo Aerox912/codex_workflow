@@ -498,7 +498,7 @@ Executor implements one coherent increment and self-validates
         ▼
 Tester independently runs focused checks when testing is warranted
         │
-        ├── routine defect ──► follow-up/wait/reply ──► tester recheck
+        ├── routine defect ──► fresh repair child/wait ──► tester recheck
         ├── proof ─────────► concise terminal report to main
         └── decision defect ─► main agent re-scopes or decides
         │
@@ -512,10 +512,13 @@ Ledger summary confirms fresh acceptance evidence
 Fresh Luna xhigh worker automatically closes the deployment before the final response
 ```
 
-The tester reactivates its named executor with `followup_task`, remains active
-with `wait_agent`, receives repair evidence through `send_message`, and rechecks
-before terminating. Routing failure or a material/repeated defect escalates
-once. Test and fixture defects stay with the tester.
+The tester creates a fresh executor child from the criterion's main-supplied,
+guidance-rich repair capsule, remains active with `wait_agent`, receives the
+child's terminal evidence, and rechecks before terminating. Repair uses no
+queued follow-up or direct-message channel. Dispatch/lifecycle failure or a
+material/repeated defect escalates once. Test and fixture defects stay with the
+tester. Before closure, the main confirms the complete package subtree is
+terminal and has consumed delivered lifecycle results.
 
 Workers keep raw output in artifacts and return small direct knowledge deltas.
 At each gate, the main starts with the owning contract, decisive source, and

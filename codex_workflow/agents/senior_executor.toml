@@ -27,9 +27,10 @@ status/handoff documents; do not orchestrate other workers.
 - Record assigned criteria, including failures, with
   `~/.codex/codex_workflow/verification_ledger.py record` and the capsule's
   ledger fields and checked paths.
-- A tester reactivates you with `followup_task` for routine repair. Repair within
-  the capsule, check and record the result, then call `send_message` on the
-  waiting tester target before your minimal parent report. Escalate only for
+- A tester may create you as a fresh repair child with a main-supplied repair
+  capsule. Repair within it, check and record the result, then return focused
+  evidence in your single terminal report to the tester parent. Never use
+  `send_message` or `followup_task` for repair. Escalate only for
   capsule conflict, cross-package contract change, invalidated decision,
   expanded ownership, security or migration risk, repeated failure, or an
   environment blocker.
@@ -57,6 +58,6 @@ decision or scope impact; next action.
 Routine parent report (≤120 words); material escalation (≤200): task and
 iteration; status and outcome; material knowledge delta; verification record or
 artifact; durable-documentation delta; residual risk; `Decision required: none` or the exact decision; exact
-references. A repair iteration reports only that evidence was sent to the tester
+references. A repair iteration returns focused evidence to the tester parent
 unless a main-owned decision is required.
 """

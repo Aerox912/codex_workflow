@@ -73,6 +73,18 @@ def user_message(timestamp: str, text: str) -> dict[str, object]:
     }
 
 
+def assistant_message(timestamp: str, text: str) -> dict[str, object]:
+    return {
+        "timestamp": timestamp,
+        "type": "response_item",
+        "payload": {
+            "type": "message",
+            "role": "assistant",
+            "content": [{"type": "output_text", "text": text}],
+        },
+    }
+
+
 def usage(
     timestamp: str,
     input_tokens: int,
@@ -146,9 +158,10 @@ class DeploymentTokenReportTests(unittest.TestCase):
                     task="/root/companion",
                     role="companion",
                 ),
-                user_message(
+                assistant_message(
                     "2026-08-23T10:00:31Z",
-                    "Goal\ncodex-workflow-deployment-start: major_task\nBoundary",
+                    "- Deployment marker retained: "
+                    "`codex-workflow-deployment-start: major_task`.",
                 ),
                 usage("2026-08-23T10:01:30Z", 50, 40, 10),
             ],
@@ -305,6 +318,42 @@ class DeploymentTokenReportTests(unittest.TestCase):
         self.assertEqual(completed.returncode, 2)
         self.assertIn("was not found", completed.stderr)
         self.assertEqual(completed.stdout, "")
+
+    def test_repeated_marker_in_same_companion_rollout_is_not_ambiguous(self) -> None:
+        self.build_fixture()
+        path = self.sessions / (
+            "rollout-2026-08-23T10-00-00-companion-session.jsonl"
+        )
+        path.write_text(
+            path.read_text(encoding="utf-8").removesuffix('{"timestamp":'),
+            encoding="utf-8",
+        )
+        with path.open("a", encoding="utf-8") as stream:
+            stream.write(
+                json.dumps(
+                    assistant_message(
+                        "2026-08-23T10:00:32Z",
+                        "Confirmed `codex-workflow-deployment-start: major_task`.",
+                    )
+                )
+                + "\n"
+            )
+        completed = self.run_report("--format", "json")
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+
+    def test_marker_does_not_match_a_longer_deployment_id(self) -> None:
+        self.build_fixture()
+        path = self.sessions / (
+            "rollout-2026-08-23T10-00-00-companion-session.jsonl"
+        )
+        text = path.read_text(encoding="utf-8").replace(
+            "codex-workflow-deployment-start: major_task",
+            "codex-workflow-deployment-start: major_task_extra",
+        )
+        path.write_text(text, encoding="utf-8")
+        completed = self.run_report()
+        self.assertEqual(completed.returncode, 2)
+        self.assertIn("was not found", completed.stderr)
 
     def test_companion_cannot_run_the_closure_owned_report(self) -> None:
         self.build_fixture()
