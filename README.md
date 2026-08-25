@@ -112,4 +112,4 @@ Send these exact commands to Codex from the relevant project directory:
 | `codex_workflow --remove` | Remove the installed workflow after a destructive dry-run and confirmation. |
 
 For the complete command reference, installed-file map, scripted customization
-guide, and Heavy-route design, see [workflow_usage.md](workflow_usage.md).
+guide, and Heavy-route design, see [workflow_break_down.md](workflow_break_down.md).

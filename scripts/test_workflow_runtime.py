@@ -7,6 +7,7 @@ import contextlib
 import io
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 import zipfile
@@ -18,7 +19,13 @@ ROOT = Path(__file__).resolve().parents[1]
 PACKAGE = ROOT / "codex_workflow"
 PACKAGE_VERSION = (PACKAGE / "VERSION").read_text(encoding="utf-8").strip()
 
-import sys
+
+def next_patch_version(version: str) -> str:
+    major, minor, patch = version.split(".")
+    return f"{major}.{minor}.{int(patch) + 1}"
+
+
+NEXT_PACKAGE_VERSION = next_patch_version(PACKAGE_VERSION)
 
 sys.path.insert(0, str(PACKAGE))
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -1030,12 +1037,14 @@ class LifecycleIntegrationTests(unittest.TestCase):
         )
         incoming_root = self.root / "incoming" / "codex_workflow"
         shutil.copytree(PACKAGE, incoming_root, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
-        (incoming_root / "VERSION").write_text("1.1.9\n", encoding="utf-8")
+        (incoming_root / "VERSION").write_text(
+            f"{NEXT_PACKAGE_VERSION}\n", encoding="utf-8"
+        )
         user_agents = (incoming_root / "user_AGENTS.md").read_text(encoding="utf-8")
         (incoming_root / "user_AGENTS.md").write_text(
             user_agents.replace(
                 f"codex-workflow-version: {PACKAGE_VERSION}",
-                "codex-workflow-version: 1.1.9",
+                f"codex-workflow-version: {NEXT_PACKAGE_VERSION}",
             ),
             encoding="utf-8",
         )
@@ -1043,7 +1052,10 @@ class LifecycleIntegrationTests(unittest.TestCase):
         plan_update(incoming, self.runtime, self.project).apply()
         entry = self.project.active.read_text(encoding="utf-8")
         self.assertEqual(extract(entry, PROJECT_LOCAL), "Local policy.")
-        self.assertEqual((self.runtime.runtime / "VERSION").read_text(), "1.1.9\n")
+        self.assertEqual(
+            (self.runtime.runtime / "VERSION").read_text(),
+            f"{NEXT_PACKAGE_VERSION}\n",
+        )
         self.assertNotIn(
             "local worker override",
             (self.runtime.agents / "default_executor.toml").read_text(encoding="utf-8"),
@@ -1457,12 +1469,14 @@ class LifecycleIntegrationTests(unittest.TestCase):
             incoming_root,
             ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
         )
-        (incoming_root / "VERSION").write_text("1.1.9\n", encoding="utf-8")
+        (incoming_root / "VERSION").write_text(
+            f"{NEXT_PACKAGE_VERSION}\n", encoding="utf-8"
+        )
         user_agents = (incoming_root / "user_AGENTS.md").read_text(encoding="utf-8")
         (incoming_root / "user_AGENTS.md").write_text(
             user_agents.replace(
                 f"codex-workflow-version: {PACKAGE_VERSION}",
-                "codex-workflow-version: 1.1.9",
+                f"codex-workflow-version: {NEXT_PACKAGE_VERSION}",
             ),
             encoding="utf-8",
         )
@@ -1486,7 +1500,7 @@ class LifecycleIntegrationTests(unittest.TestCase):
         )
         self.assertEqual(completed.returncode, 0, completed.stderr)
         summary = json.loads(completed.stdout)
-        self.assertEqual(summary["details"]["to_version"], "1.1.9")
+        self.assertEqual(summary["details"]["to_version"], NEXT_PACKAGE_VERSION)
         self.assertTrue(summary["applied"])
 
     def test_external_update_delegates_before_launcher_validation(self) -> None:
@@ -1497,7 +1511,9 @@ class LifecycleIntegrationTests(unittest.TestCase):
             incoming_root,
             ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
         )
-        (incoming_root / "VERSION").write_text("1.1.9\n", encoding="utf-8")
+        (incoming_root / "VERSION").write_text(
+            f"{NEXT_PACKAGE_VERSION}\n", encoding="utf-8"
+        )
 
         argv = [
             str(PACKAGE / "workflow.py"),
