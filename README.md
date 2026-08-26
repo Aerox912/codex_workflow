@@ -81,6 +81,7 @@ filter information, and close the deployment around it.
 | --- | --- | --- |
 | Main agent | Reads task-critical context, identifies the defect, chooses the plan, and defines and evaluates acceptance gates. | Workers execute operational checks; gate ownership does not require the main agent to rerun their evidence. |
 | Companion | Medium provides routine context support; Heavy adds distribution and readiness audits. | One persistent read-only worker; route changes replace its active duties, not its identity. |
+| Wave barrier | Launches one main-authored multi-worker manifest and returns all terminal reports together. | Absorbs individual completion wakeups without changing capsules or filtering evidence. |
 | Investigators | Explore independent bug, evidence, prior-art, and solution lanes. | The main agent defines lanes and makes the root-cause decision. |
 | Role-scoped knowledge | Gives executors implementation guidance, testers verification criteria, and investigators focused search briefs. | Workers receive only the context needed for their role. |
 | Executor–tester loop | `default_executor` implements; the tester verifies independently and stays active through repair. | A fresh repair child returns terminal evidence for recheck; material conflicts escalate. |
@@ -89,10 +90,14 @@ filter information, and close the deployment around it.
 | Doc-writer | Updates verified public, product, operator, or service documentation. | Does not edit `agent_docs/` during deployment. |
 | Closure Steward | Reconciles `agent_docs/` and prepares the final handoff. | Never edits outside `agent_docs/` or mutates Git. |
 
-Heavy keeps raw work off the main thread while preserving direct decision
-evidence. Capsules distribute package-specific guidance; static mechanics stay
-in worker definitions. Routine repair stays inside an explicit tester–executor
-child lifecycle, and the verification ledger makes freshness deterministic. The main
+At the first substantive Medium or Heavy deployment in a session, the main and
+Companion each read `agent_docs/` once into their own retained context;
+Companion returns only intake status, not a duplicate framework brief. Heavy
+keeps raw work and individual worker-completion wakeups off the main thread while
+preserving direct decision evidence. Capsules distribute package-specific
+guidance unchanged through the wave barrier; static mechanics stay in worker
+definitions. Routine repair stays inside an explicit tester–executor child
+lifecycle, and the verification ledger makes freshness deterministic. The main
 agent retains root-cause, architecture, allocation, acceptance, and final-claim
 authority.
 

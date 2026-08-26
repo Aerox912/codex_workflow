@@ -10,8 +10,9 @@ context work while the main agent plans, diagnoses, implements, and verifies.
 
 Assign bounded work such as:
 
-- reading the complete `agent_docs/` framework at deployment entry and returning
-  the loss-minimized Framework Brief defined by the Companion worker;
+- reading the complete `agent_docs/` framework once at session initialization,
+  retaining it for later work, and returning no framework summary or project
+  facts;
 - locating and comparing peripheral documentation, dependencies, interfaces,
   configuration, logs, or artifacts;
 - mapping unfamiliar supporting code and answering routine factual questions;

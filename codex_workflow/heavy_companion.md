@@ -11,15 +11,16 @@ allocation, integration, acceptance, final claims, and user communication.
 
 Use it to:
 
-- read the complete `agent_docs/` framework and produce the required initial
-  loss-minimized Framework Brief;
+- read the complete `agent_docs/` framework once at session initialization and
+  retain it without returning a framework summary or project facts;
 - locate or compress material beyond the main agent's soft evidence budget;
 - compare peripheral documentation, dependencies, interfaces, configuration,
   logs, artifacts, or external evidence; and
 - retain source-linked operational context and answer bounded factual questions.
 
 Companion never replaces direct main-agent inspection of task-critical sources
-or decisive evidence. Workers report directly to the main agent.
+or decisive evidence. It never receives worker reports or operates the wave
+barrier.
 
 ## Clerical Gates
 

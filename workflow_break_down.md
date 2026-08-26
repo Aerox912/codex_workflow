@@ -208,6 +208,7 @@ and the current project as follows:
 │   ├── tester.toml
 │   ├── doc-writer.toml
 │   ├── companion.toml
+│   ├── wave_barrier.toml
 │   ├── investigator.toml
 │   └── closure_steward.toml
 ├── skills/
@@ -292,18 +293,20 @@ contracts, route documents own orchestration limits, and
 copy those definitions exactly.
 
 The current built-ins are `default_executor`, `senior_executor`, `tester`,
-`doc-writer`, `companion`, `investigator`, and `closure_steward`. The first
-three are Heavy production/verification roles. `doc-writer` and Closure
-Steward own documentation updates, while Companion and investigator provide
-read-only workflow support. The default executor uses `xhigh`; Heavy permits
-at most one senior executor; and the Codex child-worker ceiling is twenty.
+`doc-writer`, `companion`, `wave_barrier`, `investigator`, and
+`closure_steward`. The first three are Heavy production/verification roles.
+`doc-writer` and Closure Steward own documentation updates; Companion and
+investigator provide read-only workflow support; and Wave Barrier is a
+read-only lifecycle parent. The default executor uses `xhigh`; Heavy permits at
+most one senior executor; and the Codex child-worker ceiling is twenty.
 
 All listed roles are fixed built-in definitions. Companion is the single
-persistent secretary and office wrapper: it handles routine read-only work,
-and retains operational context. Workers report directly to the main agent.
-Multiple investigator task names may use the one read-only investigator
-definition for Heavy evidence lanes or an explicitly requested Medium evidence
-wave.
+persistent secretary and office wrapper: it handles routine read-only work and
+retains operational context. A single worker reports directly to the main;
+Wave Barrier parents a coherent multi-worker wave and returns its unmodified
+terminal reports in one bundle. Multiple investigator task names may use the
+one read-only investigator definition for Heavy evidence lanes or an explicitly
+requested Medium evidence wave.
 
 Bootstrap and update enable the documented multi-agent settings under `[agents]`
 and `[features]`. They remove workflow-owned legacy V2 keys instead of
@@ -440,6 +443,7 @@ The fixed role set is:
 | `tester` | Independent tests, ledger evidence, and failure analysis | Test/fixture scope; waits through routine executor repair |
 | `doc-writer` | Verified public/product/operator/service docs and required installation initialization | Outside `agent_docs/`, except listed bootstrap recovery files |
 | Companion | Medium context secretary or Heavy orchestration secretary | No; one persistent route-aware worker |
+| Wave Barrier | Launches an exact main-authored wave manifest and returns one terminal bundle | No; read-only lifecycle parent, no evidence filtering or task decisions |
 | `investigator` | Disposable Luna leaf agent for one bounded code, evidence, dependency, documentation, log, or external-solution lane | No |
 | `closure_steward` | Reconciles `agent_docs/`, verification freshness, Git status/handoff, and token report | No edits outside `agent_docs/`; no Git mutation |
 
@@ -451,16 +455,16 @@ encode the fixed role list and limits; no route block is generated.
 
 When Heavy is selected for a deployment-state task, the main agent:
 
-1. reads the project entry point and route instructions, then initializes one
-   read-only Heavy Companion;
-2. consumes Companion's loss-minimized Framework Brief covering every core and
-   module-specific `agent_docs/` document, verifies its inventory, and directly
-   opens incomplete, conflicting, or decision-critical material;
+1. reads the project entry point and route instructions, directly reads every
+   core and module-specific `agent_docs/` document once for the session, and
+   initializes one read-only Heavy Companion that privately does the same;
+2. consumes only Companion's intake status, then opens exact changed or
+   decision-critical material when freshness or a decision requires it;
 3. for a serious or ambiguous issue, dispatches orthogonal read-only
    investigator lanes under the shared investigation contract;
-4. waits for one concise terminal report from each investigator, evaluates the
-   evidence wave together, then opens decisive sources and identifies the actual
-   defect through the main-owned root-cause gate;
+4. waits once on the investigation Wave Barrier, receives all concise terminal
+   reports together, then evaluates them, opens decisive sources, and identifies
+   the actual defect through the main-owned root-cause gate;
 5. forms architecture, ownership, and acceptance, then initializes the
    append-only verification ledger;
 6. optionally asks Companion to audit shared package boundaries, then sends only
@@ -478,13 +482,13 @@ The normal implementation and verification loop is:
 User selects Heavy route
         │
         ▼
-Companion reads all agent_docs and returns a loss-minimized Framework Brief
+Main and Companion independently read all agent_docs once; Companion returns intake status only
         │
         ▼
-Main verifies complete framework intake, reads decisive context, and frames lanes
+Main retains its authoritative framework intake, reads decisive context, and frames lanes
         │
         ▼
-Investigator swarm tests hypotheses and reports directly to the main agent
+Wave Barrier runs the investigator swarm and returns one complete terminal bundle
         │
         ▼
 Main inspects decisive sources and passes the root-cause gate
@@ -550,9 +554,11 @@ child-agent slot available for the fresh Closure Steward worker and must not
 exceed the fixed role or worker limits.
 
 Worker communication is event-driven. Named executor–tester pairs use the
-explicit repair handshake; every worker returns one small direct delta. The main
-integrates coherent groups once. Evidence-free work gets one retry, then
-replacement or a narrowly scoped main-agent takeover.
+explicit repair handshake. A single worker returns one small direct delta; a
+multi-worker Wave Barrier absorbs individual lifecycle completions and returns
+all unchanged deltas after the entire subtree is terminal. The main integrates
+the group once. Evidence-free work gets one retry, then replacement or a
+narrowly scoped main-agent takeover.
 
 Task workers do not edit Git state or shared status documents. Public-doc
 workers stay outside `agent_docs/`; Closure Steward alone edits `agent_docs/`
@@ -565,13 +571,12 @@ and next milestone. `latest_session_work.md` carries the most recent deployment
 outcome, verification, blockers, and exact continuation point. A completed
 deployment remains recorded concisely instead of clearing both files.
 
-At the start of every substantive Medium or Heavy deployment, Companion reads
-the complete framework and returns a Framework Brief. It filters only duplicate,
-obsolete, boilerplate, or navigational text and preserves every distinct fact,
-decision, failed approach, lesson, constraint, progress item, blocker,
-uncertainty, and useful reference. The main verifies complete file coverage and
-reads exact decision-critical material directly; if the brief is incomplete,
-the main reads the missing framework documents before planning.
+At the first substantive Medium or Heavy deployment in a session, the main and
+Companion independently read the complete framework once. The main batches its
+authoritative intake into one bounded turn. Companion retains its working model
+privately and returns only the deployment marker plus complete/incomplete intake
+status, never a framework summary or project facts. Later deployments reuse
+retained context and refresh only changed or decision-critical text.
 
 Before each substantive Medium or Heavy deployment returns its final response,
 the route automatically creates a fresh, uniquely named `closure_steward` worker
@@ -606,7 +611,7 @@ Location: `~/.codex/`
 
 - `~/.codex/agents/` contains all distributed worker TOMLs. The fixed role set
   is `default_executor`, `senior_executor`, `tester`, `doc-writer`,
-  `companion`, `investigator`, and `closure_steward`.
+  `companion`, `wave_barrier`, `investigator`, and `closure_steward`.
 - `~/.codex/skills/deployment-token-report/` contains the workflow-owned skill
   and deterministic read-only rollout parser. Bootstrap, update, backup, and
   removal track it separately from unrelated personal skills.
@@ -615,6 +620,8 @@ Location: `~/.codex/`
   that role.
 - `investigator.toml` defines the disposable read-only Luna xhigh leaf role used
   by Heavy, or by an explicitly requested Medium evidence wave.
+- `wave_barrier.toml` defines the read-only Luna xhigh lifecycle parent that
+  absorbs individual wave completions and returns one verbatim terminal bundle.
 - `~/.codex/codex_workflow/heavy_route.md` defines Heavy orchestration,
   delegation, limits, repair loops, and ownership.
 - `~/.codex/codex_workflow/medium_route.md` defines main-agent execution with

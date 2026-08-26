@@ -11,26 +11,23 @@ allocator. It owns task direction, architecture, scope, acceptance, package
 boundaries, cross-package decisions, integration gates, official status, and
 user communication.
 
-Workers own operational context: Companion is the main agent's persistent
-secretary and office wrapper; investigators search bounded evidence lanes;
-executors own package-local discovery, implementation, self-check, and repair;
-testers own test evidence and failure diagnosis; doc-writers own assigned
-durable documentation. The Closure Steward worker owns complete
-documentation-framework reconciliation and a read-only Git status handoff during
-automatic deployment closure; it does not stage or commit changes.
+Workers own operational context: Companion is the persistent secretary;
+investigators search evidence lanes; executors discover, implement, self-check,
+and repair packages; testers own test evidence and failure diagnosis; and
+doc-writers own assigned durable documentation. Closure Steward reconciles the
+documentation framework and returns read-only Git status without committing.
 
 The main agent directly reads and understands task-critical project context and
 owns defect identification and root-cause decisions. Companion handles routine
 read-only context work. Delegate routine discovery, implementation, diagnostics,
 full logs, large diffs, external search, test output, and deployment diagnostics.
-Workers return one small knowledge delta directly to the main agent and keep
-full evidence in artifacts. The main integrates coherent waves and directly
-inspects evidence that determines architecture, scope, root cause, or a
-high-risk boundary.
+Workers return one small knowledge delta and keep full evidence in artifacts. A
+multi-worker wave delivers unchanged deltas through one terminal `wave_barrier`
+bundle. The main integrates it once and directly inspects decision evidence.
 
 Questions and small or odd bounded tasks use a direct main-agent fast path: do
-not call subagents or create work merely to use one. This fast path also skips
-Closure Steward and deployment token reporting.
+not call subagents or create work merely to use one; skip Closure Steward and
+token reporting.
 
 ## Main-Agent Execution Boundary
 
@@ -57,24 +54,25 @@ conflict, material uncertainty, or high risk.
 
 ## Investigation and Planning
 
-Initialize Companion under `heavy_companion.md`. It first returns the
-loss-minimized Framework Brief covering every `agent_docs/` document; verify its
-inventory and resolve incomplete or conflicting coverage. Then directly inspect
-exact task-critical documentation and the rest of the Core Context Set before
-forming architecture, acceptance, dependencies, ownership, and package guidance.
+At the session's first substantive deployment, directly read the complete
+`agent_docs/` framework once. Initialize Companion under `heavy_companion.md`;
+it loads the same framework but returns only its marker and intake status, never
+a framework summary or project facts. Later reuse both retained models and
+refresh only changed or decision-critical text. Inspect the remaining Core
+Context Set before deciding architecture, acceptance, ownership, and guidance.
 
-For serious or ambiguous issues, follow `investigation_team.md` before
-allocating implementation packages. The main agent frames independent lanes,
-receives each investigator's concise terminal evidence directly, evaluates the
-wave together, and alone identifies the actual defect after inspecting decisive
-project sources. Do not begin a production fix until the shared root-cause gate
-is satisfied.
+For serious or ambiguous issues, follow `investigation_team.md`. The main frames
+lanes and exact briefs, receives one unmodified `wave_barrier` terminal set,
+evaluates it together, and alone identifies the actual defect from decisive
+sources before production work begins.
 
-For each coherent worker group, wait for all terminal reports and integrate the
-group once. Do not route worker reports through Companion. When two or more
-packages share interfaces, Companion may audit the main-approved ownership,
-dependency, and acceptance map before dispatch. It identifies gaps but does not
-make decisions or allocate workers.
+For each group of two or more workers, create one `wave_barrier` with
+`fork_turns="none"` and give it the main-approved launch manifest plus exact
+briefs or capsules. It launches the workers, absorbs individual completion
+wakeups, waits until every member and descendant is terminal, and returns all
+reports unchanged. Wait only on the barrier and integrate once; await a single
+worker directly. Never route reports through Companion. For shared interfaces,
+Companion may audit the approved ownership, dependency, and acceptance map.
 
 For durable work, the main may update `agent_docs/project_progress.md` once for
 plan activation. Closure Steward owns final reconciliation and
@@ -94,6 +92,9 @@ independent. Keep one child slot available for Closure Steward.
 Every initial worker uses `fork_turns="none"` and receives a minimal envelope:
 task ID and outcome; scope and protected areas; exact starting references;
 escalation conditions; and return format. It is routing metadata, not project knowledge.
+
+For a multi-worker wave, send these exact items in one `wave_barrier` manifest;
+it passes them unchanged, keeping the main as the guidance source.
 
 Only executors receive an implementation capsule. Generic execution, repair,
 validation, stopping, and reporting policy stays in the worker definition. The
@@ -116,11 +117,9 @@ Testers receive a verification capsule instead with acceptance, risk, contract,
 regression, independence, evidence, and ledger criteria plus one repair capsule
 per criterion. It names the executor type and original ownership, protected
 surface, decisions, recommended approach, ordered guidance, interfaces,
-invariant, pitfalls, references, and checks.
-Other roles receive only the short brief below.
-
-Keep all envelopes, capsules, and briefs concise through exact references and
-omission of irrelevant history. Follow-ups contain only the task ID/iteration,
+invariant, pitfalls, references, and checks. Other roles receive only the short
+brief below. Keep envelopes, capsules, and briefs concise through exact
+references, omitting irrelevant history. Follow-ups contain only task ID/iteration,
 changed state or scope, new evidence, affected criterion, updated guidance, and
 next action.
 
@@ -133,6 +132,7 @@ Brief the remaining roles as follows:
 | Role | Required guidance |
 | --- | --- |
 | Companion | Session goal, escalation boundaries, bounded read-only context task, and director-brief format |
+| Wave barrier | Wave ID, exact member agent types and task names, and each main-approved brief or capsule |
 | Investigator | One bounded question or hypothesis, boundaries, sources, exact references, and evidence format |
 | Doc-writer | Verified facts, changed behavior, audience, terminology, limitations, public-document surface |
 
@@ -191,9 +191,9 @@ Durable documentation delta | Residual risk | Decision required | Exact referenc
 ```
 
 Use `Decision required: none` explicitly. A routine success is at most 120
-words; a material escalation is at most 200. Integrate a coherent group once it
-is terminal. Open artifacts only for conflict, uncertainty, or integration
-risk. Reject evidence-free reports; do not rerun fresh, uncontradicted checks.
+words; a material escalation is at most 200. The barrier preserves reports
+verbatim and emits one terminal bundle. Open artifacts only for conflict,
+uncertainty, or risk. Reject evidence-free reports; do not rerun fresh checks.
 
 ## Gates, Failure, and Waiting
 
@@ -210,8 +210,8 @@ risk. Reject evidence-free reports; do not rerun fresh, uncontradicted checks.
 - After one evidence-free response, send one focused retry. Replace the worker
   after a second; if replacement also lacks evidence, report the limitation and
   take over only the smallest critical step transparently.
-- Wait for lifecycle events. Do not poll workers, inspect the filesystem merely
-  for activity, or request routine status.
+- For a multi-worker wave, only `wave_barrier` waits on workers; the main waits
+  once on it. Do not poll, inspect activity files, or request routine status.
 - Update the user only at meaningful assignment, handoff, knowledge-changing
   defect, replacement, blocker, or completion transitions.
 - A blocker report includes failed step, evidence, suspected cause, completed

@@ -32,24 +32,28 @@ uncertainty, missing reproduction, or external prior art makes parallel search
 materially useful. Skip it for the direct fast path, a known root cause, or a
 small bounded question. Do not create duplicate lanes merely to use capacity.
 
-For each orthogonal lane, spawn one worker with `agent_type="investigator"`, a
-unique `task_name="investigator_<deployment_id>_<lane>"`, and
-`fork_turns="none"`. Supply the question or hypothesis, boundaries, known facts,
-preferred authoritative sources, useful exact references, forbidden scope, and
-the evidence format. Useful lanes include execution paths and state, failure
-reproduction and logs, tests and races, dependency or version behavior,
-security or performance boundaries, official documentation and source history,
-and clearly labeled technical-forum or prior-art searches.
+Create one parent with `agent_type="wave_barrier"`, a unique
+`task_name="wave_barrier_<deployment_id>_investigation"`, and
+`fork_turns="none"`. Its manifest defines each orthogonal lane with
+`agent_type="investigator"`, a unique
+`task_name="investigator_<deployment_id>_<lane>"`, and the exact main-authored
+brief: question or hypothesis, boundaries, known facts, preferred authoritative
+sources, useful exact references, forbidden scope, and evidence format. Useful
+lanes include execution paths and state, failure reproduction and logs, tests
+and races, dependency or version behavior, security or performance boundaries,
+official documentation and source history, and clearly labeled technical-forum
+or prior-art searches.
 
 Select the useful lanes before dispatch and treat them as one investigation
-wave. Each investigator returns one concise terminal evidence package directly
-to the main agent. Wait for the complete wave; do not analyze, acknowledge, or
-answer each routine completion separately.
+wave. The barrier passes each brief unchanged, absorbs individual investigator
+completion wakeups, waits through all descendants, and returns the complete set
+of concise terminal evidence packages without summarizing them. The main waits
+only on the barrier and reviews the terminal bundle once.
 
 Use investigators when the installed agent type is available. Keep Companion's
 live slot and one slot for Closure Steward within the fixed concurrency ceiling.
 Investigator quantity is driven by independent search breadth, not token-cost
-minimization.
+minimization. Keep capacity for the barrier, Companion, and Closure Steward.
 
 ## Evidence and Root-Cause Gate
 

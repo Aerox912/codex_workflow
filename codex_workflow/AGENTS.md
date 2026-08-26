@@ -95,26 +95,31 @@ ends.
   ```text
   codex-workflow-deployment-start: <deployment_id>
   ```
-- Before planning or dispatch, consume the complete Project Documentation
-  Framework: all six core `agent_docs/` files and every module-specific
-  document. Normally ask Companion to read them all and return the loss-minimized
-  framework brief defined in its worker contract. That brief may remove only
-  duplication, obsolete repetition, and navigation noise; it must preserve
-  every distinct fact, decision, discarded approach, reusable lesson,
-  constraint, progress item, blocker, next action, uncertainty, and useful
-  reference. Verify its file inventory and directly read any missing,
-  contradictory, ambiguous, or decision-critical source. If Companion is
-  unavailable or its coverage is incomplete, read the complete framework
-  directly before continuing.
+- Before planning or dispatch in the session's first substantive deployment,
+  the main agent directly reads the complete Project Documentation Framework:
+  all six core `agent_docs/` files and every module-specific document. This is
+  one session-wide intake, not a per-deployment read. Batch it into one bounded
+  read turn and do not ask Companion to echo, summarize, or brief the framework
+  back. In later deployments, use retained context and read only a document
+  whose changed or decision-critical text must be refreshed.
+- Companion also reads the complete framework once when initialized so it can
+  retain project context for its own work. Its intake response contains only
+  the deployment marker and `Framework intake: complete`, or the names of
+  unreadable files; it contains no framework summary, inventory, or project
+  facts. The main has already performed the authoritative intake, so Companion
+  coverage failure does not trigger a second complete main-agent read.
 - If the selected route changes, send the same Companion an explicit transition
   brief naming the new route; previous route-specific duties become inactive.
   Never create a second Companion merely because the route changed.
 - If Companion is unavailable, continue only when safe and report the limitation.
-- Workers return one small knowledge delta directly to the main agent. Wait
-  for a coherent group to become terminal, then integrate the group once rather
-  than acknowledging or analyzing routine completions individually. Use
-  Companion separately for assigned read-only context work; it is not a
-  worker-report relay.
+- A single worker returns one small knowledge delta directly to the main agent.
+  For every coherent wave of two or more workers, the main creates one
+  `wave_barrier` with the approved launch manifest and exact worker briefs or
+  capsules. The barrier launches the workers, absorbs individual completion
+  wakeups, waits until the complete wave and all descendants are terminal, and
+  returns the unmodified terminal reports together. The main waits only for the
+  barrier and integrates the wave once. Companion remains separate assigned
+  read-only context support; it is not a worker-report relay or wave barrier.
 - After complete framework intake, the main agent directly reads relevant
   source paths, contracts, exact decision-critical documentation, and decisive
   failure evidence. It owns defect identification, root-cause adjudication,

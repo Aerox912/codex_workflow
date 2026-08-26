@@ -31,6 +31,7 @@ BUILTIN_WORKERS = frozenset(
         "tester",
         "doc-writer",
         "companion",
+        "wave_barrier",
         "investigator",
         "closure_steward",
     }

@@ -19,19 +19,24 @@ during automatic closure; it does not implement or verify the task.
 
 Use Companion to protect main-agent context and attention. Give it routine
 read-only questions and peripheral or unfamiliar context. It resolves bounded
-routine matters and retains supporting detail. At deployment entry, require its
-loss-minimized Framework Brief covering every `agent_docs/` document; verify the
-inventory and resolve incomplete or conflicting coverage before planning. The
-main agent then directly reads exact task-critical documentation, the rest of
-the task's Core Context Set, and every investigator terminal report, and remains responsible for source it edits, defect
+routine matters and retains supporting detail. At the first substantive
+deployment in a session, the main directly reads the complete `agent_docs/`
+framework once. Companion separately loads the same framework into retained
+context but returns no framework summary or project facts. Later deployments
+reuse both retained working models and refresh only changed or
+decision-critical text. The main then directly reads exact task-critical
+documentation, the rest of the task's Core Context Set, and the complete
+investigation-wave bundle, and remains responsible for source it edits, defect
 identification, material acceptance decisions, critical evidence, and final
 claims.
 
 For a serious or ambiguous issue with independent search lanes, follow
 `investigation_team.md` before implementation only when those read-only lanes
 are materially useful. Investigators gather and challenge evidence and deliver
-one concise terminal report each directly to the main agent. The main agent
-evaluates the wave together, opens the decisive project sources, and alone
+one concise terminal report each to the wave's `wave_barrier`. The barrier
+returns the complete unmodified set only after the whole wave and its
+descendants are terminal. The main agent evaluates that single bundle, opens
+the decisive project sources, and alone
 passes the root-cause gate. If investigators are unavailable, continue with
 main-agent evidence work only when safe and report the limitation.
 
