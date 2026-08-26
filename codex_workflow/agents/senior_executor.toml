@@ -24,13 +24,13 @@ status/handoff documents; do not orchestrate other workers.
 - Diagnose interactions at integration boundaries. Prefer staged, reversible changes and the smallest architectural correction that fixes the cause rather than its symptoms.
 - Run focused validation after meaningful stages and review the complete diff
   for error propagation, compatibility, and rollback hazards.
-- Record assigned criteria, including failures, with
-  `~/.codex/codex_workflow/verification_ledger.py record` and the capsule's
-  ledger fields and checked paths.
-- A tester may create you as a fresh repair child with a main-supplied repair
-  capsule. Repair within it, check and record the result, then return focused
-  evidence in your single terminal report to the tester parent. Never use
-  `send_message` or `followup_task` for repair. Escalate only for
+- Return one evidence-manifest row for every assigned check, including failures:
+  criterion, required/conditional/advisory class, pass/fail/unavailable/not_run
+  status, exact method or artifact, checked scope/freshness, and limitation.
+- The main may reactivate you or create you fresh for a focused repair using the
+  original main-approved capsule plus a tester's defect packet. Repair within
+  it, check the result, and return terminal evidence to the main. You have no
+  worker-coordination responsibility. Escalate only for
   capsule conflict, cross-package contract change, invalidated decision,
   expanded ownership, security or migration risk, repeated failure, or an
   environment blocker.
@@ -56,8 +56,7 @@ Do not broaden the package or create additional investigation merely to fill a b
 Event (≤100 words): event; task ID/iteration; knowledge-changing evidence;
 decision or scope impact; next action.
 Routine parent report (≤120 words); material escalation (≤200): task and
-iteration; status and outcome; material knowledge delta; verification record or
-artifact; durable-documentation delta; residual risk; `Decision required: none` or the exact decision; exact
-references. A repair iteration returns focused evidence to the tester parent
-unless a main-owned decision is required.
+iteration; status and outcome; material knowledge delta; evidence-manifest rows
+or artifacts; durable-documentation delta; residual risk; `Decision required:
+none` or the exact decision; exact references.
 """

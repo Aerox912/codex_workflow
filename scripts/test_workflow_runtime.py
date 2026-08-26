@@ -114,47 +114,49 @@ class MarkerTests(unittest.TestCase):
 
         heavy = policies["heavy_route.md"]
         self.assertIn("recommended approach", heavy.lower())
-        self.assertIn("canonical task names", heavy)
         self.assertIn("Decision required: none", heavy)
         self.assertIn("Generic execution, repair", heavy)
-        self.assertIn("ordered reference/change/rationale/check steps", heavy)
-        self.assertIn("still distributes the main agent's implementation", heavy)
-        self.assertIn("not call subagents or create work merely to use one", heavy)
-        self.assertIn("skip Closure Steward and\ntoken reporting", heavy)
-        self.assertIn("before the final response", heavy)
-        self.assertIn("automatic handoff context fork", heavy)
-        self.assertIn("Closure Steward seals its closure work", heavy)
-        self.assertIn("do not dispatch Companion", heavy)
-        self.assertIn("uses `spawn_agent`", heavy)
-        self.assertIn("single terminal report", heavy)
-        self.assertIn("Neither role uses `followup_task`", heavy)
+        self.assertIn("reference/change/rationale/check steps", heavy)
+        self.assertIn("distributes the main agent's knowledge", heavy)
+        self.assertIn("not call subagents merely to use the route", heavy)
+        self.assertIn("skip Closure Steward and token\nreporting", heavy)
+        self.assertIn("before the final\nresponse", heavy)
+        self.assertIn("The main directly launches every", heavy)
+        self.assertIn("never create an LLM parent merely to operate a wave", heavy)
         self.assertIn("`list_agents`", heavy)
-        self.assertIn("does\nnot relay or rediagnose", heavy)
-        self.assertIn("repair_dispatch_blocked", heavy)
+        self.assertIn("have no assumed collaboration\ntools", heavy)
+        self.assertIn("Status: repair_needed", heavy)
+        self.assertIn("the main forwards that\n   packet unchanged", heavy)
         self.assertIn("follow `investigation_team.md`", heavy)
-        self.assertIn("alone identifies the actual defect", heavy)
-        self.assertIn("directly reads and understands task-critical", heavy)
-        self.assertIn("multi-worker wave delivers unchanged deltas", heavy)
-        self.assertIn("Never route reports through Companion", heavy)
-        self.assertIn('create one `wave_barrier` with\n`fork_turns="none"`', heavy)
-        self.assertIn("waits until every member and descendant is", heavy)
-        self.assertIn("passes them unchanged", heavy)
-        self.assertIn("receives a minimal envelope", heavy)
+        self.assertIn("alone determines the\nroot cause", heavy)
+        self.assertIn("receives a concise envelope", heavy)
         self.assertIn("Only executors receive an implementation capsule", heavy)
-        self.assertIn("Testers receive a verification capsule instead", heavy)
-        self.assertIn("Other roles receive only the short\nbrief", heavy)
-        self.assertIn("Owning acceptance and integration gates means", heavy)
+        self.assertIn("Testers receive a verification capsule", heavy)
+        self.assertIn("Owning a gate means", heavy)
         self.assertIn("does not mean rerunning", heavy)
         self.assertIn("one bounded tool turn", heavy)
-        self.assertIn("does not authorize\na main-agent diagnostic loop", heavy)
+        self.assertIn("instead of starting a main-agent diagnostic loop", heavy)
         self.assertIn("soft evidence budget", heavy)
         self.assertIn("`heavy_companion.md`", heavy)
-        self.assertIn("directly read the complete\n`agent_docs/` framework once", heavy)
-        self.assertIn("never\na framework summary or project facts", heavy)
-        self.assertIn("verification_ledger.py", heavy)
-        self.assertIn("Prose test counts are not authoritative", heavy)
+        self.assertIn("first substantive Heavy entry", heavy)
+        self.assertIn("`agent_docs/project_overview.md`", heavy)
+        self.assertIn("`project_core_tech.md`", heavy)
+        self.assertIn("`project_structure.md`", heavy)
+        self.assertIn("`project_progress.md`", heavy)
+        self.assertIn("`latest_session_work.md`", heavy)
+        self.assertIn("every module-specific\nMarkdown document", heavy)
+        self.assertIn("required even when Companion started in Medium", heavy)
+        self.assertIn("does not routinely read the diary", heavy)
+        self.assertIn("source/contract indexing", heavy)
+        self.assertIn("owner/acceptance tracking", heavy)
+        self.assertIn("## Lightweight Evidence Manifest", heavy)
+        self.assertIn("`unavailable`, or `not_run`", heavy)
+        self.assertIn("blank/low-confidence OCR", heavy)
+        self.assertIn("## Deployment and Rollback", heavy)
+        self.assertIn("prior baseline is worse", heavy)
         self.assertIn("routine success is at most 120", heavy)
-        self.assertNotIn("compact ledger", heavy)
+        self.assertNotIn("wave_barrier", heavy)
+        self.assertNotIn("verification_ledger", heavy)
 
         medium = policies["medium_route.md"]
         self.assertIn("direct main-agent fast path", medium)
@@ -165,12 +167,13 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("Closure\nSteward seals its closure work", medium)
         self.assertIn("Do not\ndispatch Companion", medium)
         self.assertIn("follow\n`investigation_team.md`", medium)
-        self.assertIn("terminal report each to the wave's `wave_barrier`", medium)
+        self.assertIn("main directly launches each investigator", medium)
         self.assertIn("alone\npasses the root-cause gate", medium)
         self.assertIn("`medium_companion.md`", medium)
-        self.assertIn("directly reads the complete `agent_docs/`\nframework once", medium)
-        self.assertIn("returns no framework summary or project facts", medium)
-        self.assertNotIn("usage ledger", medium)
+        self.assertIn("reads `agent_docs/project_diary.md`", medium)
+        self.assertIn("does not automatically read the complete", medium)
+        self.assertIn("runtime-asset inventory", medium)
+        self.assertNotIn("wave_barrier", medium)
 
         agents_policy = policies["AGENTS.md"]
         self.assertIn("handoff is not a user command", agents_policy)
@@ -179,50 +182,65 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("do not dispatch Companion", agents_policy)
         self.assertNotIn("session-model requirement", agents_policy)
         self.assertIn("read-only investigators", agents_policy)
-        self.assertIn("directly reads the complete Project Documentation", agents_policy)
-        self.assertIn("all six core `agent_docs/` files", agents_policy)
-        self.assertIn("every module-specific", agents_policy)
-        self.assertIn("one session-wide intake", agents_policy)
-        self.assertIn("do not ask Companion to echo", agents_policy)
-        self.assertIn("Framework intake: complete", agents_policy)
-        self.assertIn("For every coherent wave of two or more", agents_policy)
-        self.assertIn("absorbs individual completion", agents_policy)
+        self.assertIn("first substantive entry into Heavy", agents_policy)
+        for framework_file in (
+            "agent_docs/project_overview.md",
+            "agent_docs/project_core_tech.md",
+            "agent_docs/project_structure.md",
+            "agent_docs/project_progress.md",
+            "agent_docs/latest_session_work.md",
+        ):
+            self.assertIn(framework_file, agents_policy)
+        self.assertIn("every module-specific Markdown document", agents_policy)
+        self.assertIn("any Markdown file other than the six core", agents_policy)
+        self.assertIn("required once per session even when Companion was initialized", agents_policy)
+        self.assertIn("source and\n  contract indexing", agents_policy)
+        self.assertIn("environment/configuration matrices", agents_policy)
+        self.assertIn("directly launches every worker", agents_policy)
+        self.assertIn("do not\n  create an LLM worker merely to parent a wave", agents_policy)
         self.assertIn("one bounded tool turn", agents_policy)
         self.assertIn("soft budget", agents_policy)
-        self.assertIn("verification ledger", agents_policy)
+        self.assertIn("lightweight evidence manifest", agents_policy)
+        self.assertIn("A tool or browser\n  failure is `unavailable`", agents_policy)
         self.assertIn('agent_type="companion"', agents_policy)
         self.assertIn("codex-workflow-deployment-start", agents_policy)
         self.assertIn("explicit transition", agents_policy)
         self.assertIn("previous route-specific duties become inactive", agents_policy)
-        self.assertNotIn("compact receipts", agents_policy)
+        self.assertNotIn("wave_barrier", agents_policy)
+        self.assertNotIn("verification ledger", agents_policy)
 
         medium_companion = policies["medium_companion.md"]
         self.assertIn("persistent read-only secretary", medium_companion)
         self.assertIn("main agent plans, diagnoses, implements, and verifies", medium_companion)
-        self.assertIn("does not perform package-distribution", medium_companion)
         self.assertIn("director-brief or knowledge-delta", medium_companion)
-        self.assertIn("returning no framework summary or project", medium_companion)
+        self.assertIn("reading `agent_docs/project_diary.md`", medium_companion)
+        self.assertIn("environment/configuration matrices", medium_companion)
 
         heavy_companion = policies["heavy_companion.md"]
-        self.assertIn("read-only orchestration secretary", heavy_companion)
-        self.assertIn("soft evidence budget", heavy_companion)
-        self.assertIn("Distribution audit", heavy_companion)
-        self.assertIn("Readiness audit", heavy_companion)
-        self.assertIn("never receives worker reports or operates the wave", heavy_companion)
-        self.assertIn("never receives worker reports", heavy_companion)
-        self.assertIn("or decides readiness", heavy_companion)
+        self.assertIn("persistent read-only secretary", heavy_companion)
+        self.assertIn("available throughout the deployment", heavy_companion)
+        self.assertIn("first substantive Heavy entry", heavy_companion)
+        self.assertIn("every module-specific Markdown document", heavy_companion)
+        self.assertIn("module paths covered or `none`", heavy_companion)
+        self.assertIn("Medium-to-Heavy transition", heavy_companion)
+        self.assertIn("source, symbol, call-site, and public-contract indexes", heavy_companion)
+        self.assertIn("runtime-asset inventories", heavy_companion)
+        self.assertIn("browser/tool availability", heavy_companion)
+        self.assertIn("clerical owner/acceptance view", heavy_companion)
+        self.assertIn("format main-owned decisions", heavy_companion)
+        self.assertIn("not a readiness decision", heavy_companion)
+        self.assertIn("make acceptance and rollback decisions", heavy_companion)
 
         investigation = policies["investigation_team.md"]
         self.assertIn("Core Context Set", investigation)
         self.assertIn('agent_type="investigator"', investigation)
         self.assertIn('fork_turns="none"', investigation)
-        self.assertIn("fixed concurrency ceiling", investigation)
-        self.assertIn("treat them as one investigation", investigation)
-        self.assertIn('agent_type="wave_barrier"', investigation)
-        self.assertIn("passes each brief unchanged", investigation)
-        self.assertIn("returns the complete set", investigation)
-        self.assertIn("reviews the complete set of concise lane", investigation)
-        self.assertIn("root-cause gate", investigation.lower())
+        self.assertIn("fixed capacity ceiling", investigation)
+        self.assertIn("main directly creates each useful lane", investigation)
+        self.assertIn("collects each\nconcise terminal report directly", investigation)
+        self.assertIn("do\nnot create an LLM parent", investigation)
+        self.assertIn("Evidence and Root-Cause Gate", investigation)
+        self.assertNotIn("wave_barrier", investigation)
 
         handoff_contract = (PACKAGE / "closure_steward.md").read_text(
             encoding="utf-8"
@@ -236,7 +254,7 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("complete `agent_docs/` framework", handoff_contract)
         self.assertIn("Do not call a second documentation worker", handoff_contract)
         self.assertNotIn('fork_turns="none"', handoff_contract)
-        self.assertNotIn("compact usage ledger", handoff_contract)
+        self.assertIn("separate usage summary", handoff_contract)
         self.assertNotIn("| Worker name | Quantity | Number of calls |", handoff_worker)
         self.assertIn("Companion", handoff_worker)
         self.assertIn("`$deployment-token-report`", handoff_contract)
@@ -250,7 +268,8 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("Do not create another worker", handoff_worker)
         self.assertIn("preserve its exact six-column table", handoff_worker)
         self.assertIn("never edit outside `agent_docs/`", handoff_worker)
-        self.assertIn("verification ledger's `summarize`", handoff_worker)
+        self.assertIn("lightweight evidence manifest", handoff_worker)
+        self.assertIn("unavailable browser or OCR", handoff_worker)
         for framework_file in (
             "project_overview.md",
             "project_core_tech.md",
@@ -284,23 +303,22 @@ class MarkerTests(unittest.TestCase):
         companion_worker = (PACKAGE / "agents" / "companion.toml").read_text(
             encoding="utf-8"
         )
-        wave_barrier = (PACKAGE / "agents" / "wave_barrier.toml").read_text(
-            encoding="utf-8"
-        )
         investigator = (PACKAGE / "agents" / "investigator.toml").read_text(
             encoding="utf-8"
         )
-        self.assertIn("to `spawn_agent`", tester)
-        self.assertIn("become terminal while", tester)
-        self.assertIn("repair_dispatch_blocked", tester)
-        self.assertIn("Never use `followup_task` or `send_message`", tester)
-        self.assertIn("fresh repair child", executor)
-        self.assertIn("Never use `send_message` or `followup_task`", executor)
-        self.assertIn("fresh repair child", senior)
+        self.assertIn("Status: repair_needed", tester)
+        self.assertIn("You are a leaf verifier", tester)
+        self.assertIn("Do not assume collaboration tools", tester)
+        self.assertIn("may reactivate you", tester)
+        self.assertIn("main may reactivate you", executor)
+        self.assertIn("main may reactivate you", senior)
+        self.assertIn("no worker-coordination responsibility", executor)
+        self.assertIn("no\n  worker-coordination responsibility", senior)
         self.assertNotIn("Execution Guide", executor)
         self.assertNotIn("Execution Guide", senior)
         for worker in (executor, senior, tester):
-            self.assertIn("verification_ledger.py", worker)
+            self.assertIn("evidence-manifest row", worker)
+            self.assertNotIn("verification_ledger", worker)
             self.assertIn("≤120 words", worker)
         self.assertIn('model = "gpt-5.6-luna"', executor)
         self.assertIn('model = "gpt-5.6-sol"', senior)
@@ -311,24 +329,23 @@ class MarkerTests(unittest.TestCase):
         )
         self.assertIn("secretary and office", companion_worker)
         self.assertIn("complete routine read-only context work", companion_worker)
-        self.assertIn("read every Markdown\nfile under `agent_docs/`", companion_worker)
-        self.assertIn("Do\nnot return a Framework Brief", companion_worker)
-        self.assertIn("Framework intake: complete", companion_worker)
-        self.assertIn("Do not reread the complete framework", companion_worker)
+        self.assertIn("first substantive Medium deployment", companion_worker)
+        self.assertIn("first substantive Heavy entry", companion_worker)
+        self.assertIn("every module-specific Markdown", companion_worker)
+        self.assertIn("The main agent, not you, reads those other five core", companion_worker)
+        self.assertIn("task-related director brief", companion_worker)
+        self.assertIn("Write like a capable secretary", companion_worker)
+        self.assertIn("Do not automatically read other `agent_docs/`", companion_worker)
         self.assertIn("Deployment Boundary Marker", companion_worker)
         self.assertIn("Closure Steward uses that marker", companion_worker)
         self.assertIn("Do not invoke `$deployment-token-report`", companion_worker)
         self.assertIn("explicit route-transition request", companion_worker)
-        self.assertIn("In Medium, perform routine context support", companion_worker)
-        self.assertIn("In Heavy, perform a distribution or ledger-readiness", companion_worker)
+        self.assertIn("In Medium, perform continuing", companion_worker)
+        self.assertIn("In Heavy, perform continuing clerical", companion_worker)
+        self.assertIn("runtime-asset inventories", companion_worker)
+        self.assertIn("format the main agent's decisions", companion_worker)
         self.assertNotIn("report-batch", companion_worker)
         self.assertNotIn("sent directly\nby those workers", companion_worker)
-        self.assertIn('model = "gpt-5.6-luna"', wave_barrier)
-        self.assertIn('sandbox_mode = "read-only"', wave_barrier)
-        self.assertIn("pass its brief or\n  capsule unchanged", wave_barrier)
-        self.assertIn("every launched member and every descendant is", wave_barrier)
-        self.assertIn("terminal report verbatim", wave_barrier)
-        self.assertIn("Wave terminal: yes", wave_barrier)
         self.assertIn('model = "gpt-5.6-luna"', investigator)
         self.assertNotIn("terra", investigator.lower())
         self.assertIn('sandbox_mode = "read-only"', investigator)
@@ -356,7 +373,8 @@ class MarkerTests(unittest.TestCase):
         self.assertNotIn("task capsule", doc_writer)
         self.assertIn("outside `agent_docs/`", doc_writer)
         self.assertIn("Closure Steward alone reconciles", doc_writer)
-        self.assertTrue((PACKAGE / "verification_ledger.py").is_file())
+        self.assertFalse((PACKAGE / "verification_ledger.py").exists())
+        self.assertFalse((PACKAGE / "agents" / "wave_barrier.toml").exists())
         for required_context in (
             "project_structure.md",
             "project_overview.md",
@@ -649,9 +667,15 @@ class ReleaseTests(unittest.TestCase):
                 ):
                     verify_archive(self._archive_without(missing))
 
-    def test_archive_requires_verification_ledger(self) -> None:
-        with self.assertRaisesRegex(PackageReleaseError, "archive is missing"):
-            verify_archive(self._archive_without("verification_ledger.py"))
+    def test_archive_rejects_retired_wave_barrier(self) -> None:
+        names = ["codex_workflow"]
+        names.extend(
+            f"codex_workflow/{path.relative_to(PACKAGE).as_posix()}"
+            for path in PACKAGE.rglob("*")
+        )
+        names.append("codex_workflow/agents/wave_barrier.toml")
+        with self.assertRaisesRegex(PackageReleaseError, "retired worker roles"):
+            _verify_member_names(names)
 
     def test_archive_requires_route_companion_guides(self) -> None:
         for guide in ("medium_companion.md", "heavy_companion.md"):
@@ -861,7 +885,7 @@ class LifecycleIntegrationTests(unittest.TestCase):
         self.assertTrue((self.runtime.agents / "default_executor.toml").is_file())
         self.assertTrue((self.runtime.agents / "senior_executor.toml").is_file())
         self.assertTrue((self.runtime.agents / "investigator.toml").is_file())
-        self.assertTrue((self.runtime.agents / "wave_barrier.toml").is_file())
+        self.assertFalse((self.runtime.agents / "wave_barrier.toml").exists())
         self.assertFalse((self.runtime.agents / "executor_terra.toml").exists())
         self.assertTrue((self.runtime.agents / "closure_steward.toml").is_file())
         self.assertTrue((self.runtime.agents / "companion.toml").is_file())
@@ -1166,16 +1190,20 @@ class LifecycleIntegrationTests(unittest.TestCase):
             "## Working State (1.2)", second.active.read_text(encoding="utf-8")
         )
 
-    def test_update_removes_retired_workers(self) -> None:
+    def test_update_removes_retired_architecture_assets(self) -> None:
         self.bootstrap()
         state_path = self.runtime.runtime / "install_state.json"
         state = json.loads(state_path.read_text(encoding="utf-8"))
+        retired_verification_utility = self.runtime.runtime / "verification_ledger.py"
+        retired_verification_utility.write_text("# retired\n", encoding="utf-8")
+        state["owned_runtime_files"].append("verification_ledger.py")
         for legacy_worker in (
             "executor_luna",
             "executor_sol",
             "executor_terra",
             "explorer",
             "end_of_session",
+            "wave_barrier",
         ):
             (self.runtime.agents / f"{legacy_worker}.toml").write_text(
                 f"# codex-workflow-worker: {legacy_worker}\n",
@@ -1190,12 +1218,14 @@ class LifecycleIntegrationTests(unittest.TestCase):
 
         incoming = self.incoming_package("worker-migration-incoming", "1.2.0")
         plan_update(incoming, self.runtime, self.project).apply()
+        self.assertFalse(retired_verification_utility.exists())
         for legacy_worker in (
             "executor_luna",
             "executor_sol",
             "executor_terra",
             "explorer",
             "end_of_session",
+            "wave_barrier",
         ):
             self.assertFalse((self.runtime.agents / f"{legacy_worker}.toml").exists())
             self.assertFalse(
@@ -1321,15 +1351,15 @@ class LifecycleIntegrationTests(unittest.TestCase):
 
     def test_remove_requires_second_confirmation_and_cleans_owned_files(self) -> None:
         self.bootstrap(existing_agents="Local policy.\n")
-        ledger_record = (
+        legacy_resource = (
             self.project.hidden_dir
             / "deployments"
             / "feature_a"
             / "verification"
             / "record.json"
         )
-        ledger_record.parent.mkdir(parents=True)
-        ledger_record.write_text("{}\n", encoding="utf-8")
+        legacy_resource.parent.mkdir(parents=True)
+        legacy_resource.write_text("{}\n", encoding="utf-8")
         user_agents = self.runtime.user_agents.read_text(encoding="utf-8")
         self.runtime.user_agents.write_text(
             "# Keep this user policy.\n\n" + user_agents,
@@ -1374,7 +1404,7 @@ class LifecycleIntegrationTests(unittest.TestCase):
         self.assertFalse(planned_summary["applied"])
         self.assertTrue(planned_summary["confirmation_required"])
         self.assertTrue(
-            any("verification ledger" in warning for warning in planned_summary["warnings"])
+            any("legacy project workflow resources" in warning for warning in planned_summary["warnings"])
         )
         self.assertTrue(self.project.active.is_file())
         self.assertTrue(self.runtime.runtime.is_dir())

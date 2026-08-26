@@ -31,7 +31,6 @@ BUILTIN_WORKERS = frozenset(
         "tester",
         "doc-writer",
         "companion",
-        "wave_barrier",
         "investigator",
         "closure_steward",
     }
@@ -105,7 +104,6 @@ class PackageLayout:
         if not allow_legacy:
             required = [
                 "workflow.py",
-                "verification_ledger.py",
                 "heavy_route.md",
                 "medium_route.md",
                 "heavy_companion.md",

@@ -20,23 +20,27 @@ during automatic closure; it does not implement or verify the task.
 Use Companion to protect main-agent context and attention. Give it routine
 read-only questions and peripheral or unfamiliar context. It resolves bounded
 routine matters and retains supporting detail. At the first substantive
-deployment in a session, the main directly reads the complete `agent_docs/`
-framework once. Companion separately loads the same framework into retained
-context but returns no framework summary or project facts. Later deployments
-reuse both retained working models and refresh only changed or
-decision-critical text. The main then directly reads exact task-critical
-documentation, the rest of the task's Core Context Set, and the complete
-investigation-wave bundle, and remains responsible for source it edits, defect
-identification, material acceptance decisions, critical evidence, and final
-claims.
+deployment in a session, Companion reads `agent_docs/project_diary.md` and
+returns a director brief containing only task-related decisions, discarded
+approaches, mistakes, reusable lessons, conflicts, and exact references. The
+main does not automatically read the complete documentation framework. It uses
+the brief and Companion's later indexing or conflict checks to target exact
+task-critical documentation, source it edits, decisive failure evidence, and
+verification results. The main remains responsible for defect identification,
+material acceptance decisions, critical evidence, and final claims.
+
+Use Companion throughout the deployment for bounded source/contract indexing,
+documentation comparison, supporting-code or integration mapping,
+environment/configuration matrices, runtime-asset inventory, browser/tool
+availability, Git/status aggregation, artifact compression, recommendations,
+and drafts. These clerical assignments are not limited to initialization or a
+final audit.
 
 For a serious or ambiguous issue with independent search lanes, follow
 `investigation_team.md` before implementation only when those read-only lanes
-are materially useful. Investigators gather and challenge evidence and deliver
-one concise terminal report each to the wave's `wave_barrier`. The barrier
-returns the complete unmodified set only after the whole wave and its
-descendants are terminal. The main agent evaluates that single bundle, opens
-the decisive project sources, and alone
+are materially useful. The main directly launches each investigator, waits for
+lifecycle events, collects the concise terminal reports, and evaluates the
+complete expected set once. It opens the decisive project sources and alone
 passes the root-cause gate. If investigators are unavailable, continue with
 main-agent evidence work only when safe and report the limitation.
 

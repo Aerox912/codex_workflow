@@ -465,28 +465,27 @@ def plan_project_remove(
         if path.is_file():
             mutations.append(Mutation(path, None))
 
-    deployments = hidden_dir / "deployments"
-    if deployments.is_symlink() or (deployments.exists() and not deployments.is_dir()):
-        raise ValidationError(f"verification ledger path is not a directory: {deployments}")
-    if deployments.is_dir():
-        warnings.append("project verification ledger records will be permanently deleted")
-        for path in sorted(deployments.rglob("*")):
-            if path.is_symlink():
-                raise ValidationError(f"refusing to remove symlink in verification ledger: {path}")
-            if path.is_file():
-                mutations.append(Mutation(path, None))
-            elif not path.is_dir():
-                raise ValidationError(f"verification ledger contains a non-file entry: {path}")
-
     cleanup_dirs: list[Path] = []
     if hidden_dir.is_dir():
+        planned_paths = {
+            mutation.path.resolve(strict=False) for mutation in mutations
+        }
+        legacy_resources: list[Path] = []
         for path in sorted(hidden_dir.rglob("*")):
             if path.is_symlink():
                 raise ValidationError(f"refusing to remove symlink in project resource: {path}")
             if path.is_dir():
                 cleanup_dirs.append(path)
+            elif path.is_file():
+                resolved = path.resolve(strict=False)
+                if resolved not in planned_paths:
+                    mutations.append(Mutation(path, None))
+                    planned_paths.add(resolved)
+                    legacy_resources.append(path)
             elif path.exists() and not path.is_file():
                 raise ValidationError(f"project resource contains a non-file entry: {path}")
+        if legacy_resources:
+            warnings.append("legacy project workflow resources will be permanently deleted")
         cleanup_dirs.append(hidden_dir)
 
     return mutations, cleanup_dirs, warnings

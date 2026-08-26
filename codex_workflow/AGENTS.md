@@ -2,8 +2,6 @@
 <!-- codex-workflow-managed-start -->
 # AGENTS.md
 
-## Project Context
-
 
 ## Design Principles
 
@@ -12,6 +10,7 @@
 - Define proportionate acceptance and verification before implementation. Keep
   related tests cohesive; never weaken coverage, assertions, or failure
   visibility to save time or tokens.
+- Avoid building unnecessary protections and testing measures.
 - Preserve unrelated user work and use verified facts in durable documentation.
 
 Project personalization and project-local instructions are in protected regions
@@ -95,35 +94,47 @@ ends.
   ```text
   codex-workflow-deployment-start: <deployment_id>
   ```
-- Before planning or dispatch in the session's first substantive deployment,
-  the main agent directly reads the complete Project Documentation Framework:
-  all six core `agent_docs/` files and every module-specific document. This is
-  one session-wide intake, not a per-deployment read. Batch it into one bounded
-  read turn and do not ask Companion to echo, summarize, or brief the framework
-  back. In later deployments, use retained context and read only a document
-  whose changed or decision-critical text must be refreshed.
-- Companion also reads the complete framework once when initialized so it can
-  retain project context for its own work. Its intake response contains only
-  the deployment marker and `Framework intake: complete`, or the names of
-  unreadable files; it contains no framework summary, inventory, or project
-  facts. The main has already performed the authoritative intake, so Companion
-  coverage failure does not trigger a second complete main-agent read.
+- At the first substantive Medium deployment in the session, Companion reads
+  `agent_docs/project_diary.md` and returns the deployment marker plus a concise
+  task-related director brief. The main does not automatically read the complete
+  documentation framework in Medium.
+- At the first substantive entry into Heavy in the session, the main agent reads
+  these five core documents before planning or worker dispatch:
+  `agent_docs/project_overview.md`, `agent_docs/project_core_tech.md`,
+  `agent_docs/project_structure.md`, `agent_docs/project_progress.md`, and
+  `agent_docs/latest_session_work.md`. In parallel, Companion reads
+  `agent_docs/project_diary.md` and every module-specific Markdown document under
+  `agent_docs/`—any Markdown file other than the six core framework files—and
+  returns a concise task-related director brief with exact references and a
+  coverage list of the module documents read, or `none`. It reports any
+  unreadable required path explicitly. Do not ask it for a status-only intake
+  response.
+- Heavy intake is required once per session even when Companion was initialized
+  earlier in Medium. Later Heavy deployments or re-entry reuse retained intake
+  and refresh only changed or decision-critical documents. The main does not
+  routinely reread `project_diary.md` or module-specific documents; it opens an
+  exact supporting document when Companion reports ambiguity or conflict, or
+  when that document directly controls a material decision or final claim.
+- Use Companion throughout the deployment for bounded clerical work: source and
+  contract indexing, document-conflict checks, external-integration mapping,
+  environment/configuration matrices, runtime-asset inventories, browser/tool
+  availability, Git/status aggregation, owner/acceptance tracking, artifact
+  compression, and capsule formatting from decisions already owned by the main.
+  Companion may retain the supporting bibliography; the main directly checks
+  the small subset that controls a material decision or final claim.
 - If the selected route changes, send the same Companion an explicit transition
   brief naming the new route; previous route-specific duties become inactive.
   Never create a second Companion merely because the route changed.
 - If Companion is unavailable, continue only when safe and report the limitation.
-- A single worker returns one small knowledge delta directly to the main agent.
-  For every coherent wave of two or more workers, the main creates one
-  `wave_barrier` with the approved launch manifest and exact worker briefs or
-  capsules. The barrier launches the workers, absorbs individual completion
-  wakeups, waits until the complete wave and all descendants are terminal, and
-  returns the unmodified terminal reports together. The main waits only for the
-  barrier and integrates the wave once. Companion remains separate assigned
-  read-only context support; it is not a worker-report relay or wave barrier.
-- After complete framework intake, the main agent directly reads relevant
-  source paths, contracts, exact decision-critical documentation, and decisive
-  failure evidence. It owns defect identification, root-cause adjudication,
-  architecture, scope, and final claims.
+- The main agent directly launches every worker with its exact main-approved
+  brief or capsule, waits for lifecycle events, and collects each terminal
+  report. Launching, waiting, and collection are coordination duties; do not
+  create an LLM worker merely to parent a wave. Integrate a coherent group once
+  all expected reports are terminal. Companion is not a worker-report relay.
+- The main agent directly reads relevant source paths, contracts, exact
+  decision-critical documentation, and decisive failure evidence. It owns
+  defect identification, root-cause adjudication, architecture, scope, and
+  final claims.
   At each gate, start with the owning contract, decisive source excerpt, and
   decisive failure or verification artifact; exceed that soft budget only when
   conflict, uncertainty, or risk requires it.
@@ -135,8 +146,11 @@ ends.
 - In Heavy, main-agent ownership of acceptance and integration gates means
   defining the gates, assigning their execution, evaluating returned evidence,
   and deciding acceptance. It does not mean rerunning evidenced worker checks.
-  Initialize the Heavy verification ledger after defining acceptance criteria;
-  its deterministic summary, not prose test counts, owns freshness state.
+  Keep a lightweight evidence manifest in the deployment working state. Each
+  gate records its required/conditional/advisory class, owner, status, method or
+  artifact, checked scope/freshness, and material limitation. A tool or browser
+  failure is `unavailable`, not a failed product result; it blocks only when the
+  missing observation is itself required and no acceptable alternative exists.
   Delegate deployment state, endpoints, uploads, browser or screenshot work,
   external search, routine Git or status collation, tool or API discovery, and
   operational diagnostics to the responsible worker.

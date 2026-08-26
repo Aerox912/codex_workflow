@@ -36,7 +36,6 @@ BUILTIN_WORKERS = frozenset(
         "tester",
         "doc-writer",
         "companion",
-        "wave_barrier",
         "investigator",
         "closure_steward",
     }
@@ -298,7 +297,6 @@ def _verify_member_names(names: Iterable[str]) -> list[str]:
         f"{PACKAGE_DIR_NAME}/closure_steward.md",
         f"{PACKAGE_DIR_NAME}/investigation_team.md",
         f"{PACKAGE_DIR_NAME}/workflow.py",
-        f"{PACKAGE_DIR_NAME}/verification_ledger.py",
         f"{PACKAGE_DIR_NAME}/runtime/__init__.py",
         f"{PACKAGE_DIR_NAME}/runtime/_toml.py",
         f"{PACKAGE_DIR_NAME}/runtime/backup.py",
@@ -335,6 +333,7 @@ def _verify_member_names(names: Iterable[str]) -> list[str]:
         f"{PACKAGE_DIR_NAME}/agents/executor_terra.toml",
         f"{PACKAGE_DIR_NAME}/agents/explorer.toml",
         f"{PACKAGE_DIR_NAME}/agents/end_of_session.toml",
+        f"{PACKAGE_DIR_NAME}/agents/wave_barrier.toml",
     }
     present_retired = sorted(retired_workers.intersection(normalized))
     if present_retired:
@@ -445,7 +444,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output-dir", type=Path, default=repository_root() / "dist", help="asset directory"
     )
-    parser.add_argument("--release-tag", help="validate a release tag such as v1.1.9")
+    parser.add_argument("--release-tag", help="validate a release tag such as v1.1.12")
     parser.add_argument("--version", help="validate an expected package version")
     parser.add_argument(
         "--verify",

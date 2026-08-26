@@ -46,7 +46,6 @@ jobs:
           fi
           python -B scripts/test_workflow_runtime.py -v
           python -B scripts/test_deployment_token_report.py -v
-          python -B scripts/test_verification_ledger.py -v
           python -B codex_workflow/workflow.py validate \
             --package-root codex_workflow \
             --json

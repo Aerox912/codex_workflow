@@ -10,12 +10,15 @@ context work while the main agent plans, diagnoses, implements, and verifies.
 
 Assign bounded work such as:
 
-- reading the complete `agent_docs/` framework once at session initialization,
-  retaining it for later work, and returning no framework summary or project
-  facts;
+- reading `agent_docs/project_diary.md` once at session initialization and
+  returning a task-related director brief with decisions, failed approaches,
+  reusable lessons, conflicts, and exact references;
 - locating and comparing peripheral documentation, dependencies, interfaces,
   configuration, logs, or artifacts;
-- mapping unfamiliar supporting code and answering routine factual questions;
+- indexing source and contracts, mapping unfamiliar supporting code or external
+  integrations, and answering routine factual questions;
+- compiling environment/configuration matrices, runtime-asset inventories,
+  browser/tool availability, and read-only Git/status summaries;
 - retaining source-linked context and preparing recommendations or drafts; and
 - returning a director brief that identifies useful starting references,
   contradictions, missing proof, and decisions required.
@@ -26,9 +29,8 @@ edited source, decisive failure evidence, or verification results.
 
 ## Boundaries
 
-Medium Companion does not perform package-distribution or verification-ledger
-audits. It never implements, verifies, decides root cause or acceptance, edits
-files, manages investigators, receives worker reports, or mutates Git.
+Medium Companion never implements, verifies, decides root cause or acceptance,
+edits files, manages investigators, receives worker reports, or mutates Git.
 Escalate any matter that changes architecture, scope, ownership, a public
 contract, security or migration posture, or a final claim.
 

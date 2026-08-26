@@ -71,35 +71,35 @@ Codex stays on the selected route until you change it.
 
 ### Coordinating architecture
 
-The Heavy route uses a circular coordination model: the main agent remains the knowledge
-director at the center, while specialized workers search, implement, verify,
-filter information, and close the deployment around it.
-
-![Heavy Route architecture](heavy_route_architecture.png)
+The Heavy route uses a main-directed coordination model: the main agent remains
+the knowledge director, Companion handles routine read-only office work, and
+specialized workers search, implement, verify, document, and close bounded work.
 
 | Role or mechanism | Responsibility | Boundary |
 | --- | --- | --- |
-| Main agent | Reads task-critical context, identifies the defect, chooses the plan, and defines and evaluates acceptance gates. | Workers execute operational checks; gate ownership does not require the main agent to rerun their evidence. |
-| Companion | Medium provides routine context support; Heavy adds distribution and readiness audits. | One persistent read-only worker; route changes replace its active duties, not its identity. |
-| Wave barrier | Launches one main-authored multi-worker manifest and returns all terminal reports together. | Absorbs individual completion wakeups without changing capsules or filtering evidence. |
+| Main agent | In Heavy, reads the five non-diary core project documents, identifies the defect, chooses the plan, and defines and evaluates acceptance gates. | Workers execute operational checks; gate ownership does not require the main agent to rerun their evidence. |
+| Companion | Performs diary and Heavy module-document intake, indexing, conflict checks, integration/config/tool mapping, status aggregation, evidence-owner tracking, and decision-to-capsule formatting. | One persistent read-only secretary; the main approves decisions and directly checks decisive evidence. |
 | Investigators | Explore independent bug, evidence, prior-art, and solution lanes. | The main agent defines lanes and makes the root-cause decision. |
 | Role-scoped knowledge | Gives executors implementation guidance, testers verification criteria, and investigators focused search briefs. | Workers receive only the context needed for their role. |
-| Executor–tester loop | `default_executor` implements; the tester verifies independently and stays active through repair. | A fresh repair child returns terminal evidence for recheck; material conflicts escalate. |
-| Verification ledger | Stores immutable criterion results and checked-path hashes. | Missing, failed, or stale evidence blocks Heavy acceptance. |
+| Executor–tester loop | `default_executor` implements; the tester verifies independently and reports production defects. | The main routes repair to the executor and reactivates the tester; leaf roles need no collaboration tools. |
+| Evidence manifest | Tracks each gate's class, owner, status, method/artifact, checked scope/freshness, and limitation. | Unavailable browser/OCR evidence is distinct from product failure and does not erase unrelated passing gates. |
+| Rollback policy | Compares the candidate with the actual pre-change baseline. | Rollback requires a material regression or required failure and a safer or more functional prior state. |
 | Senior executor | Handles exceptionally difficult mathematical, logical, or cross-cutting work. | It is a limited reserve, not the default production agent. |
 | Doc-writer | Updates verified public, product, operator, or service documentation. | Does not edit `agent_docs/` during deployment. |
 | Closure Steward | Reconciles `agent_docs/` and prepares the final handoff. | Never edits outside `agent_docs/` or mutates Git. |
 
-At the first substantive Medium or Heavy deployment in a session, the main and
-Companion each read `agent_docs/` once into their own retained context;
-Companion returns only intake status, not a duplicate framework brief. Heavy
-keeps raw work and individual worker-completion wakeups off the main thread while
-preserving direct decision evidence. Capsules distribute package-specific
-guidance unchanged through the wave barrier; static mechanics stay in worker
-definitions. Routine repair stays inside an explicit tester–executor child
-lifecycle, and the verification ledger makes freshness deterministic. The main
-agent retains root-cause, architecture, allocation, acceptance, and final-claim
-authority.
+At the first substantive Medium deployment in a session, Companion reads
+`agent_docs/project_diary.md`; Medium otherwise uses targeted documentation.
+At the first substantive Heavy entry, the main reads `project_overview.md`,
+`project_core_tech.md`, `project_structure.md`, `project_progress.md`, and
+`latest_session_work.md`, while Companion reads and summarizes
+`project_diary.md` plus every module-specific Markdown document. The split also
+runs on a Medium-to-Heavy transition and is reused for later Heavy deployments
+unless relevant files change. In Heavy, the main launches workers directly,
+integrates their small terminal reports, routes repair, and owns the lightweight
+evidence manifest. Capsules still distribute package-specific guidance. The
+main retains root-cause, architecture, allocation, acceptance, rollback, and
+final-claim authority.
 
 ## Light benchmark
 

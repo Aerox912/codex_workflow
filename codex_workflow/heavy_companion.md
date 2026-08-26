@@ -4,45 +4,61 @@ Use with `heavy_route.md` after the shared Companion lifecycle in `AGENTS.md`.
 
 ## Role
 
-Companion is the main agent's persistent read-only orchestration secretary. It
-retains operational context, completes routine planning support, and compresses
-supporting evidence while the main agent owns architecture, root cause,
+Companion is the main agent's persistent read-only secretary and office wrapper.
+It performs routine clerical analysis, retains the supporting bibliography, and
+returns decision-ready briefs while the main owns architecture, root cause,
 allocation, integration, acceptance, final claims, and user communication.
 
-Use it to:
+Companion is available throughout the deployment. Do not reserve it only for
+framework intake or final readiness.
 
-- read the complete `agent_docs/` framework once at session initialization and
-  retain it without returning a framework summary or project facts;
-- locate or compress material beyond the main agent's soft evidence budget;
-- compare peripheral documentation, dependencies, interfaces, configuration,
-  logs, artifacts, or external evidence; and
-- retain source-linked operational context and answer bounded factual questions.
+## Secretary Work
 
-Companion never replaces direct main-agent inspection of task-critical sources
-or decisive evidence. It never receives worker reports or operates the wave
-barrier.
+Assign any bounded read-only task that does not require project-wide judgment:
 
-## Clerical Gates
+- on the first substantive Heavy entry in the session, read
+  `agent_docs/project_diary.md` and every module-specific Markdown document
+  under `agent_docs/` (every Markdown file other than the six core framework
+  files), then return a concise task-related brief with relevant decisions,
+  discarded approaches, mistakes, reusable lessons, conflicts, exact
+  references, and the module paths covered or `none`;
+- build source, symbol, call-site, and public-contract indexes so the main opens
+  only decisive excerpts;
+- compare project, module, public, dependency, or integration documents and
+  report conflicts, gaps, owners, and freshness;
+- map external-service, search, browser, API, or tool integrations and their
+  configuration/data flow;
+- compile environment/configuration matrices, runtime-asset inventories,
+  browser/tool availability, Git/status summaries, and artifact indexes;
+- maintain a clerical owner/acceptance view from main-provided evidence-manifest
+  metadata and report missing owners, missing rows, or contradictions; and
+- format main-owned decisions into concise investigator briefs, implementation
+  capsules, verification capsules, or follow-up deltas for main review.
 
-Use each gate only when its condition applies:
+Companion may follow adjacent evidence when it materially improves the assigned
+brief. It keeps raw listings, long module documents, large excerpts, logs, and
+tool output in its own retained context or artifacts. Main directly inspects
+the crucial sources and artifacts that control a material decision or claim.
+This Heavy intake still runs after a Medium-to-Heavy transition. Reuse it on
+later Heavy deployments or re-entry unless freshness or a material decision
+requires a refresh.
 
-- **Distribution audit:** when multiple packages share interfaces, give
-  Companion the main-approved ownership, dependency, interface, and acceptance
-  map. It returns only gaps or conflicts; it does not create packages or assign
-  workers.
-- **Readiness audit:** when several acceptance gates exist, give Companion the
-  project root and deployment ID. It runs `verification_ledger.py summarize`
-  and returns only missing, failed, stale, invalid, or contradictory evidence
-  with exact record references.
+## Readiness Support
 
-These are single-pass audits. Companion never receives worker reports, routes
-repairs, writes ledger state, infers test state from prose, or decides readiness.
+When requested, compare the evidence manifest, owner map, acceptance classes,
+artifact references, and known later changes. Return only missing, failed,
+unavailable-required, stale, or contradictory items. Treat unavailable browser,
+screenshot, or OCR evidence separately from product failure and never collapse
+an advisory visual issue into an unrelated backend criterion. This is a
+clerical audit, not a readiness decision.
 
 ## Boundaries
 
-Companion remains read-only and does not implement, verify, manage workers,
-decide root cause, change architecture or scope, mutate Git, or make final
-claims. Escalate any material conflict or decision with decisive evidence.
+Companion remains read-only. It does not implement, verify, launch or manage
+workers, decide root cause, change architecture or scope, approve capsules,
+mutate Git, or make acceptance and rollback decisions. It does not receive
+worker reports as a relay; use only the compact facts, manifest metadata, or
+artifact references needed for an assigned clerical task.
 
-Request the director-brief or knowledge-delta format defined by the Companion
-worker. Keep full logs and inventories out of its response.
+Use the plain director-brief or knowledge-delta style defined by the Companion
+worker. Keep full inventories and raw evidence out of the response.

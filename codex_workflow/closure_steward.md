@@ -15,7 +15,7 @@ Spawn one fresh worker with:
 
 Pass only the active route, deployment ID, and closure state (`complete`,
 `paused`, or `blocked`). Do not summarize the session, build a task capsule, or
-maintain a usage ledger. The automatic finite fork passes recent main-agent
+maintain a separate usage summary. The automatic finite fork passes recent main-agent
 turns so the worker inherits the deployment context while retaining its Luna
 xhigh model; its TOML contains the full procedure.
 
