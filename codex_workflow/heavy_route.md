@@ -38,6 +38,14 @@ should be used by the role that owns that context when practical. The main
 agent retains access to critical evidence but opens it only for a material
 decision, uncertainty, contradiction, missing proof, or high-risk boundary.
 
+Visible host surfaces are not delegable. The primary task exclusively owns the
+in-app browser, Chrome surface control, Computer Use and browser confirmations,
+exact tab identity, and live ChatGPT submission and read operations, including
+`codex-chatgpt-control`. Workers may prepare prompts and analyze returned output
+only. If a worker needs a visible-surface operation, it returns that operation
+before browser initialization and the main agent performs it. `chatgpt-delegate`
+means delegate to ChatGPT, not delegate browser control to a Codex worker.
+
 Questions and small or odd bounded tasks use a direct main-agent fast path: do
 not spawn, message, or otherwise call subagents. Do not create work merely to
 use a worker. This fast path also skips End-of-Session and worker statistics

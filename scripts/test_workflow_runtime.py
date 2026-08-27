@@ -180,6 +180,9 @@ class MarkerTests(unittest.TestCase):
             self.assertLess(len(text.splitlines()), limit, name)
 
         heavy = policies["heavy_route.md"]
+        self.assertIn("Visible host surfaces are not delegable", heavy)
+        self.assertIn("primary task exclusively owns", heavy)
+        self.assertIn("means delegate to ChatGPT", heavy)
         self.assertIn("recommended approach", heavy.lower())
         self.assertIn("canonical task names", heavy)
         self.assertIn("Decision required: none", heavy)
@@ -194,6 +197,8 @@ class MarkerTests(unittest.TestCase):
         self.assertNotIn("compact ledger", heavy)
 
         medium = policies["medium_route.md"]
+        self.assertIn("primary task exclusively owns", medium)
+        self.assertIn("means delegate to ChatGPT", medium)
         self.assertIn("direct main-agent fast path", medium)
         self.assertIn("do not call `end_of_session`", medium)
         self.assertIn("Before the final response", medium)
@@ -201,7 +206,22 @@ class MarkerTests(unittest.TestCase):
         self.assertNotIn("usage ledger", medium)
 
         agents_policy = policies["AGENTS.md"]
+        self.assertIn("primary task exclusively owns", agents_policy)
         self.assertIn("handoff is not a user command", agents_policy)
+
+        worker_profiles = sorted((PACKAGE / "agents").glob("*.toml"))
+        self.assertGreater(len(worker_profiles), 0)
+        for worker_profile in worker_profiles:
+            worker_text = worker_profile.read_text(encoding="utf-8")
+            self.assertIn(
+                "Never bootstrap or operate the in-app browser",
+                worker_text,
+                worker_profile.name,
+            )
+            self.assertIn(
+                "stop before browser initialization", worker_text, worker_profile.name
+            )
+            self.assertIn("return it to the parent", worker_text, worker_profile.name)
 
         explorer = policies["explorer_companion.md"]
         self.assertIn("planning brief", explorer)

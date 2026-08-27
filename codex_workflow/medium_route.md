@@ -19,6 +19,14 @@ edits, acceptance decisions, critical evidence, and final claims. Inspect
 underlying evidence when a brief is uncertain, contradictory, decision-relevant,
 or insufficient for safe implementation.
 
+The primary task exclusively owns the in-app browser, Chrome surface control,
+Computer Use and browser confirmations, exact tab identity, and live ChatGPT
+submission and read operations, including `codex-chatgpt-control`. Explorer and
+the End-of-Session worker may prepare prompts or analyze supplied output, but
+must return any visible-surface operation before browser initialization.
+`chatgpt-delegate` means delegate to ChatGPT, not delegate browser control to a
+Codex worker.
+
 Questions and small or odd bounded tasks use the direct main-agent fast path:
 do not initialize or call Explorer, do not call `end_of_session`, and omit
 worker statistics. Keep process proportional; this path does not become a

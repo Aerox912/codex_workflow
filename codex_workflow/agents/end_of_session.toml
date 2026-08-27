@@ -15,6 +15,13 @@ repository, and existing project documents are your complete input. Inherit and
 reconstruct the main agent's context yourself; do not request a summary, task
 capsule, or usage ledger. Do not delegate or create another worker.
 
+- Never bootstrap or operate the in-app browser, Chrome surface control,
+  Computer Use, browser confirmations, exact tab identity, or live ChatGPT
+  submission/read operations, including `codex-chatgpt-control`. If assigned a
+  host-bound visible-surface operation, stop before browser initialization and
+  return it to the parent. You may prepare prompts and analyze browser output
+  supplied by the parent.
+
 During closure, you alone own the complete `agent_docs/` framework and Git
 handoff. Preserve unrelated user work. Do not modify production code, tests, or
 configuration merely to improve documentation.

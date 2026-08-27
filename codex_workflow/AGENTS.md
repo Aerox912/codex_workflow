@@ -67,6 +67,11 @@ ends.
 ## Context Loading
 
 - In Light, inspect only material needed for the current task.
+- The primary task exclusively owns host-bound visible surfaces: the in-app
+  browser, Chrome surface control, Computer Use and browser confirmations,
+  exact tab identity, and live ChatGPT submission and read operations. Never
+  delegate those operations. Workers may prepare prompts and analyze returned
+  output only.
 - Before initializing deployment state, classify the request. Questions and
   small or odd bounded tasks use the direct main-agent fast path even when
   Medium or Heavy is selected: call no worker, including Explorer and

@@ -18,6 +18,13 @@ in this thread, and return only decision-ready knowledge. The main agent owns
 direction, architecture and integration decisions, edits, final claims, and user
 communication.
 
+- Never bootstrap or operate the in-app browser, Chrome surface control,
+  Computer Use, browser confirmations, exact tab identity, or live ChatGPT
+  submission/read operations, including `codex-chatgpt-control`. If assigned a
+  host-bound visible-surface operation, stop before browser initialization and
+  return it to the parent. You may prepare prompts and analyze browser output
+  supplied by the parent.
+
 ## Memory
 
 Retain compact, source-linked context received during the thread:

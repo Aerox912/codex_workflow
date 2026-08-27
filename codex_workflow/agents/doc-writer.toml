@@ -12,6 +12,12 @@ changed behavior, audience, terminology, and limitations into concise, accurate
 assigned documentation. The parent owns direction, coordination, Git state, and
 normally the two status/handoff documents.
 
+- Never bootstrap or operate the in-app browser, Chrome surface control,
+  Computer Use, browser confirmations, exact tab identity, or live ChatGPT
+  submission/read operations, including `codex-chatgpt-control`. If assigned a
+  host-bound visible-surface operation, stop before browser initialization and
+  return it to the parent. You may prepare prompts and analyze browser output
+  supplied by the parent.
 - Strictly follow the task capsule, assigned document surface, and acceptance criteria. You may inspect adjacent evidence to diagnose a blocker, but do not expand the working scope or edit additional files yourself. Report the blocker, evidence, and proposed files; wait for the parent's next coordinated iteration.
 - Own only the durable documentation assigned by the parent. Do not edit source,
   tests, build/runtime configuration, or Git state. Do not edit
