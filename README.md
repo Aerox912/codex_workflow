@@ -43,10 +43,10 @@ a new project, simply open Codex and send: `codex_workflow --install`
   in the main agent rather than delegated to production task workers.
 
 > Full workflow mode activates the `Companion` secretary and automatic context
-> and progress management. Heavy additionally uses bounded investigation teams
-> and delegated production workers; Medium may use explicitly requested
-> read-only evidence support, but does not delegate implementation or
-> verification.
+> and progress management. Both routes can use disposable Investigators for
+> bounded Internet research. Heavy additionally makes production, verification,
+> and public-documentation workers available; Medium does not delegate
+> implementation or verification.
 
 In Medium, the main agent owns implementation and verification. Choose it when
 you want workflow-mode context support without delegating production work.
@@ -71,35 +71,31 @@ Codex stays on the selected route until you change it.
 
 ### Coordinating architecture
 
-The Heavy route uses a main-directed coordination model: the main agent remains
-the knowledge director, Companion handles routine read-only office work, and
-specialized workers search, implement, verify, document, and close bounded work.
+Medium and Heavy are capability and ownership models, not fixed execution
+pipelines. Their architecture is hub-and-spoke: the main agent is the central
+knowledge director and decides the task-specific topology; every worker has a
+direct bounded relationship with the main rather than belonging to a mandatory
+wave or hierarchy.
 
 | Role or mechanism | Responsibility | Boundary |
 | --- | --- | --- |
-| Main agent | In Heavy, reads the five non-diary core project documents, identifies the defect, chooses the plan, and defines and evaluates acceptance gates. | Workers execute operational checks; gate ownership does not require the main agent to rerun their evidence. |
-| Companion | Performs diary and Heavy module-document intake, indexing, conflict checks, integration/config/tool mapping, status aggregation, evidence-owner tracking, and decision-to-capsule formatting. | One persistent read-only secretary; the main approves decisions and directly checks decisive evidence. |
-| Investigators | Explore independent bug, evidence, prior-art, and solution lanes. | The main agent defines lanes and makes the root-cause decision. |
-| Role-scoped knowledge | Gives executors implementation guidance, testers verification criteria, and investigators focused search briefs. | Workers receive only the context needed for their role. |
-| Executor–tester loop | `default_executor` implements; the tester verifies independently and reports production defects. | The main routes repair to the executor and reactivates the tester; leaf roles need no collaboration tools. |
-| Evidence manifest | Tracks each gate's class, owner, status, method/artifact, checked scope/freshness, and limitation. | Unavailable browser/OCR evidence is distinct from product failure and does not erase unrelated passing gates. |
-| Rollback policy | Compares the candidate with the actual pre-change baseline. | Rollback requires a material regression or required failure and a safer or more functional prior state. |
+| Main agent | Chooses the plan, topology, worker count, ordering, concurrency, repair, verification, and acceptance approach for the actual task. | Retains architecture, scope, material decisions, integration, and final claims. |
+| Companion | Maintains project context and performs bounded read-only work in the project ecosystem: repository material, project docs, local modules, dependencies, logs, configuration, Git history, and artifacts. | One persistent worker; does not research the Internet or make project decisions. |
+| Investigator | Researches any bounded external-information question on the Internet and synthesizes useful sources. | Disposable and read-only; does not take over local project discovery, implementation, or final decisions. |
+| Default executor | Discovers, implements, self-checks, and ordinarily repairs one bounded production package. | Receives task-specific project knowledge and guidance from the main. |
 | Senior executor | Handles exceptionally difficult mathematical, logical, or cross-cutting work. | It is a limited reserve, not the default production agent. |
+| Tester | Independently designs and performs verification from the acceptance intent, risks, and boundaries supplied by the main. | May own assigned test assets, but not production fixes. |
 | Doc-writer | Updates verified public, product, operator, or service documentation. | Does not edit `agent_docs/` during deployment. |
-| Closure Steward | Reconciles `agent_docs/` and prepares the final handoff. | Never edits outside `agent_docs/` or mutates Git. |
+| Closure Steward | Reconciles `agent_docs/`, prepares the final handoff, and invokes the Deployment Token Report. | Never edits outside `agent_docs/` or mutates Git. |
 
-At the first substantive Medium deployment in a session, Companion reads
-`agent_docs/project_diary.md`; Medium otherwise uses targeted documentation.
-At the first substantive Heavy entry, the main reads `project_overview.md`,
-`project_core_tech.md`, `project_structure.md`, `project_progress.md`, and
-`latest_session_work.md`, while Companion reads and summarizes
-`project_diary.md` plus every module-specific Markdown document. The split also
-runs on a Medium-to-Heavy transition and is reused for later Heavy deployments
-unless relevant files change. In Heavy, the main launches workers directly,
-integrates their small terminal reports, routes repair, and owns the lightweight
-evidence manifest. Capsules still distribute package-specific guidance. The
-main retains root-cause, architecture, allocation, acceptance, rollback, and
-final-claim authority.
+Heavy keeps only stable invariants rigid: at most twenty active subagents, one
+persistent Companion, at most one Senior Executor, direct main-to-worker
+coordination, non-overlapping concurrent write ownership, and one automatic
+Closure Steward per substantive deployment. It deliberately does not prescribe
+investigation, intake, repair, evidence, deployment, or rollback sequences.
+Executor capsules still distribute the main agent's task-specific knowledge,
+but their form adapts to the project and task. The Tester normally designs the
+specific tests rather than receiving a complete test design from the main.
 
 ## Light benchmark
 

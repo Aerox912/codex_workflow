@@ -59,13 +59,12 @@ work; do not modify production code, tests, configuration, or public docs.
    completed-deployment record in `latest_session_work.md`; do not clear both
    files. For paused or blocked work, record an exact recoverable continuation
    point.
-5. For Heavy, reconcile the lightweight evidence manifest found in inherited
-   context and worker reports. Record required, conditional, and advisory gates;
-   pass, fail, unavailable, and not-run states; artifact references; checked
-   scope/freshness; and material limitations. Keep unavailable browser or OCR
-   observation separate from product failure. For Medium, assess the main
-   agent's cited evidence. Do not rerun tests solely for closure or invent
-   missing manifest rows.
+5. Reconcile the verification and acceptance evidence present in inherited
+   context and worker reports. Preserve the method or artifact, checked scope
+   and freshness, material limitations, and any required check that failed, was
+   unavailable, or was not run. Respect whatever evidence structure the main
+   selected for the task; do not impose a new schema, rerun tests solely for
+   closure, or invent missing results.
 6. Run only compact non-test checks needed to validate the documentation
    framework and final diff. Broaden inspection only for contradictory evidence
    or an unexpected changed surface.

@@ -2,97 +2,50 @@
 
 Use after Medium is selected under `AGENTS.md`.
 
-## Role and Context
+## Ownership
 
-You are the main agent.
+The main agent plans, diagnoses, implements, verifies, integrates, and
+communicates with the user. Medium does not delegate production implementation,
+production repair, root-cause decisions, or verification to another worker.
 
-The main agent performs planning, root-cause analysis, implementation, and
-verification. Do not delegate those responsibilities or create production
-executor/tester packages in Medium. For a substantive deployment, Companion is
-the workflow-mode secretary and office wrapper defined by
-`medium_companion.md`.
-Medium may use disposable read-only investigators under
-`investigation_team.md` only when an independent evidence wave is materially
-useful; that support does not transfer root-cause or implementation authority.
-One fresh `closure_steward` worker reconciles the complete documentation framework
-during automatic closure; it does not implement or verify the task.
+Medium makes these support roles available:
 
-Use Companion to protect main-agent context and attention. Give it routine
-read-only questions and peripheral or unfamiliar context. It resolves bounded
-routine matters and retains supporting detail. At the first substantive
-deployment in a session, Companion reads `agent_docs/project_diary.md` and
-returns a director brief containing only task-related decisions, discarded
-approaches, mistakes, reusable lessons, conflicts, and exact references. The
-main does not automatically read the complete documentation framework. It uses
-the brief and Companion's later indexing or conflict checks to target exact
-task-critical documentation, source it edits, decisive failure evidence, and
-verification results. The main remains responsible for defect identification,
-material acceptance decisions, critical evidence, and final claims.
+| Role | Ownership |
+| --- | --- |
+| Companion | One persistent read-only worker for context in the project ecosystem. It retains useful operational context and handles bounded project-context work assigned by the main. It does not research the Internet. |
+| Investigator | A disposable read-only worker for bounded external-information research on the Internet. It synthesizes sources for the main and owns neither project discovery nor project decisions. |
+| Closure Steward | One fresh end-of-deployment worker that reconciles `agent_docs/` and produces the Deployment Token Report. It does not implement or verify the task. |
 
-Use Companion throughout the deployment for bounded source/contract indexing,
-documentation comparison, supporting-code or integration mapping,
-environment/configuration matrices, runtime-asset inventory, browser/tool
-availability, Git/status aggregation, artifact compression, recommendations,
-and drafts. These clerical assignments are not limited to initialization or a
-final audit.
+The main decides whether an Investigator is useful, what Companion should
+handle, and how support work relates to its own implementation. These roles are
+capabilities, not stages in a predefined pipeline. There is no mandatory
+investigation, evidence wave, root-cause gate, intake sequence, or report schema.
 
-For a serious or ambiguous issue with independent search lanes, follow
-`investigation_team.md` before implementation only when those read-only lanes
-are materially useful. The main directly launches each investigator, waits for
-lifecycle events, collects the concise terminal reports, and evaluates the
-complete expected set once. It opens the decisive project sources and alone
-passes the root-cause gate. If investigators are unavailable, continue with
-main-agent evidence work only when safe and report the limitation.
+## Fixed Boundaries
 
-Questions and small or odd bounded tasks use the direct main-agent fast path:
-do not initialize Companion or investigators; do not call `closure_steward`; omit
-the deployment token report. Keep process proportional; this
-path does not become a deployment merely because Medium remains selected.
-
-## Execution
-
-- Work in bounded context, inspection, implementation, verification, and review
-  stages.
-- When the optional evidence gate applies, finish the evidence wave and
-  main-agent root-cause decision before making a production change.
-- Batch independent, already-known reads, searches, metadata checks, and
-  isolated validation. Keep dependent or overlapping edits sequential.
-- Run checks concurrently only when they share no mutable build output,
-  generated files, fixtures, databases, ports, devices, or processes.
-- Keep detailed logs in artifacts and retain only the claim, result, exact
-  command or method, artifact path, critical excerpt if needed, and confidence.
-- Reinspect after a change, failure, contradiction, or newly discovered
-  dependency—not as routine repetition.
+- Never create a production executor, tester, or normal doc-writer package in
+  Medium. The main retains that work.
+- Keep at most 20 active subagents in the session, including Companion,
+  Investigators, and Closure Steward. Use one persistent Companion and at most
+  one Closure Steward at a time.
+- Give support workers bounded questions and sufficient context. The main owns
+  all material interpretations and final claims.
 - Preserve unrelated work, verify in proportion to risk, and never claim an
   unrun check passed.
 
-## Plans and Durable Status
+Within those boundaries, the main chooses the task-specific topology, order,
+concurrency, tools, checkpoints, and response to failures. It may work directly
+without manufacturing work for an available role.
 
-When the user asks to plan an implementation, persist and begin it unless they
-request planning only. Record the goal, major milestones, overall progress,
-current position, and next milestone.
+## Fast Path and Closure
 
-For durable or multi-session work, the main agent may update
-`agent_docs/project_progress.md` once to activate the bounded plan. The
-automatic closure worker owns final reconciliation and replaces
-`agent_docs/latest_session_work.md`; the main must not use it as scratch space.
+Questions and small or odd bounded tasks use the direct main-agent fast path.
+Do not initialize Companion or another worker, call Closure Steward, or produce
+a deployment token report for that path.
 
-Leave the end-of-deployment documentation reconciliation to the single
-`closure_steward` worker. Do not create a separate doc-writer for that process.
-
-For a blocker, preserve a clear continuation point and record the failed step,
-evidence, suspected cause, completed state, affected criterion, and required
-input. Never present partial work as complete.
-
-## Automatic Deployment Handoff
-
-Before the final response that completes, pauses, or blocks the deployment,
-follow `~/.codex/codex_workflow/closure_steward.md` exactly once and wait for its
-fresh worker. Pass only the route, a unique deployment ID, and closure state.
-The automatic handoff context fork supplies the main-agent history. Closure
-Steward seals its closure work, invokes `$deployment-token-report` directly,
-and returns the exact six-column table with its handoff. Relay both without
-duplicating its documentation, status, Git-status, or reporting work. Do not
-dispatch Companion for the report.
-A later substantive
-deployment receives a new ID, handoff, and report, even in the same session.
+Before the final response that completes, pauses, or blocks a substantive
+deployment, follow `~/.codex/codex_workflow/closure_steward.md` exactly once.
+Pass only the route, a unique deployment ID, and closure state. Wait for the
+fresh Closure Steward and relay its handoff and exact six-column
+`$deployment-token-report` table. A later substantive deployment receives a new
+ID, handoff, and report.
