@@ -4,12 +4,12 @@ Run this procedure only when the user's trimmed message is exactly:
 
     codex_workflow --personal
 
-The persistent resource is:
+Use this persistent resource:
 
     .codex_workflow_hidden_resources/personalization.md
 
-The lifecycle CLI applies a validated resource directly and requires Python
-3.11 or newer:
+Use Python 3.11 or newer with the lifecycle CLI to apply a validated resource
+directly:
 
     ~/.codex/codex_workflow/workflow.py
 
@@ -51,6 +51,7 @@ temporary candidate afterward, including after an error. A missing or invalid
 candidate changes no live file. If the current resource was missing or invalid,
 a successful application is the explicit recovery and recreates it.
 
-The script validates all three sections and atomically updates the resource and
-the generated personalization region. It preserves the workflow-managed and
-project-local regions and the enabled/disabled entry-point state.
+Let the script validate all three sections and atomically update the resource
+and generated personalization region. Preserve the workflow-managed and
+project-local regions and the enabled/disabled entry-point state through that
+operation.

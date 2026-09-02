@@ -46,7 +46,12 @@ a new project, simply open Codex and send: `codex_workflow --install`
 > and progress management. Both routes can use disposable Investigators for
 > bounded Internet research. Heavy additionally makes production, verification,
 > and public-documentation workers available; Medium does not delegate
-> implementation or verification.
+> implementation or verification. On the first deployment-state entry in each
+> session, the main agent reads the complete current `agent_docs/` framework
+> directly exactly once; later freshness checks belong to Companion.
+
+`agent_docs/` remains Git-trackable: installation does not add it to
+`.gitignore`, so durable project context can be versioned and shared normally.
 
 In Medium, the main agent owns implementation and verification. Choose it when
 you want workflow-mode context support without delegating production work.
@@ -71,11 +76,12 @@ Codex stays on the selected route until you change it.
 
 ### Coordinating architecture
 
-Medium and Heavy are capability and ownership models, not fixed execution
-pipelines. Their architecture is hub-and-spoke: the main agent is the central
-knowledge director and decides the task-specific topology; every worker has a
-direct bounded relationship with the main rather than belonging to a mandatory
-wave or hierarchy.
+Medium and Heavy expose capabilities and ownership boundaries through a
+hub-and-spoke architecture. The main agent is the central knowledge director,
+chooses the task-specific topology, and has a direct bounded relationship with
+every worker.
+
+![Heavy Route structure](heavy_route_structure.png)
 
 | Role or mechanism | Responsibility | Boundary |
 | --- | --- | --- |
@@ -91,11 +97,18 @@ wave or hierarchy.
 Heavy keeps only stable invariants rigid: at most twenty active subagents, one
 persistent Companion, at most one Senior Executor, direct main-to-worker
 coordination, non-overlapping concurrent write ownership, and one automatic
-Closure Steward per substantive deployment. It deliberately does not prescribe
-investigation, intake, repair, evidence, deployment, or rollback sequences.
-Executor capsules still distribute the main agent's task-specific knowledge,
-but their form adapts to the project and task. The Tester normally designs the
-specific tests rather than receiving a complete test design from the main.
+Closure Steward per substantive deployment. Within those invariants, the main
+chooses the investigation, project-context work, repair, evidence, deployment,
+and rollback approach appropriate to the task.
+Every initial task package has a logical **Task ID**, then three minimal parts
+named for the role's work. Executor packages use implementation context, task
+and goal, and main-agent implementation guidance; Tester, Investigator,
+Companion, and Doc-writer use corresponding role-specific capsules. The named
+parts are complete and their content stays proportional to the package. This
+format correlates dispatch and reports, while worker selection, topology,
+sequence, and lifecycle remain task-specific decisions of the main. The Tester
+normally designs the specific tests from the acceptance context supplied by the
+main.
 
 ## Light benchmark
 

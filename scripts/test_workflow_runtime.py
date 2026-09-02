@@ -105,27 +105,57 @@ class MarkerTests(unittest.TestCase):
         policies = {
             name: (PACKAGE / name).read_text(encoding="utf-8") for name in names
         }
+        line_limits = {
+            "AGENTS.md": 90,
+            "medium_route.md": 115,
+            "heavy_route.md": 155,
+        }
         for name, text in policies.items():
-            limit = 140 if name == "heavy_route.md" else 150
-            self.assertLess(len(text.splitlines()), limit, name)
+            self.assertLess(len(text.splitlines()), line_limits[name], name)
 
         heavy = policies["heavy_route.md"]
-        self.assertIn("## Main Agent at the Center", heavy)
-        self.assertIn("capabilities; they do not form a fixed", heavy)
-        self.assertIn("main decides for each task which roles are useful", heavy)
-        self.assertIn("does not impose a mandatory intake", heavy)
-        self.assertIn("## Available Roles", heavy)
+        heavy_flat = " ".join(heavy.split())
+        self.assertIn("## Your Role and Authority", heavy)
+        self.assertIn("You are the main agent and central knowledge director", heavy)
+        self.assertIn("For each task, decide which roles are useful", heavy_flat)
+        self.assertIn("## Agents You Can Use", heavy)
+        self.assertIn("## Required Documentation Read", heavy)
+        self.assertIn("The first time the session enters `deployment state`", heavy)
+        self.assertIn("directly read the complete current `agent_docs/`", heavy_flat)
+        self.assertIn("framework exactly once", heavy_flat)
+        self.assertIn("every module-specific Markdown document", heavy)
+        self.assertIn("one shared session-level read across both routes", heavy_flat)
+        self.assertIn("do not directly reopen or reread", heavy_flat)
+        self.assertIn("Companion a bounded delta or conflict check", heavy_flat)
+        self.assertIn("do not treat deployment entry as complete", heavy_flat)
+        self.assertIn("## Initialize Companion", heavy)
+        self.assertIn('agent_type="companion"', heavy)
+        self.assertIn('task_name="companion"', heavy)
+        self.assertIn('fork_turns="none"', heavy)
+        self.assertIn("codex-workflow-deployment-start", heavy)
+        self.assertIn("Reuse the same Companion after a route change", heavy_flat)
         self.assertIn("project ecosystem", heavy)
         self.assertIn("Internet research", heavy)
-        self.assertIn("designs and executes suitable tests", heavy)
-        self.assertIn("## Knowledge Distribution", heavy)
-        self.assertIn("enough of the main agent's\nknowledge", heavy)
-        self.assertIn("no mandatory field order or universal\nschema", heavy)
-        self.assertIn("normally designs the\nspecific tests", heavy)
+        self.assertIn("Let it design and execute suitable tests", heavy)
+        self.assertIn("## Role-Specific Work Packages", heavy)
+        self.assertIn("**Task ID**", heavy)
+        self.assertIn("**Project Context Scope**", heavy)
+        self.assertIn("**Research Question + Goal**", heavy)
+        self.assertIn("**Implementation Context + Ownership**", heavy)
+        self.assertIn("**Verification Context**", heavy)
+        self.assertIn("**Documentation Context + Audience**", heavy)
+        self.assertIn("standardize communication with each worker", heavy)
+        self.assertIn("under your authority", heavy)
+        self.assertIn("Treat them as the complete structure", heavy)
+        self.assertIn("Require workers to echo Task ID in every report", heavy)
+        self.assertIn("Repeat it in follow-ups", heavy)
+        self.assertIn("as lifecycle exceptions", heavy)
+        self.assertIn("Put enough project knowledge", heavy)
+        self.assertIn("Let Tester design the\nspecific tests", heavy)
         self.assertIn("at most 20 active subagents", heavy)
         self.assertIn("at most one Senior Executor", heavy)
-        self.assertIn("Do not create an LLM\n  lifecycle parent", heavy)
-        self.assertIn("direct main-agent fast path", heavy)
+        self.assertIn("Create and coordinate every worker directly", heavy)
+        self.assertIn("direct fast path", heavy)
         self.assertIn("`$deployment-token-report`", heavy)
         for retired_contract in (
             "investigation_team.md",
@@ -136,12 +166,36 @@ class MarkerTests(unittest.TestCase):
             self.assertNotIn(retired_contract, heavy.lower())
 
         medium = policies["medium_route.md"]
-        self.assertIn("direct main-agent fast path", medium)
-        self.assertIn("main agent plans, diagnoses, implements, verifies", medium)
-        self.assertIn("does not research the Internet", medium)
+        medium_flat = " ".join(medium.split())
+        self.assertIn("direct fast path", medium)
+        self.assertIn("You are the main agent", medium)
+        self.assertIn("Own planning, diagnosis, implementation", medium)
+        self.assertIn("## Required Documentation Read", medium)
+        self.assertIn("The first time the session enters `deployment state`", medium)
+        self.assertIn("directly read the complete current `agent_docs/`", medium_flat)
+        self.assertIn("framework exactly once", medium_flat)
+        self.assertIn("every module-specific Markdown document", medium)
+        self.assertIn("one shared session-level read across both routes", medium_flat)
+        self.assertIn("do not directly reopen or reread", medium_flat)
+        self.assertIn("Companion a bounded delta or conflict check", medium_flat)
+        self.assertIn("do not treat deployment entry as complete", medium_flat)
+        self.assertIn("## Initialize Companion", medium)
+        self.assertIn("## Assign Support Work", medium)
+        self.assertIn('agent_type="companion"', medium)
+        self.assertIn('task_name="companion"', medium)
+        self.assertIn('fork_turns="none"', medium)
+        self.assertIn("codex-workflow-deployment-start", medium)
+        self.assertIn("Reuse the same Companion after a route change", medium_flat)
+        self.assertIn("Keep Internet research outside this role", medium)
         self.assertIn("external-information research on the Internet", medium)
-        self.assertIn("capabilities, not stages in a predefined pipeline", medium)
-        self.assertIn("There is no mandatory", medium)
+        self.assertIn("Assign a support capability only when it fits", medium_flat)
+        self.assertIn("**Task ID**", medium)
+        self.assertIn("**Project Context Scope**", medium)
+        self.assertIn("**Main-Agent Context Guidance**", medium)
+        self.assertIn("**Research Context**", medium)
+        self.assertIn("**Main-Agent Research Guidance**", medium)
+        self.assertIn("Require each worker to echo Task ID", medium_flat)
+        self.assertIn("package format to standardize communication", medium_flat)
         self.assertIn("at most 20 active subagents", medium)
         self.assertIn("Never create a production executor, tester", medium)
         self.assertIn("Before the final response", medium)
@@ -153,23 +207,28 @@ class MarkerTests(unittest.TestCase):
             self.assertNotIn(retired_contract, medium.lower())
 
         agents_policy = policies["AGENTS.md"]
-        self.assertIn("is not a user command", agents_policy.lower())
-        self.assertIn("invokes `$deployment-token-report`", agents_policy)
-        self.assertIn("capabilities, ownership boundaries", agents_policy)
-        self.assertIn("do not prescribe a task-independent execution plan", agents_policy)
+        self.assertIn("## Design Principles", agents_policy)
+        self.assertIn("## Working State", agents_policy)
+        self.assertIn("## Project Documentation", agents_policy)
+        self.assertIn("## Route Selection", agents_policy)
+        self.assertIn("## Platform Paths", agents_policy)
+        self.assertIn("codex_workflow/medium_route.md", agents_policy)
+        self.assertIn("codex_workflow/heavy_route.md", agents_policy)
+        self.assertIn("Select one of these routes", agents_policy)
+        self.assertIn("Follow the user's route selection", agents_policy)
         self.assertNotIn("session-model requirement", agents_policy)
-        self.assertIn('agent_type="companion"', agents_policy)
-        self.assertIn("codex-workflow-deployment-start", agents_policy)
-        self.assertIn("source of the work", agents_policy)
-        self.assertIn("project ecosystem", agents_policy)
-        self.assertIn("does not perform Internet research", agents_policy)
-        self.assertIn("disposable read-only Internet researcher", agents_policy)
-        self.assertIn("It decides dynamically whether roles are", agents_policy)
-        self.assertIn("Do not\nintroduce a mandatory investigation wave", agents_policy)
-        self.assertIn("directly creates and coordinates its workers", agents_policy)
-        self.assertIn("LLM lifecycle parent", agents_policy)
-        self.assertIn("distributes enough of the main agent's\nknowledge", agents_policy)
-        self.assertIn("Adapt the capsule to the task", agents_policy)
+        self.assertNotIn("The main agent", agents_policy)
+        for route_owned_contract in (
+            "## Medium and Heavy Contracts",
+            'agent_type="companion"',
+            "codex-workflow-deployment-start",
+            "**Task ID**",
+            "project ecosystem",
+            "Internet researcher",
+            "directly creates and coordinates",
+            "`$deployment-token-report`",
+        ):
+            self.assertNotIn(route_owned_contract, agents_policy)
         for retired_guide in (
             "medium_companion.md",
             "heavy_companion.md",
@@ -177,6 +236,27 @@ class MarkerTests(unittest.TestCase):
         ):
             self.assertNotIn(retired_guide, agents_policy)
             self.assertFalse((PACKAGE / retired_guide).exists())
+        for direct_main_instruction in (heavy, medium):
+            self.assertNotIn("The main agent", direct_main_instruction)
+            self.assertNotIn("The main ", direct_main_instruction)
+            self.assertNotIn("Workers ", direct_main_instruction)
+            self.assertNotIn("This package structure", direct_main_instruction)
+        self.assertNotIn("There are three routes", agents_policy)
+
+        token_report_skill = (
+            PACKAGE / "skills" / "deployment-token-report" / "SKILL.md"
+        ).read_text(encoding="utf-8")
+        token_report_header = (
+            "| Agent | Quantity | Rollouts | Cached input | Input | Output |"
+        )
+        self.assertIn("The required table template is exactly", token_report_skill)
+        self.assertEqual(token_report_skill.count(token_report_header), 1)
+        self.assertIn(
+            "| --- | ---: | ---: | ---: | ---: | ---: |", token_report_skill
+        )
+        self.assertIn(
+            "Do not rename, reorder, add, or remove columns", token_report_skill
+        )
 
         handoff_contract = (PACKAGE / "closure_steward.md").read_text(
             encoding="utf-8"
@@ -184,28 +264,36 @@ class MarkerTests(unittest.TestCase):
         handoff_worker = (PACKAGE / "agents" / "closure_steward.toml").read_text(
             encoding="utf-8"
         )
+        handoff_contract_flat = " ".join(handoff_contract.split())
+        handoff_worker_flat = " ".join(handoff_worker.split())
         self.assertIn('task_name="closure_steward_<deployment_id>"', handoff_contract)
         self.assertIn("after every substantive Medium or Heavy", handoff_contract)
-        self.assertIn("inherits the deployment context", handoff_contract)
-        self.assertIn("complete `agent_docs/` framework", handoff_contract)
+        self.assertIn("Use that inherited deployment context", handoff_contract_flat)
+        self.assertIn("complete `agent_docs/` framework", handoff_contract_flat)
+        self.assertIn("Give that worker sole ownership", handoff_contract)
+        self.assertNotIn("The worker alone", handoff_contract)
         self.assertIn("Do not call a second documentation worker", handoff_contract)
         self.assertNotIn('fork_turns="none"', handoff_contract)
         self.assertIn("separate usage summary", handoff_contract)
         self.assertNotIn("| Worker name | Quantity | Number of calls |", handoff_worker)
         self.assertIn("Companion", handoff_worker)
         self.assertIn("`$deployment-token-report`", handoff_contract)
-        self.assertIn("final deterministic token report", handoff_worker)
-        self.assertIn("seal the closure state", handoff_worker)
+        self.assertIn("final deterministic token report", handoff_worker_flat)
+        self.assertIn("You are Closure Steward. Close one substantive", handoff_worker_flat)
+        self.assertNotIn("You are created once", handoff_worker)
+        self.assertIn("seal the closure state", handoff_worker_flat)
         self.assertIn("Never\n   derive worker statistics yourself or trigger Companion", handoff_worker)
         self.assertNotIn("single `followup_task`", handoff_worker)
         self.assertNotIn("persistent Companion target", handoff_worker)
         self.assertNotIn("Do not wait for Companion", handoff_worker)
-        self.assertIn("read the complete existing", handoff_worker)
-        self.assertIn("Do not create another worker", handoff_worker)
-        self.assertIn("preserve its exact six-column table", handoff_worker)
-        self.assertIn("never edit outside `agent_docs/`", handoff_worker)
-        self.assertIn("Respect whatever evidence structure the main", handoff_worker)
-        self.assertIn("do not impose a new schema", handoff_worker)
+        self.assertIn("read the complete existing", handoff_worker_flat)
+        self.assertIn("Do not create another worker", handoff_worker_flat)
+        self.assertIn("preserve its exact six-column table", handoff_worker_flat)
+        self.assertIn("never edit outside `agent_docs/`", handoff_worker_flat)
+        self.assertIn(
+            "Preserve the evidence structure selected by the", handoff_worker_flat
+        )
+        self.assertIn("Reuse inherited test results during closure", handoff_worker_flat)
         self.assertNotIn("lightweight evidence manifest", handoff_worker)
         for framework_file in (
             "project_overview.md",
@@ -243,15 +331,86 @@ class MarkerTests(unittest.TestCase):
         investigator = (PACKAGE / "agents" / "investigator.toml").read_text(
             encoding="utf-8"
         )
-        self.assertIn("Design the\nspecific tests", tester)
-        self.assertIn("does not need to predesign every test", tester)
+        current_instruction_surfaces = {
+            **policies,
+            "closure_steward.md": handoff_contract,
+            **{
+                f"agents/{path.name}": path.read_text(encoding="utf-8")
+                for path in sorted((PACKAGE / "agents").glob("*.toml"))
+            },
+            "README.md": (ROOT / "README.md").read_text(encoding="utf-8"),
+            "workflow_break_down.md": (
+                ROOT / "workflow_break_down.md"
+            ).read_text(encoding="utf-8"),
+        }
+        retired_architecture_phrases = (
+            "wave barrier",
+            "investigation wave",
+            "execution wave",
+            "evidence ledger",
+            "evidence manifest",
+            "evidence-manifest",
+            "verification_ledger",
+            "repair packet",
+            "repair loop",
+            "root-cause gate",
+            "split intake",
+            "lifecycle parent",
+            "five-file intake",
+            "universal executor-tester",
+            "universal implementation checklist",
+            "fixed execution pipeline",
+            "predefined pipeline",
+        )
+        for name, text in current_instruction_surfaces.items():
+            lowered = text.lower()
+            for retired_phrase in retired_architecture_phrases:
+                self.assertNotIn(retired_phrase, lowered, name)
+
+        tester_flat = " ".join(tester.split())
+        self.assertIn("Receive the intended behavior", tester)
+        self.assertIn("Design the specific tests", tester_flat)
         self.assertIn("do not repair production\ncode", tester)
-        self.assertIn("the main chooses how repair", tester)
+        self.assertIn("Leave repair and re-verification decisions", tester)
         self.assertIn("bounded local discovery, implementation, self-check", executor)
-        self.assertIn("capsule is not required to follow a fixed schema", executor)
         self.assertIn("ordinary repair", executor)
         self.assertIn("unresolved hard decision", senior)
-        self.assertIn("no required universal form", senior)
+        for worker in (
+            companion_worker,
+            investigator,
+            executor,
+            senior,
+            tester,
+            doc_writer,
+        ):
+            normalized_worker = " ".join(worker.split())
+            self.assertIn("You are", worker)
+            self.assertIn("`Task ID`", worker)
+            self.assertIn("follow-up to repeat task id", normalized_worker.lower())
+            self.assertIn("Task ID in every", normalized_worker)
+            self.assertIn("complete capsule structure", normalized_worker)
+            for descriptive_instruction in (
+                "The initial package",
+                "An initial package",
+                "The main owns",
+                "The main supplies",
+            ):
+                self.assertNotIn(descriptive_instruction, worker)
+        self.assertIn("`Project Context Scope`", companion_worker)
+        self.assertIn("`Main-Agent Context Guidance`", companion_worker)
+        self.assertIn("`Research Context`", investigator)
+        self.assertIn("`Research Question + Goal`", investigator)
+        self.assertIn("`Main-Agent Research Guidance`", investigator)
+        for worker in (executor, senior):
+            self.assertIn("`Implementation Context + Ownership`", worker)
+            self.assertIn("`Implementation Task + Goal`", worker)
+            self.assertIn("`Main-Agent Implementation Guidance`", worker)
+        self.assertIn("`Verification Context`", tester)
+        self.assertIn("`Verification Goal`", tester)
+        self.assertIn("`Main-Agent Verification Guidance`", tester)
+        self.assertIn("`Documentation Context + Audience`", doc_writer)
+        self.assertIn("`Documentation Task + Goal`", doc_writer)
+        self.assertIn("`Main-Agent Documentation Guidance`", doc_writer)
         for worker in (executor, senior, tester):
             self.assertNotIn("evidence-manifest", worker)
             self.assertNotIn("verification_ledger", worker)
@@ -278,7 +437,7 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("Adapt the search strategy", investigator)
         self.assertIn("Prefer primary or authoritative sources when appropriate", investigator)
         self.assertIn("direct source\nlinks or identifiers", investigator)
-        self.assertIn("Project facts in the brief are context", investigator)
+        self.assertIn("Treat project facts in the brief as context", investigator)
         self.assertIn("Do not modify project files", investigator)
         self.assertNotIn("known bugs", investigator.lower())
         self.assertNotIn("package version", investigator.lower())
@@ -295,7 +454,7 @@ class MarkerTests(unittest.TestCase):
         )
         self.assertIn("prevents repeated mistakes", diary_template)
         self.assertIn("Do not record\nsession chronology", diary_template)
-        self.assertIn("always contains one required", bootstrap)
+        self.assertIn("Expect one required", bootstrap)
         self.assertIn("explicitly labeled bootstrap or", doc_writer)
         self.assertIn("one bounded assignment", doc_writer)
         self.assertNotIn("task capsule", doc_writer)
@@ -886,7 +1045,7 @@ class LifecycleIntegrationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValidationError, "unowned skill directory"):
             plan_bootstrap(self.package, self.runtime, self.project)
 
-    def test_bootstrap_cleans_project_staging_and_updates_gitignore(self) -> None:
+    def test_bootstrap_cleans_staging_and_keeps_agent_docs_trackable(self) -> None:
         staging = self.project_root / "Codex_Workflow"
         (staging / "nested").mkdir(parents=True)
         (staging / "nested" / "package.txt").write_text("staged", encoding="utf-8")
@@ -897,8 +1056,8 @@ class LifecycleIntegrationTests(unittest.TestCase):
         self.assertFalse(staging.exists())
         gitignore = (self.project_root / ".gitignore").read_text(encoding="utf-8")
         self.assertIn("# local rules\n", gitignore)
+        self.assertNotIn("agent_docs/", gitignore)
         for entry in (
-            "agent_docs/",
             ".codex_workflow_hidden_resources/",
             "AGENTS.md",
         ):
@@ -909,8 +1068,8 @@ class LifecycleIntegrationTests(unittest.TestCase):
         # A repeated project install is idempotent and does not duplicate rules.
         plan_project_install(self.package, self.project).apply()
         repeated = (self.project_root / ".gitignore").read_text(encoding="utf-8")
+        self.assertNotIn("agent_docs/", repeated)
         for entry in (
-            "agent_docs/",
             ".codex_workflow_hidden_resources/",
             "AGENTS.md",
         ):
@@ -944,6 +1103,50 @@ class LifecycleIntegrationTests(unittest.TestCase):
             "AGENTS.md",
         ):
             self.assertNotIn(entry, remaining_gitignore)
+
+    def test_install_preserves_user_owned_agent_docs_ignore(self) -> None:
+        self.project.gitignore.write_text("agent_docs/\n", encoding="utf-8")
+
+        self.bootstrap()
+
+        gitignore = self.project.gitignore.read_text(encoding="utf-8")
+        self.assertEqual(gitignore.splitlines().count("agent_docs/"), 1)
+        self.assertLess(
+            gitignore.splitlines().index("agent_docs/"),
+            gitignore.splitlines().index("# codex-workflow-managed-start"),
+        )
+
+    def test_new_install_preserves_user_owned_legacy_shaped_ignore(self) -> None:
+        self.project.gitignore.write_text(
+            "agent_docs/\n.codex_workflow_hidden_resources/\nAGENTS.md\n",
+            encoding="utf-8",
+        )
+
+        self.bootstrap()
+
+        gitignore = self.project.gitignore.read_text(encoding="utf-8")
+        for entry in (
+            "agent_docs/",
+            ".codex_workflow_hidden_resources/",
+            "AGENTS.md",
+        ):
+            self.assertEqual(gitignore.splitlines().count(entry), 1)
+        self.assertNotIn("# codex-workflow-managed-start", gitignore)
+
+    def test_install_retires_legacy_unmarked_agent_docs_ignore(self) -> None:
+        self.bootstrap()
+        self.project.gitignore.write_text(
+            "# local\nagent_docs/\n.codex_workflow_hidden_resources/\nAGENTS.md\n",
+            encoding="utf-8",
+        )
+
+        plan_project_install(self.package, self.project).apply()
+
+        gitignore = self.project.gitignore.read_text(encoding="utf-8")
+        self.assertIn("# local\n", gitignore)
+        self.assertNotIn("agent_docs/", gitignore)
+        self.assertIn("# codex-workflow-managed-start", gitignore)
+        self.assertIn("# codex-workflow-managed-end", gitignore)
 
     def test_remove_restores_project_local_instructions_from_disabled_entry(self) -> None:
         self.bootstrap(existing_agents="# Original project instructions\nKeep this.\n")
@@ -1016,6 +1219,14 @@ class LifecycleIntegrationTests(unittest.TestCase):
 
     def test_update_restores_workers_and_preserves_project_state(self) -> None:
         self.bootstrap(existing_agents="Local policy.\n")
+        gitignore = self.project.gitignore
+        gitignore.write_text(
+            gitignore.read_text(encoding="utf-8").replace(
+                "# codex-workflow-managed-start\n",
+                "# codex-workflow-managed-start\nagent_docs/\n",
+            ),
+            encoding="utf-8",
+        )
         (self.runtime.agents / "default_executor.toml").write_text(
             "# local worker override\n", encoding="utf-8"
         )
@@ -1044,6 +1255,10 @@ class LifecycleIntegrationTests(unittest.TestCase):
             "local worker override",
             (self.runtime.agents / "default_executor.toml").read_text(encoding="utf-8"),
         )
+        updated_gitignore = gitignore.read_text(encoding="utf-8")
+        self.assertNotIn("agent_docs/", updated_gitignore)
+        self.assertIn(".codex_workflow_hidden_resources/", updated_gitignore)
+        self.assertIn("AGENTS.md", updated_gitignore)
         installed_skill = self.runtime.skills / "deployment-token-report"
         self.assertEqual(
             (installed_skill / "SKILL.md").read_text(encoding="utf-8"),

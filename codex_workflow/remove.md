@@ -4,9 +4,9 @@ Run this procedure only for the exact command:
 
     codex_workflow --remove
 
-This is a destructive operation. It uses two phases: the first phase is a
-read-only plan, and the second phase is allowed only after one clear second
-confirmation from the user. Do not ask any other questions.
+Treat this as a destructive operation. Use two phases: first produce a read-only
+plan, then allow execution only after one clear second confirmation from the
+user. Do not ask any other questions.
 
 First run the lifecycle CLI without `--confirm`:
 

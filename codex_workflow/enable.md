@@ -6,6 +6,7 @@ Run the installed lifecycle CLI from the project directory:
 python3 ~/.codex/codex_workflow/workflow.py enable --project <project> --json
 ```
 
-It atomically moves the recognized hidden entry point to `AGENTS.md`, updates
-project state, and preserves its exact contents. An already enabled project is
-a safe no-op; conflicted or unrecognized entry points are a hard error.
+Expect the command to move the recognized hidden entry point atomically to
+`AGENTS.md`, update project state, and preserve its exact contents. Treat an
+already enabled project as a safe no-op and a conflicted or unrecognized entry
+point as a hard error.

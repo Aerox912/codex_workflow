@@ -1,8 +1,8 @@
 # Initial Workflow Bootstrap
 
 Use this guide only for the first installation from a universal GitHub Release
-ZIP. Python 3.11 or newer is required. On Windows, use the equivalent
-`py -3.11` invocation and native paths.
+ZIP. Use Python 3.11 or newer. On Windows, use the equivalent `py -3.11`
+invocation and native paths.
 
 Verify `codex_workflow-<version>.zip` against `SHA256SUMS`, extract it into a
 temporary directory, and require exactly one top-level `codex_workflow/`
@@ -20,16 +20,16 @@ python3 <extracted>/codex_workflow/workflow.py bootstrap \
   --project <project>
 ```
 
-The bootstrap installs the shared runtime, templates, source backup, user
-command block, installation state, distributed worker TOMLs, and
-workflow-owned Codex settings and skills. It also initializes the current project's
-workflow entry point, documentation scaffold, personalization and state files,
-and other project-level assets in one compensating transaction.
+Expect the bootstrap to install the shared runtime, templates, source backup,
+user command block, installation state, distributed worker TOMLs, and
+workflow-owned Codex settings and skills. Expect it to initialize the current
+project's workflow entry point, documentation scaffold, personalization and
+state files, and other project-level assets in one compensating transaction.
 
 ## Required documentation action
 
-Read the command's `agent_actions` result. It always contains one required
-`doc-writer` action for the Project Documentation Framework. Spawn it with
+Read the command's `agent_actions` result. Expect one required `doc-writer`
+action for the Project Documentation Framework. Spawn it with
 `agent_type="doc-writer"`, `task_name="bootstrap_docs"`, and
 `fork_turns="none"`. Give it a short installation brief with the project root and returned
 `files`, `created_files`, `recovery_files`, `framework`, and
@@ -55,8 +55,8 @@ Read the command's `agent_actions` result. It always contains one required
 
 Verify that every framework file exists, no file listed in `files` retains the
 bootstrap marker, and every listed file in `required_context_files` has been
-populated. Installation is incomplete if the required worker cannot run or
-fails; do not silently perform its work in the main thread.
+populated. Treat installation as incomplete if the required worker cannot run
+or fails; do not silently perform its work in the main thread.
 
 Restart Codex only after the bootstrap and required documentation action both
 succeed.

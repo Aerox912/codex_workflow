@@ -12,7 +12,7 @@ compact checks, and Git inspection are complete. Treat that state as sealed:
 after starting this report, do not modify the repository or run another closure
 check.
 
-The deployment's first Companion brief must have contained this exact line,
+Confirm that the deployment's first Companion brief contained this exact line
 with a unique lowercase underscore-safe ID:
 
 ```text
@@ -20,19 +20,30 @@ codex-workflow-deployment-start: <deployment_id>
 ```
 
 Run the bundled `scripts/report_tokens.py` with `--deployment-id` and
-`--format markdown`. The script uses `CODEX_THREAD_ID` to identify this Closure
-Steward rollout, resolves its parent main-agent thread, finds the exact marker
-in user or assistant message text in the persistent Companion rollout (including
-when the retained marker is surrounded by Markdown or explanatory prose), and
-reads only metadata and token-count fields beneath `~/.codex/sessions/`. It
-excludes guardian sessions.
+`--format markdown`. Let it use `CODEX_THREAD_ID` to identify this Closure
+Steward rollout, resolve its parent main-agent thread, find the exact marker in
+user or assistant message text in the persistent Companion rollout, and read
+only metadata and token-count fields beneath `~/.codex/sessions/`. Accept the
+marker when surrounded by Markdown or explanatory prose. Exclude guardian
+sessions.
 
 Return the script's six-column Markdown table verbatim to the main agent. Do
 not add pricing, estimates, inferred usage, or another statistics table. If the
 script fails or warns that evidence is incomplete, report that limitation
 instead of repairing or inventing values.
 
-`Input` is total input tokens and therefore includes the cached-input subset.
-`Rollouts` counts model generations that have a `last_token_usage` record.
-Totals stop when the script starts, intentionally excluding Closure Steward's
-post-tool final response and the main agent's later final response.
+The required table template is exactly:
+
+```text
+| Agent | Quantity | Rollouts | Cached input | Input | Output |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| <agent role> | <count> | <count> | <tokens> | <tokens> | <tokens> |
+```
+
+Do not rename, reorder, add, or remove columns. Preserve every data row emitted
+by the script, including its final `main agent` row.
+
+Interpret `Input` as total input tokens, including the cached-input subset, and
+`Rollouts` as model generations with a `last_token_usage` record. Stop totals
+when the script starts, excluding Closure Steward's post-tool final response
+and the main agent's later final response.

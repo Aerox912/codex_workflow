@@ -24,9 +24,10 @@ and rolls back its own files. Restart Codex after installation so the new
 user-level instructions and worker definitions are loaded.
 
 Bootstrap installs the user runtime and current project, adds marked workflow
-rules to `.gitignore`, and invokes one `doc-writer` action to initialize new or
-still-template-marked `agent_docs/` files. Installation is complete only after
-that action succeeds. Existing healthy project documentation is preserved.
+rules for generated private assets to `.gitignore`, and invokes one `doc-writer`
+action to initialize new or still-template-marked `agent_docs/` files.
+`agent_docs/` itself stays trackable. Installation is complete only after that
+action succeeds. Existing healthy project documentation is preserved.
 
 ### Exact command prompts
 
@@ -99,7 +100,10 @@ The selection lasts for the session unless the user changes it. A question or
 small bounded task still takes the direct worker-free fast path and produces no
 Deployment Token Report. A substantive Medium or Heavy deployment initializes
 or reuses one persistent Companion and receives one automatic Closure Steward
-handoff before the final response.
+handoff before the final response. Before planning, changing files, or
+dispatching workers on the session's first deployment-state entry, the main
+agent directly reads the complete current `agent_docs/` framework exactly once,
+including module-specific Markdown documents.
 
 ## Part 2 — Installed-file map
 
@@ -180,8 +184,8 @@ in the files that own it:
 
 - worker TOMLs define role, model, permissions, and role boundaries;
 - `medium_route.md` and `heavy_route.md` define available capabilities and
-  static route invariants;
-- `AGENTS.md` defines route selection and shared ownership;
+  their complete orchestration contracts and static invariants;
+- `AGENTS.md` defines shared project rules and route selection;
 - `runtime/platform_settings.py` owns the documented Codex platform settings;
 - `closure_steward.md` and the Deployment Token Report skill own automatic
   closure and reporting.
@@ -241,8 +245,8 @@ flowchart TB
     class X closure;
 ```
 
-The main launches, briefs, waits for, follows up with, and integrates workers
-directly. There is no LLM lifecycle parent or mandatory wave barrier.
+The main launches, briefs, waits for, follows up with, integrates, and owns the
+lifecycle of every worker directly.
 
 ### Roles and source boundaries
 
@@ -257,37 +261,50 @@ directly. There is no LLM lifecycle parent or mandatory wave barrier.
 | Doc-writer | Verified public, product, operator, or service documentation | No deployment closure edits in `agent_docs/` |
 | Closure Steward | Final `agent_docs/` reconciliation, read-only Git handoff, and token report | No production/public-doc edits and no Git mutations |
 
-Companion and Investigator are separated by information source, not by a list
-of example task types. Companion answers what the project ecosystem contains
-and how it behaves. Investigator discovers and synthesizes useful information
-outside that ecosystem. The main decides what the combined information means
-for the project.
+Companion and Investigator are separated by information source across all task
+types. Companion answers what the project ecosystem contains and how it
+behaves. Investigator discovers and synthesizes useful information outside that
+ecosystem. The main decides what the combined information means for the
+project.
 
-Investigator is available when Internet research would materially help; it is
-not a normal mandatory phase. Its brief can ask any bounded external question.
-The role contract deliberately avoids enumerating technologies, platforms,
-artifact types, bug classes, or source categories as eligibility rules.
+The main uses Investigator when Internet research would materially help and may
+ask it any bounded external question. Eligibility follows the information
+source and required research capability across task domains.
 
 ### Knowledge distribution and verification
 
-Every Executor capsule transfers enough task-specific knowledge from the main
-to execute well. Depending on the package, this may include the intended
-outcome, relevant project context, ownership and protected areas, settled
-decisions and constraints, useful references, recommended reasoning or
-implementation guidance, interfaces, risks, and acceptance expectations. The
-capsule has no mandatory universal schema or field order.
+Every initial task-worker package begins with a logical **Task ID** that is
+unique within the deployment. The remaining capsule reflects the worker's
+actual function:
+
+| Role | Capsule parts |
+| --- | --- |
+| Companion | Project Context Scope; Context Task + Goal; Main-Agent Context Guidance |
+| Investigator | Research Context; Research Question + Goal; Main-Agent Research Guidance |
+| Default or Senior Executor | Implementation Context + Ownership; Implementation Task + Goal; Main-Agent Implementation Guidance |
+| Tester | Verification Context; Verification Goal; Main-Agent Verification Guidance |
+| Doc-writer | Documentation Context + Audience; Documentation Task + Goal; Main-Agent Documentation Guidance |
+
+Task ID correlates dispatch, reports, follow-ups, and artifacts; it may match
+the platform `task_name` but remains a logical package identifier. Workers echo
+it in every report. The named capsule parts are complete and their content stays
+proportional to the package. Follow-ups repeat Task ID and send only the changed
+role-specific parts.
+
+The capsule standardizes main–worker communication. The main separately owns
+role eligibility, topology, worker count, dependencies, sequencing,
+concurrency, repair, verification, acceptance, and lifecycle for the task.
 
 This preserves the main agent as knowledge director while moving operational
-work and context to lower-cost workers. Executors own bounded local discovery
-and execution; they are not merely handed an outcome without guidance.
+work and context to lower-cost workers. Executor capsules combine the desired
+outcome with the main's task-specific knowledge and guidance.
 
 Tester ownership answers a different question. The main defines acceptance
 intent, material risks, scope, contracts, and any truly required gate. The
 Tester normally designs the concrete test cases and verification method, runs
 them independently, and reports evidence. If it finds a production defect, it
 reports the focused failure to the main. The main decides the repair topology
-appropriate to that task; the route does not impose a universal executor-tester
-loop.
+and re-verification path appropriate to that task.
 
 Workers keep large logs and detailed operational context out of main-agent
 history and return concise, decision-ready evidence. The main directly checks
@@ -303,7 +320,7 @@ Heavy keeps only stable platform, safety, and ownership rules rigid:
 - one persistent Companion and at most one Senior Executor;
 - initial task workers normally use `fork_turns="none"` and receive an explicit
   brief;
-- no LLM worker exists merely to parent other workers;
+- the main directly owns every worker's lifecycle;
 - concurrent mutable packages have non-overlapping ownership;
 - Tester does not repair production code and Doc-writer does not infer
   unverified behavior;
@@ -323,9 +340,12 @@ packages. The main performs implementation and verification itself.
 
 `project_progress.md` stores the active goal and next milestone;
 `latest_session_work.md` stores the last deployment outcome, evidence, blockers,
-and continuation point. Project documentation is loaded selectively as the main
-and Companion need it; there is no mandatory five-file intake or module-document
-scan before useful work can begin.
+and continuation point. On the first entry to deployment state in a session,
+the main directly reads all six core documents and every module-specific
+Markdown document under `agent_docs/` exactly once. This one read is shared by
+Medium and Heavy. The main does not reopen the framework during later
+deployments or route changes; Companion handles bounded delta or conflict checks
+when freshness matters.
 
 The first Companion brief for each substantive deployment contains:
 
@@ -339,6 +359,14 @@ closing checks, and reports read-only Git state. After sealing its writes, it
 invokes `$deployment-token-report` for that deployment ID. The deterministic
 parser returns `Agent`, `Quantity`, `Rollouts`, `Cached input`, `Input`, and
 `Output`. Closure and reporting are not used on the direct fast path.
+
+The report preserves this exact six-column template:
+
+```text
+| Agent | Quantity | Rollouts | Cached input | Input | Output |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| <agent role> | <count> | <count> | <tokens> | <tokens> | <tokens> |
+```
 
 ## Part 5 — Component hierarchy and ownership
 

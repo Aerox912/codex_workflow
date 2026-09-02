@@ -6,7 +6,7 @@ Run the installed lifecycle CLI from the project directory:
 python3 ~/.codex/codex_workflow/workflow.py disable --project <project> --json
 ```
 
-It atomically moves the recognized `AGENTS.md` to the hidden entry point,
-updates project state, and preserves its exact contents. An already disabled
-project is a safe no-op; conflicted or unrecognized entry points are a hard
-error.
+Expect the command to move the recognized `AGENTS.md` atomically to the hidden
+entry point, update project state, and preserve its exact contents. Treat an
+already disabled project as a safe no-op and a conflicted or unrecognized entry
+point as a hard error.

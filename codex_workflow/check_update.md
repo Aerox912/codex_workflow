@@ -6,11 +6,10 @@ Run the installed lifecycle CLI:
 python3 ~/.codex/codex_workflow/workflow.py check-update --json
 ```
 
-This is an explicit, read-only check and runs regardless of the automatic
-update-check setting. It compares the installed version with all available
-release assets, reports every newer version, and includes a compact summary of
-each version's GitHub release notes. It does not download, install, or change
-any workflow files.
+Treat this as an explicit, read-only check regardless of the automatic
+update-check setting. Expect it to compare the installed version with all
+available release assets, report every newer version, and include a compact
+summary of each version's GitHub release notes. Keep workflow files unchanged.
 
 If an update is available, review the reported summaries and then send
 `codex_workflow --update` when you are ready to install the latest release.
