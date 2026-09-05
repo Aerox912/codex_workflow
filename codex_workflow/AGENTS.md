@@ -62,11 +62,11 @@ There are three routes:
   Read `~/.codex/codex_workflow/heavy_route.md`.
 
 Heavy requires the session's currently selected main agent to be
-`gpt-5.6-sol` or `gpt-5.6-terra` with subagent support available. This is a
+`gpt-6-astra`, `gpt-5.6-sol`, or `gpt-5.6-terra` with subagent support available. This is a
 session-model requirement, not a persistent workflow setting. If the selected
 model is ineligible or its subagent support is unavailable, do not initialize
 Companion or any other worker; ask the user to switch the current session to
-Sol or Terra. Never pin or rewrite the main model in `config.toml`.
+Astra, Sol, or Terra. Never pin or rewrite the main model in `config.toml`.
 
 The user selects the route for the session. If unspecified, use Light; do not
 infer Medium or Heavy. Light implies `leaf state`; Medium and Heavy imply

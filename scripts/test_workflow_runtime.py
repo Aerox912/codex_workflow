@@ -229,6 +229,7 @@ class MarkerTests(unittest.TestCase):
         self.assertNotIn("usage ledger", medium)
 
         agents_policy = policies["AGENTS.md"]
+        self.assertIn("gpt-6-astra", agents_policy)
         self.assertIn("primary task exclusively owns", agents_policy)
         self.assertIn("handoff is not a user command", agents_policy)
         self.assertIn("session-model requirement", agents_policy)
