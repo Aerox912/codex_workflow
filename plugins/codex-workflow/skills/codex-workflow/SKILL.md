@@ -25,7 +25,6 @@ When the user's trimmed message exactly matches a supported `codex_workflow` com
 - `--disable_auto_check_update`: `disable_auto_check_update.md`
 - `--enable_auto_update`: `enable_auto_update.md`
 - `--disable_auto_update`: `disable_auto_update.md`
-- `--configure`: `configuration_guide.md`
 - `--personal`: `personalization_guide.md`
 - `--disable`: `disable.md`
 - `--enable`: `enable.md`
