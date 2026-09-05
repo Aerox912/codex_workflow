@@ -15,7 +15,7 @@ main agent designs the actual orchestration for each task.
 Open Codex from the project directory and send:
 
 ```text
-Download and extract the latest `codex_workflow-<version>.zip` asset (not GitHub's Source code archive) from https://github.com/viettran-edgeAI/codex_workflow/releases. Verify it against `SHA256SUMS`, then read the bundled `codex_workflow/bootstrap.md` and follow it exactly.
+Download and extract the latest `codex_workflow-<version>.zip` asset (not GitHub's Source code archive) from https://github.com/viettran-edgeAI/codex_workflow/releases. Verify it against `SHA256SUMS`, then read the bundled `codex_workflow/operate/bootstrap.md` and follow it exactly.
 ```
 
 The universal release ZIP supports Linux, macOS, and Windows and requires
@@ -24,7 +24,7 @@ and rolls back its own files. Restart Codex after installation so the new
 user-level instructions and worker definitions are loaded.
 
 Bootstrap installs the user runtime and current project, adds marked workflow
-rules for generated private assets to `.gitignore`, and invokes one `doc-writer`
+rules for generated private assets to `.gitignore`, and invokes one `archivist`
 action to initialize new or still-template-marked `agent_docs/` files.
 `agent_docs/` itself stays trackable. Installation is complete only after that
 action succeeds. Existing healthy project documentation is preserved.
@@ -85,9 +85,9 @@ project documents, and the user-level runtime.
 - **Light** is the default. The main agent works alone with minimal workflow
   overhead.
 - **Medium** keeps planning, diagnosis, implementation, and verification in the
-  main agent. Companion and Investigator provide bounded read-only support.
-- **Heavy** also makes production Executors, Tester, and public Doc-writer
-  capabilities available to the main agent.
+  main agent. Companion and Investigator provide bounded read-only support when
+  useful; Archivist handles assigned documentation and deployment handoff work.
+- **Heavy** also makes production Executors and Tester available to the main agent.
 
 Select a route in the prompt:
 
@@ -98,12 +98,13 @@ use heavy route. [task description]
 
 The selection lasts for the session unless the user changes it. A question or
 small bounded task still takes the direct worker-free fast path and produces no
-Deployment Token Report. A substantive Medium or Heavy deployment initializes
-or reuses one persistent Companion and receives one automatic Closure Steward
-handoff before the final response. Before planning, changing files, or
-dispatching workers on the session's first deployment-state entry, the main
-agent directly reads the complete current `agent_docs/` framework exactly once,
-including module-specific Markdown documents.
+Deployment Token Report. A substantive Medium or Heavy deployment records its
+boundary in the main-agent session and receives one automatic Archivist
+handoff before the final response. Companion is created or reused only when its
+project-context work is useful. Before planning, changing files, or dispatching
+workers on the session's first deployment-state entry, the main agent directly
+reads the complete current `agent_docs/` framework exactly once, including
+module-specific Markdown documents.
 
 ## Part 2 — Installed-file map
 
@@ -119,30 +120,30 @@ packaged.
 │   ├── default_executor.toml
 │   ├── senior_executor.toml
 │   ├── tester.toml
-│   ├── doc-writer.toml
+│   ├── archivist.toml
 │   ├── companion.toml
-│   ├── investigator.toml
-│   └── closure_steward.toml
+│   └── investigator.toml
 ├── skills/
 │   └── deployment-token-report/
 └── codex_workflow/
-    ├── VERSION
-    ├── user_AGENTS.md
-    ├── workflow.py
     ├── runtime/
+    │   ├── workflow.py
     ├── resources/personalization.md
     ├── install_state.json
     ├── heavy_route.md
     ├── medium_route.md
-    ├── closure_steward.md
-    ├── bootstrap.md
-    ├── install.md
-    ├── update.md
-    ├── check_update.md
-    ├── remove.md
-    ├── personalization_guide.md
-    ├── disable.md
-    ├── enable.md
+    ├── archivist.md
+    ├── operate/
+    │   ├── VERSION
+    │   ├── user_AGENTS.md
+    │   ├── bootstrap.md
+    │   ├── install.md
+    │   ├── update.md
+    │   ├── check_update.md
+    │   ├── remove.md
+    │   ├── personalization_guide.md
+    │   ├── disable.md
+    │   └── enable.md
     ├── templates/
     ├── .source_backup/<version>/
     └── .backups/<old-version>-<timestamp>/
@@ -187,12 +188,12 @@ in the files that own it:
   their complete orchestration contracts and static invariants;
 - `AGENTS.md` defines shared project rules and route selection;
 - `runtime/platform_settings.py` owns the documented Codex platform settings;
-- `closure_steward.md` and the Deployment Token Report skill own automatic
+- `archivist.md` and the Deployment Token Report skill own automatic
   closure and reporting.
 
 The built-in roles are `default_executor`, `senior_executor`, `tester`,
-`doc-writer`, `companion`, `investigator`, and `closure_steward`. The default
-executor, Companion, Investigator, Tester, Doc-writer, and Closure Steward use
+`archivist`, `companion`, and `investigator`. The default
+executor, Companion, Investigator, Tester, and Archivist use
 Luna. Senior Executor uses Sol. Heavy permits at most one Senior Executor; the
 platform ceiling is twenty active subagents.
 
@@ -232,8 +233,7 @@ flowchart TB
     E["Default Executor<br/>production package"] <--> M
     S["Senior Executor<br/>exceptionally difficult package"] <--> M
     T["Tester<br/>independent verification"] <--> M
-    D["Doc-writer<br/>public documentation"] <--> M
-    X["Closure Steward<br/>handoff + token report"] <--> M
+    D["Archivist<br/>documentation + handoff + token report"] <--> M
 
     classDef main fill:#172554,color:#fff,stroke:#60a5fa,stroke-width:3px;
     classDef support fill:#ecfeff,stroke:#0891b2,stroke-width:2px;
@@ -241,8 +241,8 @@ flowchart TB
     classDef closure fill:#f0fdf4,stroke:#16a34a,stroke-width:2px;
     class M main;
     class C,I support;
-    class E,S,T,D execution;
-    class X closure;
+    class E,S,T execution;
+    class D closure;
 ```
 
 The main launches, briefs, waits for, follows up with, integrates, and owns the
@@ -253,13 +253,12 @@ lifecycle of every worker directly.
 | Role | Ownership | Boundary |
 | --- | --- | --- |
 | Main | Task direction, architecture, topology, scope, material causal decisions, integration, acceptance, final claims, and user communication | Uses worker evidence without surrendering decisions |
-| Companion | Persistent read-only context work in the project ecosystem | Repository, project docs, local modules and dependencies, locally available sibling-project material, source, tests, logs, configuration, Git history, and artifacts; no Internet research |
+| Companion | On-demand persistent read-only context work in the project ecosystem | Repository, project docs, local modules and dependencies, locally available sibling-project material, source, tests, logs, configuration, Git history, and artifacts |
 | Investigator | Disposable read-only research for any bounded external-information question on the Internet | Adapts sources and search to the question; no local project ownership, implementation, or final project decision |
 | Default Executor | Bounded production discovery, implementation, self-check, and ordinary repair | Only its assigned mutable surface |
 | Senior Executor | One exceptionally difficult reasoning or production package | At most one instance; not the default executor |
 | Tester | Independent verification and assigned test assets | Designs suitable tests from acceptance intent and risks; no production fixes |
-| Doc-writer | Verified public, product, operator, or service documentation | No deployment closure edits in `agent_docs/` |
-| Closure Steward | Final `agent_docs/` reconciliation, read-only Git handoff, and token report | No production/public-doc edits and no Git mutations |
+| Archivist | Assigned public and project documentation, closing progress and latest-session updates, read-only Git handoff, and token report | Main owns the project diary; documentation uses verified facts; no production or Git mutations |
 
 Companion and Investigator are separated by information source across all task
 types. Companion answers what the project ecosystem contains and how it
@@ -283,7 +282,7 @@ actual function:
 | Investigator | Research Context; Research Question + Goal; Main-Agent Research Guidance |
 | Default or Senior Executor | Implementation Context + Ownership; Implementation Task + Goal; Main-Agent Implementation Guidance |
 | Tester | Verification Context; Verification Goal; Main-Agent Verification Guidance |
-| Doc-writer | Documentation Context + Audience; Documentation Task + Goal; Main-Agent Documentation Guidance |
+| Archivist | Documentation Context + Audience; Documentation Task + Goal; Main-Agent Documentation Guidance |
 
 Task ID correlates dispatch, reports, follow-ups, and artifacts; it may match
 the platform `task_name` but remains a logical package identifier. Workers echo
@@ -311,30 +310,42 @@ history and return concise, decision-ready evidence. The main directly checks
 material that controls a high-risk decision or final claim, but does not
 routinely repeat fresh, credible worker checks.
 
+### Rollout-efficient orchestration guidance
+
+When several independent workers inform the same main-agent decision, the main
+should dispatch them together, wait for the relevant set to finish, and
+synthesize the set once. Independent non-overlapping implementation packages
+can follow the same pattern when their dependencies allow it. Related Companion
+questions and independent main-owned reads or tool checks should be combined
+into bounded calls, while frequent lifecycle polling and main-side repetition
+of routine worker checks should be avoided.
+
+Batching is a transient scheduling decision. The main selects each batch and
+preserves sequential work where dependencies, ownership, uncertainty, or risk
+require it.
+
 ### Fixed Heavy invariants
 
 Heavy keeps only stable platform, safety, and ownership rules rigid:
 
-- no more than twenty active subagents, including Companion and Closure
-  Steward;
-- one persistent Companion and at most one Senior Executor;
+- no more than twenty active subagents, including Companion and Archivist;
+- at most one persistent Companion and at most one Senior Executor;
 - initial task workers normally use `fork_turns="none"` and receive an explicit
   brief;
 - the main directly owns every worker's lifecycle;
 - concurrent mutable packages have non-overlapping ownership;
-- Tester does not repair production code and Doc-writer does not infer
+- Tester does not repair production code and Archivist does not infer
   unverified behavior;
 - workers preserve unrelated user work and do not mutate Git without authority;
-- one fresh Closure Steward closes each substantive deployment.
+- one Archivist owns closure reporting for each substantive deployment.
 
 Within those invariants, main-agent discretion controls worker count, reuse,
 dependencies, sequencing, concurrency, investigation, implementation,
 verification, repair, evidence representation, deployment, rollback, and
 stopping conditions.
 
-Medium has the same Companion/Investigator source boundary and closure model,
-but prohibits delegated production Executors, Tester, and ordinary Doc-writer
-packages. The main performs implementation and verification itself.
+Medium has the same Companion/Investigator source boundary and Archivist
+capability. The main performs production implementation and verification itself.
 
 ### Cross-session continuity and token reporting
 
@@ -347,18 +358,24 @@ Medium and Heavy. The main does not reopen the framework during later
 deployments or route changes; Companion handles bounded delta or conflict checks
 when freshness matters.
 
-The first Companion brief for each substantive deployment contains:
+The main agent includes this hidden comment once in its first commentary message
+for each substantive deployment:
 
 ```text
-codex-workflow-deployment-start: <deployment_id>
+<!-- codex-workflow-deployment-start: <deployment_id> -->
 ```
 
-Before the final response, one fresh Closure Steward inherits recent main-agent
-context, reconciles the complete `agent_docs/` framework, performs compact
-closing checks, and reports read-only Git state. After sealing its writes, it
+Before the final response, the main updates `project_diary.md` when needed and
+assigns one Archivist the deployment handoff, combining remaining documentation
+updates when practical. The main may reuse a sufficiently informed worker or
+create one with recent inherited context. Archivist updates the assigned
+documents, progress, and latest-session work, performs compact closing checks,
+and reports read-only Git state. After sealing its writes, it
 invokes `$deployment-token-report` for that deployment ID. The deterministic
-parser returns `Agent`, `Quantity`, `Rollouts`, `Cached input`, `Input`, and
-`Output`. Closure and reporting are not used on the direct fast path.
+parser finds the boundary in the main-agent rollout and returns `Agent`,
+`Quantity`, `Rollouts`, `Cached input`, `Input`, and `Output`. Companion remains
+governed by project-context assignment eligibility. Closure and reporting are
+reserved for substantive deployments.
 
 The report preserves this exact six-column template:
 
@@ -387,7 +404,7 @@ same entry point in disabled state and cannot coexist with the active root file.
 
 ### 3. Fixed release definitions
 
-Worker TOMLs, route documents, `AGENTS.md`, Closure Steward, and documented
+Worker TOMLs, route documents, `AGENTS.md`, Archivist, and documented
 platform keys are release-owned. Install and update materialize them exactly;
 there is no generated aggregate configuration that can drift from those
 sources.
@@ -400,10 +417,9 @@ effective instruction; it is not ordinary project documentation.
 
 ### 5. Lifecycle control
 
-`user_AGENTS.md` exposes the exact commands. `bootstrap.md`, `install.md`,
-`update.md`, `check_update.md`, `remove.md`, `personalization_guide.md`,
-`disable.md`, and `enable.md` define intent; `workflow.py` and `runtime/`
-perform validated deterministic mutations.
+`operate/user_AGENTS.md` exposes the exact commands. The lifecycle guides in
+`operate/` define intent; `runtime/workflow.py` and the supporting runtime
+modules perform validated deterministic mutations.
 
 These are ownership boundaries rather than disjoint directories:
 

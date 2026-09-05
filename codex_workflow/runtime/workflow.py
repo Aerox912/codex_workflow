@@ -19,6 +19,10 @@ from pathlib import Path
 if sys.version_info < (3, 11):
     raise SystemExit("codex_workflow requires Python 3.11 or newer")
 
+PACKAGE_ROOT = Path(__file__).resolve().parent.parent
+if str(PACKAGE_ROOT) not in sys.path:
+    sys.path.insert(0, str(PACKAGE_ROOT))
+
 from runtime.errors import WorkflowError
 from runtime.layout import PROJECT_ID
 from runtime.lifecycle import (
@@ -68,7 +72,7 @@ def parse_args() -> argparse.Namespace:
     bootstrap = commands.add_parser("bootstrap", help=argparse.SUPPRESS)
     _add_common(bootstrap)
     bootstrap.add_argument(
-        "--package-root", type=Path, default=Path(__file__).resolve().parent
+        "--package-root", type=Path, default=PACKAGE_ROOT
     )
 
     update = commands.add_parser("update")
@@ -99,7 +103,7 @@ def parse_args() -> argparse.Namespace:
 
     validate = commands.add_parser("validate")
     _add_common(validate, project=False)
-    validate.add_argument("--package-root", type=Path, default=Path(__file__).resolve().parent)
+    validate.add_argument("--package-root", type=Path, default=PACKAGE_ROOT)
 
     return parser.parse_args()
 
@@ -138,17 +142,26 @@ def _package_root(path: Path) -> Path:
     """Resolve a package path without applying a version-specific schema."""
 
     root = path.expanduser().resolve()
-    if not (root / "VERSION").is_file():
+    if not _has_package_version(root):
         nested = root / "codex_workflow"
-        if (nested / "VERSION").is_file():
+        if _has_package_version(nested):
             root = nested
     return root
+
+
+def _has_package_version(root: Path) -> bool:
+    return (root / "operate" / "VERSION").is_file() or (root / "VERSION").is_file()
+
+
+def _version_path(root: Path) -> Path:
+    current = root / "operate" / "VERSION"
+    return current if current.is_file() else root / "VERSION"
 
 
 def _package_version(root: Path) -> object:
     """Read the minimal update-ordering metadata without applying a package schema."""
 
-    version_path = root / "VERSION"
+    version_path = _version_path(root)
     try:
         lines = version_path.read_text(encoding="utf-8").splitlines()
     except OSError as error:
@@ -168,7 +181,7 @@ def _require_newer_update(
 
     incoming = _package_version(incoming_root)
     try:
-        installed_text = (runtime.runtime / "VERSION").read_text(encoding="utf-8").strip()
+        installed_text = _version_path(runtime.runtime).read_text(encoding="utf-8").strip()
         installed = parse_semver(installed_text)
     except OSError as error:
         raise WorkflowError(f"cannot read installed workflow VERSION: {error}") from error
@@ -181,9 +194,10 @@ def _require_newer_update(
 
 
 def _delegate_update(incoming_root: Path, args: argparse.Namespace) -> int:
-    workflow = incoming_root / "workflow.py"
+    current = incoming_root / "runtime" / "workflow.py"
+    workflow = current if current.is_file() else incoming_root / "workflow.py"
     if not workflow.is_file():
-        raise WorkflowError(f"incoming package workflow.py is missing: {workflow}")
+        raise WorkflowError(f"incoming package workflow entry point is missing: {incoming_root}")
     command = [
         sys.executable,
         "-B",
@@ -228,7 +242,7 @@ def main() -> int:
             )
             return 0
         if args.command == "check-update":
-            installed_text = (runtime.runtime / "VERSION").read_text(encoding="utf-8").strip()
+            installed_text = _version_path(runtime.runtime).read_text(encoding="utf-8").strip()
             installed = parse_semver(installed_text)
             releases = select_releases()
             newer = [release for release in releases if release.version > installed]
@@ -284,7 +298,7 @@ def main() -> int:
             assert project is not None
             if project.active.exists() and project.disabled.exists():
                 raise WorkflowError("both active and disabled project entry points exist")
-            if (runtime.runtime / "VERSION").is_file():
+            if _has_package_version(runtime.runtime):
                 package = PackageLayout.resolve(runtime.runtime)
             elif args.package_root is not None:
                 package = PackageLayout.resolve(args.package_root)
@@ -335,7 +349,7 @@ def main() -> int:
             _require_newer_update(
                 incoming_root, runtime, allow_downgrade=args.allow_downgrade
             )
-            if incoming_root != Path(__file__).resolve().parent:
+            if incoming_root != PACKAGE_ROOT:
                 # The incoming runtime owns package validation. An installed
                 # launcher may be older than the package it is updating to and
                 # must not reject files removed by that newer package.

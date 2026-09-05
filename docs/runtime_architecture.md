@@ -7,14 +7,19 @@ generated outputs, and project-owned content.
 
 - Route documents and worker TOMLs: authoritative behavior distributed by a
   release.
+- `~/.codex/codex_workflow/operate/`: user command guides, the user-level
+  instruction source, and package version metadata.
 - `~/.codex/codex_workflow/install_state.json`: installed version and ownership
   manifests.
-- Heavy and Closure Steward contracts: fixed release inputs copied unchanged.
+- Heavy and Archivist contracts: fixed release inputs copied unchanged.
 - Worker TOMLs and workflow-owned Codex settings: materialized outputs.
 - Project personalization: structured project state materialized into its own
   marker region.
 - Project-local instructions: opaque preserved content in a separate marker
   region.
+- Project documentation updates: main owns `project_diary.md`; Archivist owns
+  assigned public and project documents, including closing progress and
+  latest-session updates and the deployment token report.
 
 ## Module boundaries
 
@@ -28,7 +33,7 @@ generated outputs, and project-owned content.
 - `plan.py`: validated mutation plans and compact summaries.
 - `lifecycle.py`: composition only; it owns no low-level transformation.
 - `release.py`: release selection, checksum, and safe extraction.
-- `workflow.py`: CLI parsing, direct application, two-phase removal, and
+- `runtime/workflow.py`: CLI parsing, direct application, two-phase removal, and
   incoming-runtime delegation.
 
 The removal plan deletes the recognized project entry point and private

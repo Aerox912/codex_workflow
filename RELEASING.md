@@ -18,15 +18,13 @@ Every archive contains exactly this top-level directory and nothing beside it:
 
 ```text
 codex_workflow/
-├── VERSION
-├── user_AGENTS.md
 ├── AGENTS.md
-├── bootstrap.md
-├── install.md
-├── update.md
-├── remove.md
-├── workflow.py
+├── operate/
+│   ├── VERSION
+│   ├── user_AGENTS.md
+│   └── lifecycle guides
 ├── runtime/
+│   ├── workflow.py
 ├── resources/                              # immutable package defaults
 ├── agents/
 └── project_docs/
@@ -45,13 +43,14 @@ system:
 
 ## Versioning
 
-Use SemVer 2.0.0. Keep the plain version in `codex_workflow/VERSION` and the
-`codex-workflow-version` marker in `codex_workflow/user_AGENTS.md` identical.
+Use SemVer 2.0.0. Keep the plain version in
+`codex_workflow/operate/VERSION` and the `codex-workflow-version` marker in
+`codex_workflow/operate/user_AGENTS.md` identical.
 The release tag is the same value with an optional leading `v`, for example
-`VERSION=1.1.13` and tag `v1.1.13`. GitHub's prerelease flag is independent of
+`VERSION=1.1.14` and tag `v1.1.14`. GitHub's prerelease flag is independent of
 the SemVer string; the initial releases are marked as prereleases by the
 workflow.
-The command examples below use the current package version, `1.1.13`; replace
+The command examples below use the current package version, `1.1.14`; replace
 that value consistently when preparing a later release.
 
 ## Local build and validation
@@ -65,7 +64,7 @@ Linux/macOS:
 ```sh
 python3 -B scripts/test_workflow_runtime.py -v
 python3 -B scripts/test_deployment_token_report.py -v
-python3 scripts/package_release.py --release-tag v1.1.13 --output-dir dist
+python3 scripts/package_release.py --release-tag v1.1.14 --output-dir dist
 python3 scripts/package_release.py --verify dist/codex_workflow-*.zip
 ```
 
@@ -74,8 +73,8 @@ Windows PowerShell:
 ```powershell
 py -3.11 -B scripts\test_workflow_runtime.py -v
 py -3.11 -B scripts\test_deployment_token_report.py -v
-py -3.11 scripts/package_release.py --release-tag v1.1.13 --output-dir dist
-py -3.11 scripts/package_release.py --verify dist\codex_workflow-1.1.13.zip
+py -3.11 scripts/package_release.py --release-tag v1.1.14 --output-dir dist
+py -3.11 scripts/package_release.py --verify dist\codex_workflow-1.1.14.zip
 ```
 
 The build validates the version, marker, lifecycle runtime, and required
@@ -90,8 +89,8 @@ and prerelease setting have been approved:
 
 ```sh
 git status --short
-git tag -a v1.1.13 -m "codex_workflow v1.1.13"
-git push origin v1.1.13
+git tag -a v1.1.14 -m "codex_workflow v1.1.14"
+git push origin v1.1.14
 ```
 
 Pushing a semantic `v*` tag starts `.github/workflows/release.yml`. It rebuilds
@@ -105,10 +104,10 @@ separate decision to promote the project to stable releases.
 If the workflow is unavailable, the equivalent manual publication command is:
 
 ```sh
-gh release create v1.1.13 \
-  dist/codex_workflow-1.1.13.zip \
+gh release create v1.1.14 \
+  dist/codex_workflow-1.1.14.zip \
   dist/SHA256SUMS \
-  --title "codex_workflow v1.1.13" \
+  --title "codex_workflow v1.1.14" \
   --generate-notes \
   --prerelease
 ```
@@ -119,9 +118,9 @@ same tagged commit.
 ## Consumer commands
 
 - Initial installation reads the extracted release package's
-  `codex_workflow/bootstrap.md`; the bundled lifecycle CLI validates and
+  `codex_workflow/operate/bootstrap.md`; the bundled lifecycle CLI validates and
   applies the user-level bootstrap transaction directly.
-- `codex_workflow --install` reads the installed `install.md` and creates only
+- `codex_workflow --install` reads the installed `operate/install.md` and creates only
   project-level workflow assets from the existing bootstrap.
 - `codex_workflow --check-update` explicitly checks GitHub Releases without
   downloading or installing an update.

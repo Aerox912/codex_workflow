@@ -178,29 +178,20 @@ def record_time(record: dict[str, Any], *, path: Path) -> datetime:
 
 
 def find_boundary(
-    marker_sources: Iterable[Session],
-    root: Session,
-    deployment_id: str,
-    warnings: list[str],
+    root: Session, deployment_id: str, warnings: list[str]
 ) -> datetime:
     marker = f"{MARKER_PREFIX} {deployment_id}"
     marker_pattern = re.compile(re.escape(marker) + r"(?![a-z0-9_])")
-    marker_times: dict[str, datetime] = {}
-    for source in marker_sources:
-        for record in iter_jsonl(source.path, warnings):
-            texts = message_texts(record, roles=frozenset({"user", "assistant"}))
-            if any(marker_pattern.search(text) for text in texts):
-                timestamp = record_time(record, path=source.path)
-                marker_times[source.session_id] = min(
-                    marker_times.get(source.session_id, timestamp), timestamp
-                )
+    marker_times: list[datetime] = []
+    for record in iter_jsonl(root.path, warnings):
+        texts = message_texts(record, roles=frozenset({"assistant"}))
+        if any(marker_pattern.search(text) for text in texts):
+            marker_times.append(record_time(record, path=root.path))
     if not marker_times:
         raise ReportError(
-            f"deployment marker {marker!r} was not found in a Companion rollout"
+            f"deployment marker {marker!r} was not found in the main-agent rollout"
         )
-    if len(marker_times) != 1:
-        raise ReportError(f"deployment marker {marker!r} is ambiguous")
-    marker_time = next(iter(marker_times.values()))
+    marker_time = min(marker_times)
 
     candidates: list[datetime] = []
     for record in iter_jsonl(root.path, warnings):
@@ -415,21 +406,14 @@ def main(argv: list[str] | None = None) -> int:
             caller = index.get(caller_id)
             if caller is None:
                 raise ReportError(f"caller session was not found: {caller_id}")
-            if caller.parent_id is None or caller.role != "closure_steward":
-                raise ReportError("the caller is not a spawned Closure Steward session")
+            if caller.parent_id is None or caller.role != "archivist":
+                raise ReportError("the caller is not a spawned Archivist session")
             root = index.get(caller.parent_id)
             if root is None:
                 raise ReportError(
                     f"parent main-agent session is missing: {caller.parent_id}"
                 )
-            marker_sources = (
-                session
-                for session in descendants(root.session_id, index)
-                if session.role == "companion"
-            )
-            start = find_boundary(
-                marker_sources, root, args.deployment_id, warnings
-            )
+            start = find_boundary(root, args.deployment_id, warnings)
         if start > end:
             raise ReportError("deployment start is after report cutoff")
         rows = compile_rows(root, index, start, end, warnings)

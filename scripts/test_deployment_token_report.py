@@ -144,6 +144,10 @@ class DeploymentTokenReportTests(unittest.TestCase):
                 user_message("2026-08-23T09:00:01Z", "older request"),
                 usage("2026-08-23T09:59:59Z", 999, 900, 99),
                 user_message("2026-08-23T10:00:00Z", "deployment request"),
+                assistant_message(
+                    "2026-08-23T10:00:20Z",
+                    "<!-- codex-workflow-deployment-start: major_task -->\nStarting.",
+                ),
                 usage("2026-08-23T10:01:00Z", 100, 60, 20),
                 usage("2026-08-23T10:05:00Z", 200, 150, 30),
             ],
@@ -160,8 +164,7 @@ class DeploymentTokenReportTests(unittest.TestCase):
                 ),
                 assistant_message(
                     "2026-08-23T10:00:31Z",
-                    "- Deployment marker retained: "
-                    "`codex-workflow-deployment-start: major_task`.",
+                    "Project context is ready.",
                 ),
                 usage("2026-08-23T10:01:30Z", 50, 40, 10),
             ],
@@ -213,8 +216,8 @@ class DeploymentTokenReportTests(unittest.TestCase):
                     self.closure_id,
                     "2026-08-23T10:04:30Z",
                     parent=self.root_id,
-                    task="/root/closure_steward_major_task",
-                    role="closure_steward",
+                    task="/root/archivist_major_task",
+                    role="archivist",
                 ),
                 usage("2026-08-23T10:05:30Z", 10, 5, 2),
             ],
@@ -263,7 +266,7 @@ class DeploymentTokenReportTests(unittest.TestCase):
                 "companion",
                 "default_executor",
                 "tester",
-                "closure_steward",
+                "archivist",
                 "main agent",
             ],
         )
@@ -319,15 +322,9 @@ class DeploymentTokenReportTests(unittest.TestCase):
         self.assertIn("was not found", completed.stderr)
         self.assertEqual(completed.stdout, "")
 
-    def test_repeated_marker_in_same_companion_rollout_is_not_ambiguous(self) -> None:
+    def test_repeated_marker_in_main_rollout_is_not_ambiguous(self) -> None:
         self.build_fixture()
-        path = self.sessions / (
-            "rollout-2026-08-23T10-00-00-companion-session.jsonl"
-        )
-        path.write_text(
-            path.read_text(encoding="utf-8").removesuffix('{"timestamp":'),
-            encoding="utf-8",
-        )
+        path = self.sessions / "rollout-2026-08-23T10-00-00-root-session.jsonl"
         with path.open("a", encoding="utf-8") as stream:
             stream.write(
                 json.dumps(
@@ -343,9 +340,7 @@ class DeploymentTokenReportTests(unittest.TestCase):
 
     def test_marker_does_not_match_a_longer_deployment_id(self) -> None:
         self.build_fixture()
-        path = self.sessions / (
-            "rollout-2026-08-23T10-00-00-companion-session.jsonl"
-        )
+        path = self.sessions / "rollout-2026-08-23T10-00-00-root-session.jsonl"
         text = path.read_text(encoding="utf-8").replace(
             "codex-workflow-deployment-start: major_task",
             "codex-workflow-deployment-start: major_task_extra",
@@ -354,6 +349,43 @@ class DeploymentTokenReportTests(unittest.TestCase):
         completed = self.run_report()
         self.assertEqual(completed.returncode, 2)
         self.assertIn("was not found", completed.stderr)
+
+    def test_report_boundary_does_not_require_companion(self) -> None:
+        self.build_fixture()
+        companion = self.sessions / (
+            "rollout-2026-08-23T10-00-00-companion-session.jsonl"
+        )
+        companion.unlink()
+
+        completed = self.run_report("--format", "json")
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        rows = json.loads(completed.stdout)["rows"]
+        self.assertNotIn("companion", {row["agent"] for row in rows})
+
+    def test_marker_in_companion_only_is_not_a_boundary(self) -> None:
+        self.build_fixture()
+        root = self.sessions / "rollout-2026-08-23T10-00-00-root-session.jsonl"
+        root.write_text(
+            root.read_text(encoding="utf-8").replace(
+                "codex-workflow-deployment-start: major_task",
+                "removed-deployment-boundary",
+            ),
+            encoding="utf-8",
+        )
+        companion = self.sessions / (
+            "rollout-2026-08-23T10-00-00-companion-session.jsonl"
+        )
+        companion.write_text(
+            companion.read_text(encoding="utf-8").replace(
+                "Project context is ready.",
+                "codex-workflow-deployment-start: major_task",
+            ),
+            encoding="utf-8",
+        )
+
+        completed = self.run_report()
+        self.assertEqual(completed.returncode, 2)
+        self.assertIn("main-agent rollout", completed.stderr)
 
     def test_companion_cannot_run_the_closure_owned_report(self) -> None:
         self.build_fixture()
@@ -374,7 +406,7 @@ class DeploymentTokenReportTests(unittest.TestCase):
             text=True,
         )
         self.assertEqual(completed.returncode, 2)
-        self.assertIn("not a spawned Closure Steward", completed.stderr)
+        self.assertIn("not a spawned Archivist", completed.stderr)
 
     def test_direct_root_mode_supports_deterministic_diagnostics(self) -> None:
         self.build_fixture()

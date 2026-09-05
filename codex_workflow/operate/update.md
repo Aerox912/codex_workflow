@@ -20,11 +20,12 @@ which validates its package schema.
 Run:
 
 ```text
-python3 ~/.codex/codex_workflow/workflow.py update --project <project>
+python3 ~/.codex/codex_workflow/runtime/workflow.py update --project <project>
 ```
 
-For migration from a pre-script installation, run the incoming package's
-`workflow.py` instead of an older installed launcher.
+When the installed package still stores `VERSION` at its root, run the incoming
+package's `runtime/workflow.py` instead of the installed launcher. The incoming
+runtime recognizes that historical layout and migrates it transactionally.
 
 Let the script replace installed routes, worker TOMLs, and workflow-owned skills
 with the incoming release's fixed definitions. Expect it to preserve unrelated

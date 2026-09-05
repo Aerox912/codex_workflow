@@ -3,7 +3,7 @@
 Run the installed lifecycle CLI:
 
 ```text
-python3 ~/.codex/codex_workflow/workflow.py check-update --json
+python3 ~/.codex/codex_workflow/runtime/workflow.py check-update --json
 ```
 
 Treat this as an explicit, read-only check regardless of the automatic

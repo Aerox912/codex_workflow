@@ -29,10 +29,9 @@ BUILTIN_WORKERS = frozenset(
         "default_executor",
         "senior_executor",
         "tester",
-        "doc-writer",
+        "archivist",
         "companion",
         "investigator",
-        "closure_steward",
     }
 )
 BUILTIN_SKILLS = frozenset({"deployment-token-report"})
@@ -41,6 +40,7 @@ BUILTIN_SKILLS = frozenset({"deployment-token-report"})
 @dataclass(frozen=True)
 class PackageLayout:
     root: Path
+    operate: Path
     project_template: Path
     agent_templates: Path
     project_docs: Path
@@ -49,15 +49,21 @@ class PackageLayout:
     @classmethod
     def resolve(cls, root: Path, *, allow_legacy: bool = False) -> "PackageLayout":
         root = root.resolve()
-        if not (root / "VERSION").is_file():
+        if not cls._has_version(root):
             nested = root / "codex_workflow"
-            if nested.is_dir() and (nested / "VERSION").is_file():
+            if nested.is_dir() and cls._has_version(nested):
                 root = nested
             else:
                 raise ValidationError(f"package root does not contain VERSION: {root}")
+        operate = (
+            root / "operate" if (root / "operate" / "VERSION").is_file() else root
+        )
+        if operate == root and not allow_legacy:
+            raise ValidationError(f"package operational files are missing: {root / 'operate'}")
         if (root / "templates" / "AGENTS.md").is_file():
             layout = cls(
                 root,
+                operate,
                 root / "templates" / "AGENTS.md",
                 root / "templates" / "agents",
                 root / "templates" / "project_docs",
@@ -66,6 +72,7 @@ class PackageLayout:
         else:
             layout = cls(
                 root,
+                operate,
                 root / "AGENTS.md",
                 root / "agents",
                 root / "project_docs",
@@ -73,6 +80,10 @@ class PackageLayout:
             )
         layout.validate(allow_legacy=allow_legacy)
         return layout
+
+    @staticmethod
+    def _has_version(root: Path) -> bool:
+        return (root / "operate" / "VERSION").is_file() or (root / "VERSION").is_file()
 
     def validate(self, *, allow_legacy: bool = False) -> None:
         symlinks = [
@@ -92,7 +103,7 @@ class PackageLayout:
             version,
         ):
             raise ValidationError(f"invalid package VERSION: {version!r}")
-        user_agents = self.root / "user_AGENTS.md"
+        user_agents = self.operate / "user_AGENTS.md"
         if not user_agents.is_file():
             raise ValidationError("package user_AGENTS.md marker is missing")
         user_agents_text = user_agents.read_text(encoding="utf-8")
@@ -103,18 +114,18 @@ class PackageLayout:
         extract(user_agents_text, USER_MANAGED)
         if not allow_legacy:
             required = [
-                "workflow.py",
+                "runtime/workflow.py",
                 "heavy_route.md",
                 "medium_route.md",
-                "closure_steward.md",
-                "install.md",
-                "bootstrap.md",
-                "update.md",
-                "check_update.md",
-                "remove.md",
-                "personalization_guide.md",
-                "enable.md",
-                "disable.md",
+                "archivist.md",
+                "operate/install.md",
+                "operate/bootstrap.md",
+                "operate/update.md",
+                "operate/check_update.md",
+                "operate/remove.md",
+                "operate/personalization_guide.md",
+                "operate/enable.md",
+                "operate/disable.md",
                 "runtime/__init__.py",
                 "runtime/_toml.py",
                 "runtime/backup.py",
@@ -196,7 +207,7 @@ class PackageLayout:
 
     @property
     def version(self) -> str:
-        lines = (self.root / "VERSION").read_text(encoding="utf-8").splitlines()
+        lines = (self.operate / "VERSION").read_text(encoding="utf-8").splitlines()
         if len(lines) != 1 or not lines[0]:
             raise ValidationError("VERSION must contain exactly one non-empty line")
         return lines[0]
