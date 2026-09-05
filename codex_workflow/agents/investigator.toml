@@ -1,9 +1,9 @@
 # codex-workflow-worker: investigator
 name = "investigator"
-description = "Read-only Luna investigator for bounded parallel bug, evidence, and solution-search lanes."
+description = "Read-only Astra investigator for bounded parallel bug, evidence, and solution-search lanes."
 
-model = "gpt-5.6-luna"
-model_reasoning_effort = "xhigh"
+model = "gpt-6-astra"
+model_reasoning_effort = "high"
 service_tier = "fast"
 sandbox_mode = "read-only"
 

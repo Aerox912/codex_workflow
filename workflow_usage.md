@@ -197,8 +197,8 @@ use heavy route. [task description]
 The selected route is session-scoped: it remains active until the user changes it
 or the session ends. New sessions default to Light unless a route is selected
 again. Each substantive Medium or Heavy deployment automatically creates a
-workflow-owned documentation handoff before its final response. Its fresh Luna
-xhigh worker receives the fixed finite handoff context and alone reconciles the
+workflow-owned documentation handoff before its final response. Its fresh Astra
+high worker receives the fixed finite handoff context and alone reconciles the
 complete `agent_docs/` framework, reports read-only Git status and handoff
 information, and returns the final three-column worker-statistics table. It does
 not stage or commit automatically. No manual closure prompt, main-agent summary,
@@ -309,7 +309,7 @@ The current built-ins are `default_executor`, `senior_executor`, `tester`,
 `doc-writer`, `companion`, `investigator`, and `closure_steward`. The first
 three are Heavy production/verification roles. `doc-writer` and Closure
 Steward own documentation updates, while Companion and investigator provide
-read-only workflow support. The default executor uses `xhigh`; Heavy permits
+read-only workflow support. The default executor uses `medium`; Heavy permits
 at most one senior executor; and the Codex child-worker ceiling is twenty.
 
 `auto_check_update` is not a workflow setting. It is an independent boolean in
@@ -407,7 +407,7 @@ The fixed role set is:
 | `tester` | Independent focused tests and failure analysis | Test/fixture scope; production defects return to the executor |
 | `doc-writer` | Assigned documentation during implementation and required installation initialization; not automatic deployment closure | Documentation scope; installation may authorize listed new or still-template-marked recovery files |
 | Companion | Single persistent secretary and office wrapper that solves routine read-only tasks, retains operational context, filters coherent report batches, and returns director briefs | No |
-| `investigator` | Disposable Luna leaf agent for one bounded code, evidence, dependency, documentation, log, or external-solution lane | No |
+| `investigator` | Disposable Astra leaf agent for one bounded code, evidence, dependency, documentation, log, or external-solution lane | No |
 | `closure_steward` | Inherited-context reconciliation of the complete documentation framework, read-only Git status/handoff, and statistics | `agent_docs/` plus read-only Git inspection during automatic closure; no automatic staging or commit |
 
 The role names are stable while their model bindings live only in the worker
@@ -485,7 +485,7 @@ Companion resolves routine report traffic and retains material knowledge deltas
 Main integrates verified package outcomes
         │
         ▼
-Fresh Luna xhigh worker automatically closes the deployment before the final response
+Fresh Astra high worker automatically closes the deployment before the final response
 ```
 
 The tester and responsible executor are identified by canonical task name and
@@ -541,7 +541,7 @@ deployment remains recorded concisely instead of clearing both files.
 
 Before each substantive Medium or Heavy deployment returns its final response,
 the route automatically creates a fresh, uniquely named `closure_steward` worker
-with the handoff contract's finite context fork. This preserves its Luna xhigh
+with the handoff contract's finite context fork. This preserves its Astra high
 model while inheriting recent main-agent context. Without a parent-built capsule
 or usage ledger, it reconciles every core and module-specific
 `agent_docs/` file against verified deployment facts, performs compact closing
@@ -572,10 +572,10 @@ Location: `~/.codex/`
 - `~/.codex/agents/` contains all distributed worker TOMLs. The fixed role set
   is `default_executor`, `senior_executor`, `tester`, `doc-writer`,
   `companion`, `investigator`, and `closure_steward`.
-- `companion.toml` gives the persistent Luna Companion a 1,050,000-token context
+- `companion.toml` gives the persistent Astra Companion a 1,050,000-token context
   window with automatic compaction at 900,000 tokens; the override is scoped to
   that role.
-- `investigator.toml` defines the disposable read-only Luna xhigh leaf role used
+- `investigator.toml` defines the disposable read-only Astra high leaf role used
   by Heavy, or by an explicitly requested Medium evidence wave.
 - `~/.codex/codex_workflow/heavy_route.md` defines Heavy orchestration,
   delegation, limits, repair loops, and ownership.

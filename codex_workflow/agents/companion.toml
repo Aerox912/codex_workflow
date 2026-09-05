@@ -6,8 +6,8 @@ Persistent read-only secretary and office wrapper that solves routine context
 work and filters operational knowledge for the main agent.
 """
 
-model = "gpt-5.6-luna"
-model_reasoning_effort = "xhigh"
+model = "gpt-6-astra"
+model_reasoning_effort = "medium"
 model_context_window = 1_050_000
 model_auto_compact_token_limit = 900_000
 service_tier = "fast"

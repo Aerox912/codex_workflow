@@ -24,6 +24,7 @@ sys.path.insert(0, str(PACKAGE))
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import workflow as workflow_cli
+from runtime._toml import tomllib
 from set_fork_version import ForkVersionError, set_fork_version
 from package_release import (
     ReleaseError as PackageReleaseError,
@@ -337,7 +338,7 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("Execution Guide as the primary work sequence", executor)
         self.assertIn("Track the completion checklist internally", executor)
         self.assertNotIn("Execution Guide as the primary work sequence", senior)
-        self.assertIn('model = "gpt-5.6-luna"', executor)
+        self.assertIn('model = "gpt-6-astra"', executor)
         self.assertIn('model = "gpt-6-astra"', senior)
         self.assertFalse((PACKAGE / "agents" / "executor_terra.toml").exists())
         self.assertIn("model_context_window = 1_050_000", companion_worker)
@@ -348,7 +349,7 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("complete routine read-only work", companion_worker)
         self.assertIn("For a coherent report batch", companion_worker)
         self.assertIn("sent directly\nby those workers", companion_worker)
-        self.assertIn('model = "gpt-5.6-luna"', investigator)
+        self.assertIn('model = "gpt-6-astra"', investigator)
         self.assertNotIn("terra", investigator.lower())
         self.assertIn('sandbox_mode = "read-only"', investigator)
         self.assertIn("never declare the authoritative", investigator.lower())
@@ -607,11 +608,31 @@ class PlatformSettingsTests(unittest.TestCase):
         )
         self.assertNotIn("codex-workflow-effective-config", heavy)
         self.assertNotIn("Fixed Workflow Settings", heavy)
-        self.assertIn('model_reasoning_effort = "xhigh"', default)
+        self.assertIn('model_reasoning_effort = "medium"', default)
         self.assertIn(
             'fork_turns="200"',
             (PACKAGE / "closure_steward.md").read_text(encoding="utf-8"),
         )
+
+
+class WorkerDistributionTests(unittest.TestCase):
+    def test_all_astra_worker_effort_distribution(self) -> None:
+        expected = {
+            "default_executor": "medium",
+            "senior_executor": "xhigh",
+            "investigator": "high",
+            "tester": "high",
+            "companion": "medium",
+            "doc-writer": "medium",
+            "closure_steward": "high",
+        }
+        profiles = {path.stem: path for path in (PACKAGE / "agents").glob("*.toml")}
+        self.assertEqual(set(profiles), set(expected))
+        for name, effort in expected.items():
+            with self.subTest(worker=name):
+                profile = tomllib.loads(profiles[name].read_text(encoding="utf-8"))
+                self.assertEqual(profile["model"], "gpt-6-astra")
+                self.assertEqual(profile["model_reasoning_effort"], effort)
 
 
 class ReleaseTests(unittest.TestCase):

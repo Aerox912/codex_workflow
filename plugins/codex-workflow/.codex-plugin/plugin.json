@@ -1,6 +1,6 @@
 {
   "name": "codex-workflow",
-  "version": "1.1.4-patch.2",
+  "version": "1.1.4-patch.3",
   "description": "Operate the Aerox912 Codex Workflow fork through its installed, agent-system-managed runtime.",
   "author": {
     "name": "Aerox912",

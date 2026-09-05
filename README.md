@@ -24,7 +24,7 @@ and Python 3.11 or newer for deterministic lifecycle operations.
 ```text
 Download and extract the latest `codex_workflow-<version>.zip` asset (not GitHub's Source code archive) from https://github.com/Aerox912/codex_workflow/releases. Verify it against `SHA256SUMS`, then read the bundled `codex_workflow/bootstrap.md` and follow it to complete the initial installation.
 ```
-> ⭐ Recommended: use 5.6 Luna xhigh for installation. 
+> ⭐ Recommended: use Astra medium for installation.
 
 🔄 Restart Codex after installation
 
@@ -179,3 +179,17 @@ Send these exact commands to Codex from the relevant project directory:
 
 For the complete command reference, installed-file map, scripted customization
 guide, and Heavy-route design, see [workflow_usage.md](workflow_usage.md).
+
+## Fork worker defaults
+
+All seven worker roles use `gpt-6-astra`. The main session model is not changed.
+
+| Role | Reasoning effort |
+| --- | --- |
+| Default executor | Medium |
+| Senior executor | Extra high |
+| Investigator | High |
+| Tester | High |
+| Companion | Medium |
+| Documentation writer | Medium |
+| Closure steward | High |

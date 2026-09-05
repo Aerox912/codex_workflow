@@ -3,7 +3,7 @@ name = "senior_executor"
 description = "Senior executor for mathematically or logically demanding core work and exceptionally difficult cross-cutting production changes."
 
 model = "gpt-6-astra"
-model_reasoning_effort = "medium"
+model_reasoning_effort = "xhigh"
 sandbox_mode = "workspace-write"
 
 developer_instructions = """
