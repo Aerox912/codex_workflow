@@ -4,24 +4,15 @@
 
 ![Workflow illustration](illustration.png)
 
-Built for maximum token efficiency: Heavy-route swarm execution with the main
-agent as the knowledge director, plus an on-demand persistent Companion for
-valuable read-only context work. Workers keep operational evidence in artifacts
-and return small knowledge deltas. Medium keeps implementation and verification
-in the main agent while retaining cross-session workflow support.
+Built for token-efficient agent orchestration, with swarm execution, persistent context support, and compact knowledge handoffs between agents. `agent_docs/` provides durable project memory for goals, architecture, decisions, progress, and session handoffs.
 
 > ⭐ For lightweight tasks, it won’t overdo things. Light route is default.
 
 ## 1. Quick installation ⚙️
+### Open Codex CLI / Codex app from your project directory
 
-Requires Python 3.11 or newer for deterministic lifecycle operations.
-
-### Open Codex CLI / Codex app from your project directory 
-
-Change permision to `approve for me/full access`.
-
+Change permision to `approve for me` or `full access`.
 ▶️ Send:
-
 ```text
 Download and extract the latest `codex_workflow-<version>.zip` asset from https://github.com/viettran-edgeAI/codex_workflow/releases. Verify it against `SHA256SUMS`, then read the bundled `codex_workflow/operate/bootstrap.md` and follow it to complete the initial installation.
 ```
@@ -29,8 +20,9 @@ Download and extract the latest `codex_workflow-<version>.zip` asset from https:
 
 🔄 Restart Codex after installation
 
-The initial bootstrap will include creating the project documentation framework `agent_docs/` using`archivist`. Once that bootstrap is complete, the current project is ready to use. Whenever you need to install this workflow for a new project, simply open Codex and send: `codex_workflow --install`
+The initial bootstrap will include creating the project documentation framework `agent_docs/` using `archivist` subagent. Once that bootstrap is complete, the current project is ready to use. Whenever you need to install this workflow for a new project, simply open Codex and send: `codex_workflow --install`
 
+> Requires Python 3.11 or newer for deterministic lifecycle operations.
 
 ## 2. Workflow usage 
 
@@ -40,16 +32,14 @@ The initial bootstrap will include creating the project documentation framework 
 - Medium route: Implement `copmanion` and `investigator` to assist the main agent. The main agent still owns implementation.
 Choose it when you want workflow-mode context support without delegating production work, like front-end design, visualization, or 3D works.
 
-### Project memory with `agent_docs`
-
-`agent_docs/` is the project's durable documentation framework: it records the goals, architecture, progress, decisions, and latest-session handoff. Medium and Heavy routes will use this framework doc.
+### Built-in project memory - `agent_docs`
+`agent_docs/` is the project's durable documentation framework: it records the goals, architecture, progress, decisions, and latest-session handoff. Medium and Heavy routes will use this framework doc. It is created and managed automatically by `Archivist`.
 
 ### How to use
 - Normally, for simple work, general Q&A, you don't need to do anything. `light route` is the default route.
 
 --------------------------------
-
-- When starting or continuing a plan in progress, tell Codex in the prompt:
+- When starting a new task, tell Codex :
 ```text
 use medium/heavy route. [your task description]
 ```
@@ -57,7 +47,7 @@ Or continue a task that was already underway in the previous session:
 ```text
 use medium/heavy route. Continue ongoing work.
 ```
-Codex stays on the selected route until you change it.
+> Codex stays on the selected route until you change it
 
 ---------------
 > **⭐ Recommendation:** Assign very large and complex tasks to the `heavy route` to make the most of its capabilities and maximize token usage savings. Don't hesitate to choose Sol xhigh / Astra high for this route. Using much lower reasoning efforts will not actually save tokens and will severely reduce its coordination capabilities.
@@ -76,25 +66,25 @@ Codex stays on the selected route until you change it.
 
 ![Heavy Route structure](heavy_route_structure.png)
 
-> `doc-writer` and `closure_steward` have been merged into single role `archivist`.
+> `doc-writer` and `closure_steward` have been merged into single role `archivist` since 1.1.14 version.
 
 The coordination process is roughly as follows: The Main Agent receives the task, deploys a `Companion` and swarm of `Investigator` when needed, plans the work, and breaks it into bounded tasks. Each worker receives a work package containing the context scope, task and goal, and a knowledge package with the project-specific guidance needed to complete it.  At the end of the session, the `Archivist` updates the `agent_docs/` project documentation framework and runs the integrated `$deployment-token-report` skill to produce the token-usage report.
 
+Illustrating the token-usage report at the end of each deployment in the Heavy route:
 ![End-of-session token report](token_report.png)
 
 In this design, the **Companion** helps reduce context pressure on the Main Agent. Together with the **Investigators**, it offloads work that does not require the Main Agent's high intelligence, allowing the Main Agent to remain focused on orchestration, high-level reasoning, and critical decisions without being distracted by lower-value operational work.
 
-Each work package contains instructions enriched with knowledge distilled from the Main Agent, benefiting from its broad understanding of the overall task and project context. Each **default_executor** can therefore focus on a compact, well-scoped package of work. **Luna**, as a smaller model, is particularly effective in this setting: it performs strongly when given clear boundaries, sufficient context, and a concrete implementation target.
+Each work package contains instructions enriched with knowledge distilled from the Main Agent, benefiting from its broad understanding of the overall task and project context. Each **default_executor** can therefore focus on a compact, well-scoped package of work. **Luna** is very powerful for this type of bounded work. 
 
 The **Senior Executor** serves as a fallback for exceptionally difficult problems where stronger reasoning is required.
 
 The workflow's **batching guidelines** were derived from extensive experimentation. They are designed to group related coordination and execution work more efficiently, significantly reducing the number of Main Agent rollouts and the repeated context replay associated with them.
 
-End-of-session reporting with deploy_token_report is handled by the Archivist, preserving the Main Agent's token budget for higher-value reasoning.
-
-
+End-of-session reporting with deploy_token_report is handled by the Archivist, preserving the Main Agent's token budget 
 
 ## Light benchmark
+**Batching guidelines** techniques(since 1.1.3 version) significantly reduce the main agent's rollout, which in turn reduces the main agent's cached input tokens, a major component of the operation cost, see **New workflow** below :
 
 ![Light benchmark analysis](light_benchmark/analysis.png)
 
