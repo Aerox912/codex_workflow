@@ -162,7 +162,8 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("temporary scheduling choice", heavy)
         self.assertIn("Preserve sequential ordering", heavy)
         self.assertIn("Use appropriately\n  long lifecycle waits", heavy)
-        self.assertIn("at most 20 active subagents", heavy)
+        self.assertNotIn("at most 20 active subagents", heavy)
+        self.assertIn("does not impose an aggregate active-subagent limit", heavy_flat)
         self.assertIn("at most one Senior Executor", heavy)
         self.assertIn("Create and coordinate every worker directly", heavy)
         self.assertIn("direct fast path", heavy)
@@ -211,7 +212,8 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("## Orchestration Guidance", medium)
         self.assertIn("synthesize once", medium)
         self.assertIn("temporary scheduling choice", medium)
-        self.assertIn("at most 20 active subagents", medium)
+        self.assertNotIn("at most 20 active subagents", medium)
+        self.assertIn("does not impose an aggregate active-subagent limit", medium_flat)
         self.assertIn("Limit Medium subagents to Companion", medium)
         self.assertIn("Before the final response", medium)
         self.assertIn("`$deployment-token-report`", medium)
@@ -609,7 +611,7 @@ class PlatformSettingsTests(unittest.TestCase):
         self.assertIn('model = "custom"', rendered)
         self.assertIn("other = 7", rendered)
         self.assertIn("[agents]", rendered)
-        self.assertIn("max_concurrent_threads_per_session = 20", rendered)
+        self.assertNotIn("max_concurrent_threads_per_session", rendered)
         self.assertIn("[features]", rendered)
         self.assertIn("multi_agent = true", rendered)
         self.assertNotIn("[features.multi_agent_v2]", rendered)
@@ -628,9 +630,8 @@ class PlatformSettingsTests(unittest.TestCase):
         self.assertIn("[features.multi_agent_v2]", rendered)
         self.assertIn('keep_legacy = "keep"', rendered)
         self.assertNotIn("hide_spawn_agent_metadata", rendered)
-        self.assertEqual(rendered.count("max_concurrent_threads_per_session"), 1)
         self.assertIn("[agents]", rendered)
-        self.assertIn("max_concurrent_threads_per_session = 20", rendered)
+        self.assertNotIn("max_concurrent_threads_per_session", rendered)
         self.assertIn("[features]", rendered)
         self.assertIn("multi_agent = true", rendered)
         v2_section = rendered.split("[features.multi_agent_v2]", 1)[1].split(
@@ -641,6 +642,7 @@ class PlatformSettingsTests(unittest.TestCase):
     def test_toml_patch_removes_legacy_agents_alias(self) -> None:
         original = (
             "[agents]\n"
+            "max_concurrent_threads_per_session = 20\n"
             "max_threads = 8\n"
             "max_depth = 1\n"
             "job_max_runtime_seconds = 1800\n"
@@ -649,8 +651,7 @@ class PlatformSettingsTests(unittest.TestCase):
         self.assertNotIn("max_threads", rendered)
         self.assertIn("max_depth = 1", rendered)
         self.assertIn("job_max_runtime_seconds = 1800", rendered)
-        self.assertEqual(rendered.count("max_concurrent_threads_per_session"), 1)
-        self.assertIn("max_concurrent_threads_per_session = 20", rendered)
+        self.assertNotIn("max_concurrent_threads_per_session", rendered)
 
     def test_toml_patch_removes_owned_v2_gate(self) -> None:
         rendered = patch_codex_settings(
@@ -1003,8 +1004,8 @@ class LifecycleIntegrationTests(unittest.TestCase):
                 / "SKILL.md"
             ).is_file()
         )
-        self.assertIn(
-            "max_concurrent_threads_per_session = 20",
+        self.assertNotIn(
+            "max_concurrent_threads_per_session",
             self.runtime.config_toml.read_text(encoding="utf-8"),
         )
         self.assertNotIn(

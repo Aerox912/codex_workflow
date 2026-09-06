@@ -125,7 +125,7 @@ after upgrading to load the new worker definitions and command instructions.
 ## Artifact and validation
 
 - Artifact: `dist/codex_workflow-1.1.14.zip`.
-- SHA-256: `5518f365d6839b9d8e346dbcf4ab17e00323fed32b20aaffe6ea02586166483d`.
+- SHA-256: `56951c3f8436cb595fb5b2d94764b015864cd6c66f4381418d653b78ab649ac4`.
 - The supplied rebuilt ZIP passed checksum and package/archive validation.
 - Every packaged file matched the current source, with no extra or missing files.
 - Automated test suites were not run during this commit preparation, per the

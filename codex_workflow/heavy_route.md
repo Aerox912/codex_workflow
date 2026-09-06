@@ -136,8 +136,8 @@ wherever the task's dependencies, ownership, or uncertainty require it.
 
 ## Fixed Boundaries
 
-- Keep at most 20 active subagents in the session. This count includes the
-  persistent Companion and all Archivists.
+- Heavy does not impose an aggregate active-subagent limit; the main chooses
+  worker count and concurrency for each task.
 - Use at most one persistent Companion and at most one Senior Executor. Assign
   one closure reporting owner per deployment.
 - Initial task workers normally use `fork_turns="none"` and receive an explicit

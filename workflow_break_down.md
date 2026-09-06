@@ -195,7 +195,7 @@ The built-in roles are `default_executor`, `senior_executor`, `tester`,
 `archivist`, `companion`, and `investigator`. The default
 executor, Companion, Investigator, Tester, and Archivist use
 Luna. Senior Executor uses Sol. Heavy permits at most one Senior Executor; the
-platform ceiling is twenty active subagents.
+main chooses active-subagent count and concurrency for each task.
 
 Project personalization lives at:
 
@@ -208,8 +208,8 @@ directly. Use `codex_workflow --personal`.
 
 Advanced route or role changes belong in a maintained source package or fork,
 because update replaces installed release-owned copies. Preserve role ownership,
-the main-centered topology, knowledge distribution to Executors, worker limits,
-and single-worker automatic closure unless an intentional architectural change
+the main-centered topology, knowledge distribution to Executors, and
+single-worker automatic closure unless an intentional architectural change
 updates the contracts and tests together.
 
 ## Part 4 — Medium and Heavy architecture
@@ -328,8 +328,9 @@ require it.
 
 Heavy keeps only stable platform, safety, and ownership rules rigid:
 
-- no more than twenty active subagents, including Companion and Archivist;
 - at most one persistent Companion and at most one Senior Executor;
+- no workflow-imposed aggregate active-subagent limit; the main chooses worker
+  count and concurrency for the task;
 - initial task workers normally use `fork_turns="none"` and receive an explicit
   brief;
 - the main directly owns every worker's lifecycle;

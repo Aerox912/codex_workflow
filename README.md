@@ -23,39 +23,26 @@ Change permision to `approve for me/full access`.
 ▶️ Send:
 
 ```text
-Download and extract the latest `codex_workflow-<version>.zip` asset (not GitHub's Source code archive) from https://github.com/viettran-edgeAI/codex_workflow/releases. Verify it against `SHA256SUMS`, then read the bundled `codex_workflow/operate/bootstrap.md` and follow it to complete the initial installation.
+Download and extract the latest `codex_workflow-<version>.zip` asset from https://github.com/viettran-edgeAI/codex_workflow/releases. Verify it against `SHA256SUMS`, then read the bundled `codex_workflow/operate/bootstrap.md` and follow it to complete the initial installation.
 ```
 > ⭐ Recommended: use 5.6 Luna xhigh for installation. 
 
 🔄 Restart Codex after installation
 
-The initial bootstrap is complete only after its required `archivist` action
-succeeds; restart Codex after both steps. Once that bootstrap is complete, the
-current project is ready to use. Whenever you need to install this workflow for
-a new project, simply open Codex and send: `codex_workflow --install`
+The initial bootstrap will include creating the project documentation framework `agent_docs/` using`archivist`. Once that bootstrap is complete, the current project is ready to use. Whenever you need to install this workflow for a new project, simply open Codex and send: `codex_workflow --install`
+
 
 ## 2. Workflow usage 
 
 ### This workflow has 3 routes:
 - Light route : No subagents, no workflow, minimal context.
-- Heavy route : Full workflow mode. Deploy production task workers.
-- Medium route: Full workflow mode, with implementation and verification kept
-  in the main agent rather than delegated to production task workers.
+- Heavy route : Implement the full set of workers, including `companion`, `investigator`, `default executor`, `senior executor`, `tester`, and `archivist`. The main agent orchestrates the work.
+- Medium route: Implement `copmanion` and `investigator` to assist the main agent. The main agent still owns implementation.
+Choose it when you want workflow-mode context support without delegating production work, like front-end design, visualization, or 3D works.
 
-> Full workflow mode enables automatic context and progress management. Both
-> routes can create one persistent `Companion` secretary for useful project-
-> context work and disposable Investigators for bounded Internet research.
-> Both routes use Archivist for documentation and deployment handoffs. Heavy
-> additionally delegates production implementation and independent verification.
-> On the first deployment-state entry in each session, the main agent reads the
-> complete current `agent_docs/` framework directly exactly once; later
-> freshness checks may go to Companion.
+### Project memory with `agent_docs`
 
-`agent_docs/` remains Git-trackable: installation does not add it to
-`.gitignore`, so durable project context can be versioned and shared normally.
-
-In Medium, the main agent owns implementation and verification. Choose it when
-you want workflow-mode context support without delegating production work.
+`agent_docs/` is the project's durable documentation framework: it records the goals, architecture, progress, decisions, and latest-session handoff. Medium and Heavy routes will use this framework doc.
 
 ### How to use
 - Normally, for simple work, general Q&A, you don't need to do anything. `light route` is the default route.
@@ -63,7 +50,6 @@ you want workflow-mode context support without delegating production work.
 --------------------------------
 
 - When starting or continuing a plan in progress, tell Codex in the prompt:
-
 ```text
 use medium/heavy route. [your task description]
 ```
@@ -72,49 +58,41 @@ Or continue a task that was already underway in the previous session:
 use medium/heavy route. Continue ongoing work.
 ```
 Codex stays on the selected route until you change it.
+
 ---------------
-> **⭐ Recommendation:** Assign very large and complex tasks to the `heavy route` to make the most of its capabilities and maximize token usage savings. Don't hesitate to choose 5.6 Sol xhigh for this route. Using lower reasoning effort will not actually save tokens and will severely reduce its coordination capabilities.
+> **⭐ Recommendation:** Assign very large and complex tasks to the `heavy route` to make the most of its capabilities and maximize token usage savings. Don't hesitate to choose Sol xhigh / Astra high for this route. Using much lower reasoning efforts will not actually save tokens and will severely reduce its coordination capabilities.
 
 ### Coordinating architecture
 
-Medium and Heavy expose capabilities and ownership boundaries through a
-hub-and-spoke architecture. The main agent is the central knowledge director,
-chooses the task-specific topology, and has a direct bounded relationship with
-every worker.
+| Role | Model | Primary Responsibility | Quantity  |
+|---|---|---|---:|
+| **Main Agent** | Session-selected model | **Primary orchestrator.** Owns the core task context, makes high-level decisions, coordinates the workflow, and distributes the knowledge required by specialized subagents. | 1 |
+| **Companion** | Luna · xhigh | **Persistent secretary and context assistant.** Reduces context pressure and operational overhead on the Main Agent by handling supporting context, organizing information, consolidating reports, and taking care of lightweight auxiliary work. | 1 |
+| **Investigator** | Luna · xhigh | **Research and investigation specialist.** Searches for clues, technical evidence, documentation, prior art, and potential solutions, including information available on the Internet. Investigators can operate in parallel across independent research lanes. | As needed |
+| **Default Executor** | Luna · max | **Default implementation worker.** Handles normal production tasks delegated by the Main Agent, including coding, modifications, integration work, and other routine implementation activities. Multiple Default Executors may work in parallel when tasks can be safely decomposed. | As needed |
+| **Senior Executor** | Sol · medium | **High-capability implementation specialist.** Reserved for exceptionally difficult or high-impact work where stronger reasoning is justified, such as project-core changes, complex algorithms, architectural modifications, or mathematically demanding tasks. | 1 maximum |
+| **Tester** | Luna · max | **Independent verification specialist.** Designs, implements, and runs tests; validates requirements and acceptance criteria; identifies regressions or defects; and provides verification evidence before work is accepted. | As needed |
+| **Archivist** | Luna · high | **Documentation and session-record specialist.** Maintains and updates the project's documentation structure, records relevant workflow changes and outcomes, and produces the end-of-session token usage and statistics report. | As needed |
 
 ![Heavy Route structure](heavy_route_structure.png)
 
-| Role or mechanism | Responsibility | Boundary |
-| --- | --- | --- |
-| Main agent | Chooses the plan, topology, worker count, ordering, concurrency, repair, verification, and acceptance approach for the actual task. | Retains architecture, scope, material decisions, integration, and final claims. |
-| Companion | Maintains project context and performs bounded read-only work in the project ecosystem: repository material, project docs, local modules, dependencies, logs, configuration, Git history, and artifacts. | At most one persistent worker, created when its context work is worth a dispatch; the main retains project decisions. |
-| Investigator | Researches any bounded external-information question on the Internet and synthesizes useful sources. | Disposable and read-only; does not take over local project discovery, implementation, or final decisions. |
-| Default executor | Discovers, implements, self-checks, and ordinarily repairs one bounded production package. | Receives task-specific project knowledge and guidance from the main. |
-| Senior executor | Handles exceptionally difficult mathematical, logical, or cross-cutting work. | It is a limited reserve, not the default production agent. |
-| Tester | Independently designs and performs verification from the acceptance intent, risks, and boundaries supplied by the main. | May own assigned test assets, but not production fixes. |
-| Archivist | Updates assigned public and project documentation, prepares deployment handoffs, and invokes the Deployment Token Report at closure. | Main owns the project diary; Archivist uses verified facts and read-only Git access. |
+> `doc-writer` and `closure_steward` have been merged into single role `archivist`.
 
-Heavy keeps only stable invariants rigid: at most twenty active subagents, at
-most one persistent Companion, at most one Senior Executor, direct
-main-to-worker coordination, non-overlapping concurrent write ownership, and
-one closure reporting owner per substantive deployment. Within those
-invariants, the main chooses the investigation, project-context work, repair,
-evidence, deployment, and rollback approach appropriate to the task.
-Every initial task package has a logical **Task ID**, then three minimal parts
-named for the role's work. Executor packages use implementation context, task
-and goal, and main-agent implementation guidance; Tester, Investigator,
-Companion, and Archivist use corresponding role-specific capsules. The named
-parts are complete and their content stays proportional to the package. This
-format correlates dispatch and reports, while worker selection, topology,
-sequence, and lifecycle remain task-specific decisions of the main. The Tester
-normally designs the specific tests from the acceptance context supplied by the
-main.
+The coordination process is roughly as follows: The Main Agent receives the task, deploys a `Companion` and swarm of `Investigator` when needed, plans the work, and breaks it into bounded tasks. Each worker receives a work package containing the context scope, task and goal, and a knowledge package with the project-specific guidance needed to complete it.  At the end of the session, the `Archivist` updates the `agent_docs/` project documentation framework and runs the integrated `$deployment-token-report` skill to produce the token-usage report.
 
-The route recommends batching when independent workers contribute to the same
-main-agent decision: dispatch them together, wait for the relevant set, and
-synthesize once. Independent main-owned reads and tool checks should likewise
-share bounded calls. Apply this rollout-saving scheduling heuristic according
-to the task's dependencies and uncertainty.
+![End-of-session token report](token_report.png)
+
+In this design, the **Companion** helps reduce context pressure on the Main Agent. Together with the **Investigators**, it offloads work that does not require the Main Agent's high intelligence, allowing the Main Agent to remain focused on orchestration, high-level reasoning, and critical decisions without being distracted by lower-value operational work.
+
+Each work package contains instructions enriched with knowledge distilled from the Main Agent, benefiting from its broad understanding of the overall task and project context. Each **default_executor** can therefore focus on a compact, well-scoped package of work. **Luna**, as a smaller model, is particularly effective in this setting: it performs strongly when given clear boundaries, sufficient context, and a concrete implementation target.
+
+The **Senior Executor** serves as a fallback for exceptionally difficult problems where stronger reasoning is required.
+
+The workflow's **batching guidelines** were derived from extensive experimentation. They are designed to group related coordination and execution work more efficiently, significantly reducing the number of Main Agent rollouts and the repeated context replay associated with them.
+
+End-of-session reporting with deploy_token_report is handled by the Archivist, preserving the Main Agent's token budget for higher-value reasoning.
+
+
 
 ## Light benchmark
 

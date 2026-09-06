@@ -84,12 +84,11 @@ for dependent work and choose the topology that fits the task.
 
 ## Fixed Boundaries
 
+- Medium does not impose an aggregate active-subagent limit; the main chooses
+  worker count and concurrency for each task.
 - Limit Medium subagents to Companion, Investigator, and Archivist.
   Archivist owns documentation only; keep production implementation
   and verification with the main agent.
-- Keep at most 20 active subagents in the session, including Companion,
-  Investigators and Archivists. Use at most one persistent Companion and one
-  closure reporting owner per deployment.
 - Give support workers bounded questions and sufficient context. Own all
   material interpretations and final claims.
 - Preserve unrelated work, verify in proportion to risk, and base every passing
