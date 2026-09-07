@@ -65,7 +65,7 @@ Linux/macOS:
 python3 -B scripts/test_workflow_runtime.py -v
 python3 -B scripts/test_deployment_token_report.py -v
 python3 scripts/package_release.py --release-tag v1.1.14 --output-dir dist
-python3 scripts/package_release.py --verify dist/codex_workflow-*.zip
+python3 scripts/package_release.py --verify dist/codex_workflow-1.1.14.zip --version 1.1.14
 ```
 
 Windows PowerShell:
@@ -74,7 +74,7 @@ Windows PowerShell:
 py -3.11 -B scripts\test_workflow_runtime.py -v
 py -3.11 -B scripts\test_deployment_token_report.py -v
 py -3.11 scripts/package_release.py --release-tag v1.1.14 --output-dir dist
-py -3.11 scripts/package_release.py --verify dist\codex_workflow-1.1.14.zip
+py -3.11 scripts/package_release.py --verify dist\codex_workflow-1.1.14.zip --version 1.1.14
 ```
 
 The build validates the version, marker, lifecycle runtime, and required
