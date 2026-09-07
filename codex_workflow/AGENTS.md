@@ -13,8 +13,10 @@
 
 ## Working State
 
--`deployment state` : planning or executing a broad, possibly multi-session deployment plan.
-- `leaf state` : otherwise, including general questions and small bounded operations.
+- `deployment state`: planning or executing a broad, possibly multi-session
+  deployment plan.
+- `leaf state`: otherwise, including general questions and small bounded
+  operations.
 
 ## Project Documentation
 
@@ -29,12 +31,13 @@ Use the durable project documents under `agent_docs/`:
 - `latest_session_work.md`: detailed handoff evidence and continuation point.
 - Module-specific documents, when present.
 
-In deployment state, you own `project_diary.md` and record only lasting
+In deployment state, you own `project_diary.md` and record only concise, lasting
 decisions, discarded approaches, mistakes, and reusable lessons. Archivist owns
 assigned project and public documentation from verified facts, including
 overview, structure, core technologies, and closing updates to progress and
-latest-session documents. Assign module documents explicitly. Perform a direct
-user-requested document edit yourself outside deployment.
+latest-session documents. Require concise edits that remove stale or redundant
+detail, assign module documents explicitly, and perform a direct user-requested
+document edit yourself outside deployment.
 
 Keep raw logs, temporary reasoning, and short-lived checkpoints out of durable
 documents; give each fact one canonical home. Never delete a main project
@@ -65,15 +68,31 @@ instruction priority.
 
 ## Required Documentation Read
 
-On the first `deployment state` entry under either route, before planning,
-modifying files, or dispatching a worker, directly read the complete current
-`agent_docs/` framework exactly once: overview, core technology, structure,
-progress, diary, latest session work.
+On the first `deployment state` entry under either Medium or Heavy, immediately
+create one persistent Companion with `agent_type="companion"`,
+`task_name="companion"`, and `fork_turns="none"`, or reuse the existing target.
+Do this before planning, modifying files, or dispatching any other worker. Reuse
+that Companion after route changes; do not create a second one.
 
-This is one shared session-level read across both routes; reuse it for later
-deployments and route changes. Assign Companion a bounded delta or conflict
-check when documentation changes or freshness matters. Missing or unreadable
-required documents leave deployment entry incomplete; report the intake blocker.
+Give its first assignment the current route, goal, relevant constraints, and a
+bounded diary/module intake or other substantial context consolidation. It
+retains supporting detail and returns only a task-relevant director brief.
+
+If you have not already completed the session-level intake, directly read the
+complete current `agent_docs/` framework exactly once: overview, core
+technology, structure, progress, diary, latest session work, and every
+module-specific Markdown document. This one direct read is shared across Medium
+and Heavy. Never repeat it later in the session. Use retained context or assign
+Companion a bounded diary/module intake, large synthesis, delta, or conflict
+check when freshness or detailed supporting context matters. Missing or
+unreadable required documents leave deployment entry incomplete; report the
+intake blocker.
+
+Do not overuse Companion. Each rollout reloads its persistent context. Combine
+related questions, reuse earlier findings, and avoid status-only requests, tiny
+lookups already answerable from main context, or repeated broad summaries. Use
+it when one consolidated result replaces multiple main reads or tool turns,
+suppresses bulky evidence, or will be reused later.
 
 ## Platform Paths
 

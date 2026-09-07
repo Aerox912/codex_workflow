@@ -85,9 +85,12 @@ project documents, and the user-level runtime.
 - **Light** is the default. The main agent works alone with minimal workflow
   overhead.
 - **Medium** keeps planning, diagnosis, implementation, and verification in the
-  main agent. Companion and Investigator provide bounded read-only support when
-  useful; Archivist handles assigned documentation and deployment handoff work.
-- **Heavy** also makes production Executors and Tester available to the main agent.
+  main agent. One persistent Companion is initialized on first deployment-state
+  entry; Investigator provides bounded read-only context-gap support when
+  useful, and Archivist handles documentation and deployment handoff work.
+- **Heavy** requires the same Companion and delegates production and independent
+  verification to Executors and Tester. The main remains the decision owner,
+  not another production or verification worker.
 
 Select a route in the prompt:
 
@@ -100,11 +103,12 @@ The selection lasts for the session unless the user changes it. A question or
 small bounded task still takes the direct worker-free fast path and produces no
 Deployment Token Report. A substantive Medium or Heavy deployment records its
 boundary in the main-agent session and receives one automatic Archivist
-handoff before the final response. Companion is created or reused only when its
-project-context work is useful. Before planning, changing files, or dispatching
-workers on the session's first deployment-state entry, the main agent directly
-reads the complete current `agent_docs/` framework exactly once, including
-module-specific Markdown documents.
+handoff before the final response. On the session's first deployment-state
+entry, Companion is created or reused immediately, before planning, changes, or
+other worker dispatch. The main then directly reads the complete current
+`agent_docs/` framework exactly once, including module-specific Markdown
+documents. The read is never repeated in the session; Companion retains
+diary/module context and handles bounded deltas, conflicts, or large syntheses.
 
 ## Part 2 — Installed-file map
 
@@ -228,8 +232,8 @@ main; the diagram expresses available relationships, not an execution order:
 
 ```mermaid
 flowchart TB
-    C["Companion<br/>project context"] <--> M(("Main agent<br/>knowledge director"))
-    I["Investigator<br/>Internet research"] <--> M
+    C["Companion<br/>persistent project context"] <--> M(("Main agent<br/>knowledge director"))
+    I["Investigator<br/>bounded context gaps"] <--> M
     E["Default Executor<br/>production package"] <--> M
     S["Senior Executor<br/>exceptionally difficult package"] <--> M
     T["Tester<br/>independent verification"] <--> M
@@ -252,23 +256,34 @@ lifecycle of every worker directly.
 
 | Role | Ownership | Boundary |
 | --- | --- | --- |
-| Main | Task direction, architecture, topology, scope, material causal decisions, integration, acceptance, final claims, and user communication | Uses worker evidence without surrendering decisions |
-| Companion | On-demand persistent read-only context work in the project ecosystem | Repository, project docs, local modules and dependencies, locally available sibling-project material, source, tests, logs, configuration, Git history, and artifacts |
-| Investigator | Disposable read-only research for any bounded external-information question on the Internet | Adapts sources and search to the question; no local project ownership, implementation, or final project decision |
+| Main | Task direction, architecture, topology, scope, material causal decisions, integration, acceptance, final claims, and user communication | In Heavy, never owns production execution or independent verification |
+| Companion | Required persistent read-only secretary and project-context worker | Initialized on first deployment-state entry; retains diary/module intake and handles large or repeated supporting context without Internet research |
+| Investigator | Disposable read-only investigation of a bounded project or Internet context gap | Supplements only evidence the main does not already understand; no implementation, root-cause ownership, or final decision |
 | Default Executor | Bounded production discovery, implementation, self-check, and ordinary repair | Only its assigned mutable surface |
 | Senior Executor | One exceptionally difficult reasoning or production package | At most one instance; not the default executor |
 | Tester | Independent verification and assigned test assets | Designs suitable tests from acceptance intent and risks; no production fixes |
 | Archivist | Assigned public and project documentation, closing progress and latest-session updates, read-only Git handoff, and token report | Main owns the project diary; documentation uses verified facts; no production or Git mutations |
 
-Companion and Investigator are separated by information source across all task
-types. Companion answers what the project ecosystem contains and how it
-behaves. Investigator discovers and synthesizes useful information outside that
-ecosystem. The main decides what the combined information means for the
-project.
+Companion and Investigator are separated by lifecycle and purpose. Companion is
+the one persistent secretary for broad project context, diary/module intake,
+large synthesis, and later delta checks. Investigator is disposable and explores
+one unfamiliar evidence lane in the project, on the Internet, or both. The main
+uses Investigator only to fill a material context gap and alone decides root
+cause and solution.
 
-The main uses Investigator when Internet research would materially help and may
-ask it any bounded external question. Eligibility follows the information
-source and required research capability across task domains.
+Do not overuse Companion: every rollout reloads its retained history. Combine
+related questions, reuse prior findings, and avoid status-only requests, tiny
+lookups already answerable from main context, or repeated broad summaries.
+
+After shared intake, each route creates a compact working-context map before
+broader discovery or planning. `Direct` identifies the source, contracts, and
+evidence the main must understand; `Companion` identifies supporting modules,
+tools, configuration, logs, and dependencies to summarize; `Investigator`
+identifies one unfamiliar or ambiguous evidence gap requiring independent
+project or Internet investigation. Heavy limits `Direct` to decision-critical
+inspection. Medium also includes source needed for its main-owned implementation
+and verification. A delegated context surface moves back to `Direct` only when
+new evidence makes it material, and the map is updated explicitly.
 
 ### Knowledge distribution and verification
 
@@ -279,7 +294,7 @@ actual function:
 | Role | Capsule parts |
 | --- | --- |
 | Companion | Project Context Scope; Context Task + Goal; Main-Agent Context Guidance |
-| Investigator | Research Context; Research Question + Goal; Main-Agent Research Guidance |
+| Investigator | Investigation Context; Evidence Question + Goal; Main-Agent Investigation Guidance |
 | Default or Senior Executor | Implementation Context + Ownership; Implementation Task + Goal; Main-Agent Implementation Guidance |
 | Tester | Verification Context; Verification Goal; Main-Agent Verification Guidance |
 | Archivist | Documentation Context + Audience; Documentation Task + Goal; Main-Agent Documentation Guidance |
@@ -295,8 +310,9 @@ role eligibility, topology, worker count, dependencies, sequencing,
 concurrency, repair, verification, acceptance, and lifecycle for the task.
 
 This preserves the main agent as knowledge director while moving operational
-work and context to lower-cost workers. Executor capsules combine the desired
-outcome with the main's task-specific knowledge and guidance.
+work and context to lower-cost workers. Heavy prohibits the main from becoming
+an Executor, deployment operator, or Tester. Executor capsules combine the
+desired outcome with the main's task-specific knowledge and guidance.
 
 Tester ownership answers a different question. The main defines acceptance
 intent, material risks, scope, contracts, and any truly required gate. The
@@ -312,13 +328,19 @@ routinely repeat fresh, credible worker checks.
 
 ### Rollout-efficient orchestration guidance
 
+The optimization target is fewer main-agent decision turns and lower main-agent
+context consumption without reducing quality or understanding. Aggregate
+subagent token use is not the optimization target, except that the higher-cost
+Senior Executor remains reserved for genuinely difficult work.
+
 When several independent workers inform the same main-agent decision, the main
 should dispatch them together, wait for the relevant set to finish, and
 synthesize the set once. Independent non-overlapping implementation packages
 can follow the same pattern when their dependencies allow it. Related Companion
 questions and independent main-owned reads or tool checks should be combined
-into bounded calls, while frequent lifecycle polling and main-side repetition
-of routine worker checks should be avoided.
+into bounded calls. The main does not poll workers, request status-only updates,
+inspect activity files, or start a diagnostic loop from routine operational
+failure; it uses lifecycle events and returns that evidence to the owner.
 
 Batching is a transient scheduling decision. The main selects each batch and
 preserves sequential work where dependencies, ownership, uncertainty, or risk
@@ -328,7 +350,8 @@ require it.
 
 Heavy keeps only stable platform, safety, and ownership rules rigid:
 
-- at most one persistent Companion and at most one Senior Executor;
+- exactly one persistent Companion after first deployment entry and at most one
+  Senior Executor;
 - no workflow-imposed aggregate active-subagent limit; the main chooses worker
   count and concurrency for the task;
 - initial task workers normally use `fork_turns="none"` and receive an explicit
@@ -338,26 +361,30 @@ Heavy keeps only stable platform, safety, and ownership rules rigid:
 - Tester does not repair production code and Archivist does not infer
   unverified behavior;
 - workers preserve unrelated user work and do not mutate Git without authority;
-- one Archivist owns closure reporting for each substantive deployment.
+- one Archivist owns closure reporting for each substantive deployment;
+- the Heavy main never performs production, deployment, repair, or independent
+  verification assigned to Executors and Tester.
 
 Within those invariants, main-agent discretion controls worker count, reuse,
-dependencies, sequencing, concurrency, investigation, implementation,
-verification, repair, evidence representation, deployment, rollback, and
-stopping conditions.
+dependencies, sequencing, concurrency, investigation strategy, evidence,
+integration decisions, rollback decisions, and stopping conditions. Executors
+and Tester retain Heavy implementation, operational repair, and verification.
 
-Medium has the same Companion/Investigator source boundary and Archivist
-capability. The main performs production implementation and verification itself.
+Medium has the same Companion lifecycle and Investigator eligibility boundary,
+plus Archivist. The main performs production implementation and verification
+itself.
 
 ### Cross-session continuity and token reporting
 
 `project_progress.md` stores the active goal and next milestone;
 `latest_session_work.md` stores the last deployment outcome, evidence, blockers,
 and continuation point. On the first entry to deployment state in a session,
-the main directly reads all six core documents and every module-specific
-Markdown document under `agent_docs/` exactly once. This one read is shared by
-Medium and Heavy. The main does not reopen the framework during later
-deployments or route changes; Companion handles bounded delta or conflict checks
-when freshness matters.
+Companion is initialized immediately. The main then directly reads all six core
+documents and every module-specific Markdown document under `agent_docs/`
+exactly once. This one read is shared by Medium and Heavy. The main does not
+reopen the framework during later deployments or route changes; Companion
+retains diary/module detail and handles bounded synthesis, delta, or conflict
+checks when freshness matters.
 
 The main agent includes this hidden comment once in its first commentary message
 for each substantive deployment:
@@ -367,16 +394,17 @@ for each substantive deployment:
 ```
 
 Before the final response, the main updates `project_diary.md` when needed and
-assigns one Archivist the deployment handoff, combining remaining documentation
-updates when practical. The main may reuse a sufficiently informed worker or
+assigns one Archivist the deployment handoff, combining remaining concise
+documentation updates when practical. The main may reuse an informed worker or
 create one with recent inherited context. Archivist updates the assigned
 documents, progress, and latest-session work, performs compact closing checks,
 and reports read-only Git state. After sealing its writes, it
 invokes `$deployment-token-report` for that deployment ID. The deterministic
 parser finds the boundary in the main-agent rollout and returns `Agent`,
 `Quantity`, `Rollouts`, `Cached input`, `Input`, and `Output`. Companion remains
-governed by project-context assignment eligibility. Closure and reporting are
-reserved for substantive deployments.
+the session's required persistent context worker. Closure and reporting are
+reserved for substantive deployments. Both main and Archivist keep
+`agent_docs/` canonical and brief enough for repeated intake.
 
 The report preserves this exact six-column template:
 

@@ -3,7 +3,10 @@
 Use Archivist for verified documentation work in Medium or Heavy. Give each
 assignment a Task ID and the Documentation Context + Audience, Documentation
 Task + Goal, and Main-Agent Documentation Guidance capsule. Identify the write
-surface and provide verified facts or exact evidence references.
+surface and provide verified facts or exact evidence references. Require the
+smallest durable update that preserves current decisions, state, limitations,
+and a recoverable continuation point; remove stale or redundant detail instead
+of accumulating session history.
 
 Choose the number, timing, and reuse of Archivist workers according to the task.
 Give concurrent workers non-overlapping document ownership. Ordinary assignments

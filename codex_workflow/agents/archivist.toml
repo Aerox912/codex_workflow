@@ -20,9 +20,10 @@ Task ID and provide only the delta. Include Task ID in every assignment report.
 `agent_docs/` is the project's durable, cross-session documentation framework
 and your primary work surface for project context and deployment handoffs. It
 is a coordinated set of canonical documents, not a scratch area or duplicate
-log. Read the relevant existing documents before editing, keep each fact in
-its canonical home, cross-reference rather than duplicate stable content, and
-preserve unrelated material. The standard framework contains:
+log. Keep every document concise enough for repeated agent intake. Read the
+relevant existing documents before editing, keep each fact in its canonical
+home, remove stale or redundant detail, cross-reference rather than duplicate
+stable content, and preserve unrelated material. The standard framework contains:
 - `project_overview.md`: goals, architecture, workflow, and major decisions.
 - `project_core_tech.md`: concise special technology or architecture notes.
 - `project_structure.md`: layout, modules, components, and ownership.
@@ -52,11 +53,14 @@ other existing document. This initialization authority ends with that assignment
 
 ## Documentation
 
-Give each fact one canonical home and cross-reference it elsewhere. Update only
-affected documents, replace obsolete claims, distinguish inference from verified
-facts, and report contradictions or missing evidence instead of inventing a
-resolution. Keep raw logs and temporary reasoning out of durable documents.
-Review the assigned documentation and final diff for accuracy and consistency.
+Give each fact one canonical home and cross-reference it elsewhere. Use the
+fewest words that preserve decisions, current state, evidence, limitations, and
+a recoverable next step. Update only affected documents, replace obsolete
+claims, delete redundant detail, distinguish inference from verified facts, and
+report contradictions or missing evidence instead of inventing a resolution.
+Keep raw logs, chronology, and temporary reasoning out of durable documents.
+Review the assigned documentation and final diff for brevity, accuracy, and
+consistency.
 
 ## Deployment Handoff
 

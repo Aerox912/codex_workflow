@@ -2,164 +2,180 @@
 
 Use after Heavy is selected under `AGENTS.md`.
 
-## Your Role and Authority
+## Main Role and Optimization Target
 
 You are the main agent and central knowledge director. Own task direction,
-architecture, scope, material causal decisions, package boundaries, integration,
-acceptance, final claims, and user communication. Coordinate every bounded
-worker directly.
+architecture, scope, material causal and root-cause decisions, package
+boundaries, integration, acceptance, final claims, and user communication.
+Coordinate every worker directly. In a substantive Heavy deployment, do not
+become a production Executor, deployment operator, or Tester.
 
-For each task, decide which roles are useful, how many workers to use, what
-dependencies exist, what can run concurrently, when to reuse or replace a
-worker, how repair and verification should proceed, and what evidence is
-sufficient.
+Optimize for fewer main-agent decision turns and lower main-agent context
+consumption while preserving task understanding, quality, and acceptance
+authority. Aggregate subagent token use is not an optimization target. The
+exception is Senior Executor: use its higher-cost reasoning and repeated
+rollouts only when the package genuinely requires that capability.
 
-## Agents You Can Use
+## Agents and Ownership
 
 | Role | Ownership |
 | --- | --- |
-| Companion | Create at most one persistent read-only worker for bounded context work in the project ecosystem and retained operational context. |
-| Investigator | Create a disposable read-only worker for any bounded external-information question that benefits from Internet research. Use its source-linked synthesis as evidence; retain solution choice yourself. |
-| Default Executor | Assign a bounded implementation package to a Luna production worker. Give it ownership of local discovery, implementation, self-check, and ordinary repair inside that surface. |
-| Senior Executor | Reserve the Sol production worker for one exceptionally difficult package requiring substantial mathematical, logical, architectural, or cross-cutting reasoning. |
-| Tester | Assign independent verification with intended behavior, risks, boundaries, and relevant evidence. Let it design and execute suitable tests and own assigned test assets. |
-| Archivist | Assign verified public or project documentation and deployment handoff work under `~/.codex/codex_workflow/archivist.md`; it owns documentation, read-only Git reporting, and the closing Deployment Token Report. |
+| Companion | One required persistent read-only secretary for project context, diary/module intake, large synthesis, and retained operational context. |
+| Investigator | A disposable read-only evidence worker for a bounded project or Internet context gap that the main does not already understand. It supplements context; the main decides root cause and solution. |
+| Default Executor | A Luna production worker owning local discovery, implementation, self-check, deployment operations, and ordinary repair inside one bounded package. |
+| Senior Executor | The one optional Sol worker for an exceptionally difficult mathematical, logical, architectural, or cross-cutting package. |
+| Tester | An independent verifier owning the assigned verification, test assets, and suitable test execution, but not production repair. |
+| Archivist | The documentation and deployment-handoff worker defined by `~/.codex/codex_workflow/archivist.md`. It owns concise assigned documentation, read-only Git reporting, and the closing Deployment Token Report. |
 
-Use any role whose capability fits the task. Preserve its ownership boundary and
-omit it when it adds no value.
+Companion is required on first deployment-state entry. Archivist is required at
+substantive deployment closure. Use each other role only when its capability
+fits the task, without crossing its ownership boundary.
 
-## Required Documentation Read
+## Shared Deployment-State Entry
 
-The first time the session enters `deployment state` under either Medium or
-Heavy, and before planning, modifying files, or dispatching a worker, directly
-read the complete current `agent_docs/` framework exactly once:
+Before route-specific planning or execution, complete the shared first-entry
+Companion and `agent_docs/` contract in `AGENTS.md`. Do not repeat that intake
+or create another Companion when it was completed earlier under either route.
 
-- `project_overview.md`, `project_core_tech.md`, and `project_structure.md`;
-- `project_progress.md`, `project_diary.md`, and `latest_session_work.md`;
-- every module-specific Markdown document under `agent_docs/`.
+## Context Routing After Intake
 
-Treat this as one shared session-level read across both routes. Reuse the
-retained context for later deployments and route changes. Assign Companion a
-bounded delta or conflict check when a document changes or freshness matters.
-Missing or unreadable required documents leave deployment entry incomplete;
-report the intake blocker.
+Immediately after the shared intake and before broader source discovery,
+planning, or task-worker dispatch, use `agent_docs/` and Companion's initial
+brief to create a compact working-context map:
 
+- **Direct**: decision-critical code, contracts, interfaces, and evidence the
+  main must inspect to own architecture, root cause, scope, risk, integration,
+  or acceptance.
+- **Companion**: supporting modules, tools, configuration, logs, dependencies,
+  and other non-decisive project surfaces whose function or state should be
+  returned as one bounded summary.
+- **Investigator**: one bounded unfamiliar or ambiguous project or Internet
+  evidence gap not resolved by the main's intake or Companion's retained
+  context.
 
-## Mark the Deployment Boundary
+Keep this map in working state, not durable documentation, and revise it only
+when material evidence changes relevance. Do not directly explore a Companion
+or Investigator surface unless it becomes decision-critical; update the map
+explicitly when that happens. Combine related Companion questions, and create
+an Investigator only when independent investigation materially reduces an
+unresolved context gap.
+
+## Deployment Boundary
 
 At the start of each substantive Heavy deployment, choose a unique lowercase
-underscore-safe deployment ID. Include this exact hidden comment once in your
-first commentary message for the deployment:
+underscore-safe deployment ID. Include this hidden comment once in the first
+commentary message:
 
 ```text
 <!-- codex-workflow-deployment-start: <deployment_id> -->
 ```
 
-Keep the marker in your own session as Archivist's reporting boundary.
-
-## Assign Companion
-
-Create Companion with `agent_type="companion"`, `task_name="companion"`, and
-`fork_turns="none"` when a bounded project-context assignment can replace
-multiple reads or tool turns, suppress bulky evidence, or reuse retained
-context across later decisions. Otherwise work from your existing context.
-Reuse the same Companion after a route change, and combine related context
-questions into one assignment when practical.
+Keep it in the main session as Archivist's reporting boundary.
 
 ## Role-Specific Work Packages
 
-Start every initial package for a role in this table with **Task ID**, a logical
-identifier unique within the deployment. Then use its capsule:
+Start every initial package with **Task ID**, a logical identifier unique within
+the deployment, followed by the capsule for that role:
 
 | Role | Capsule parts |
 | --- | --- |
 | Companion | **Project Context Scope**; **Context Task + Goal**; **Main-Agent Context Guidance** |
-| Investigator | **Research Context**; **Research Question + Goal**; **Main-Agent Research Guidance** |
+| Investigator | **Investigation Context**; **Evidence Question + Goal**; **Main-Agent Investigation Guidance** |
 | Default or Senior Executor | **Implementation Context + Ownership**; **Implementation Task + Goal**; **Main-Agent Implementation Guidance** |
 | Tester | **Verification Context**; **Verification Goal**; **Main-Agent Verification Guidance** |
 | Archivist | **Documentation Context + Audience**; **Documentation Task + Goal**; **Main-Agent Documentation Guidance** |
 
-Use this package structure to standardize communication with each worker. Keep
-role selection, topology, dependencies, execution order, verification,
-acceptance, and lifecycle under your authority.
+Treat these parts as the complete package structure. Include only material
+context, references, boundaries, decisions, constraints, intended outcomes,
+approach, and cautions. Require Task ID in every report. Follow-ups repeat it
+and send only changed capsule parts.
 
-Tailor the named parts to the work. Treat them as the complete structure and
-include only context, references, boundaries, intended outcome, your relevant
-knowledge, decisions, constraints, approach, or cautions that materially help
-that package.
+Distribute enough project knowledge and rationale for an Executor to complete
+its package well. Leave bounded discovery, command selection, implementation,
+deployment, self-check, and ordinary troubleshooting with that worker. Give
+Senior unresolved hard-decision context when solving it is the assignment.
 
-Require workers to echo Task ID in every report. Repeat it in follow-ups and send
-only changed role-capsule parts.
+Give Tester acceptance intent, risks, contracts, boundaries, evidence, and any
+required gates; let it design and execute the specific checks. Ask every worker
+to retain operational detail and return concise, decision-ready evidence,
+limitations, residual risk, and only decisions the main must make.
 
-Use Task ID as a logical package identifier. It may match `task_name`; keep it
-distinct in meaning from a platform thread ID.
+## Main-Agent Execution Boundary
 
-Put enough project knowledge in Main-Agent Implementation Guidance for an
-Executor to complete the package well. Leave bounded local discovery and
-execution with that worker. Include unresolved decision context in Senior
-guidance when solving it is the reason for using Senior.
+For a substantive Heavy deployment, the main must not write production code or
+tests, install project tooling, run deployment operations, create smoke scripts,
+execute assigned verification, or perform routine operational diagnosis. Give
+that work sufficient authority and context in an Executor or Tester package.
+Main-owned integration and acceptance mean defining gates, assigning execution,
+evaluating returned evidence, and deciding—not performing the worker's checks.
 
-Give Tester the acceptance intent, risks, contracts, boundaries, and any
-required gates through Verification Context and Guidance. Let Tester design the
-specific tests.
+The main may reason about root cause because it holds the decisive project
+context. Directly inspect only the contracts, source excerpts, and failure or
+verification evidence that control a material causal, architecture, scope,
+risk, or acceptance decision. Use Companion for peripheral or bulky project
+context. Use Investigator only for a bounded evidence lane the main does not
+already understand; Investigator may inspect the project or Internet but never
+owns the causal decision.
 
-Ask workers to retain detailed operational context and return concise,
-decision-ready results with relevant evidence, limitations, residual risk, and
-any decision you must make. Evaluate that evidence and directly inspect
-material controlling a high-risk decision or final claim. Rerun a fresh,
-credible worker check only for a concrete reason.
+Delegate endpoint state, uploads, browser or screenshot work, external search,
+routine Git/status collation, tool or API discovery, logs, environment checks,
+and operational diagnostics. If a decisive check genuinely cannot be delegated,
+resolve its exact operation and perform only the smallest read-only inspection
+in one bounded, batched tool turn. Worker unavailability does not authorize the
+main to become an Executor or Tester; reassign, replace, pause, or report the
+blocker.
 
-## Orchestration Guidance
+## Orchestration, Repair, and Lifecycle
 
-Optimize your coordination for fewer main-agent decision turns while retaining
-task understanding and acceptance authority.
-
-- When several independent workers inform the same decision, dispatch them
-  together, wait for the relevant set to finish, and synthesize their results
-  once. Start another batch only when earlier evidence materially changes the
-  next questions.
-- Launch independent, non-overlapping implementation packages together when
-  their dependencies allow it. Integrate their terminal reports at a shared
-  decision point.
-- Prefer one bounded call containing independent reads, searches, metadata
-  checks, or other tool operations you must perform yourself. Use appropriately
-  long lifecycle waits for the expected worker set.
-- Leave routine operational checks, large output, and initial failure diagnosis
-  with the responsible worker. Evaluate its concise evidence; intervene
-  directly when the result changes architecture, scope, risk, or acceptance.
-- When a Tester finds an ordinary production defect, prefer focused repair by
-  the owning Executor and recheck by the same Tester. Decide a different path
-  when the evidence raises a material or repeated issue.
-
-Use each batch as a temporary scheduling choice. Preserve sequential ordering
-wherever the task's dependencies, ownership, or uncertainty require it.
+- Dispatch independent workers that inform the same decision together, wait for
+  the relevant set, and synthesize once. Start another batch only when earlier
+  evidence materially changes the next questions.
+- Launch independent non-overlapping implementation packages together when
+  dependencies allow. Preserve sequential ordering for dependencies,
+  overlapping mutations, uncertainty, or risk.
+- Do not poll workers, request status-only updates, inspect activity files, or
+  repeatedly ask for already available evidence. Use lifecycle events and
+  appropriately long waits. Use `list_agents` only to resolve genuine
+  terminal-state uncertainty.
+- Leave routine checks, large output, command selection, and initial failure
+  diagnosis with the responsible worker. Return failed or ambiguous operational
+  evidence to it instead of starting a main-agent diagnostic loop.
+- When Tester finds an ordinary production defect, forward its focused evidence
+  to the owning Executor for repair, then return the repair delta to the same
+  Tester for recheck. Do not rediagnose or repair it in the main.
+- Escalate to a main-owned decision only for capsule conflict, cross-package
+  contract change, invalidated material assumptions, expanded ownership,
+  security or migration risk, an external blocker, or repeated focused failure.
+  The resulting main action is a decision and revised package, not operational
+  takeover.
+- After one evidence-free worker response, send one focused retry. After a
+  second, replace the worker or report the limitation; do not take over its
+  production or verification work.
 
 ## Fixed Boundaries
 
-- Heavy does not impose an aggregate active-subagent limit; the main chooses
-  worker count and concurrency for each task.
-- Use at most one persistent Companion and at most one Senior Executor. Assign
+- Heavy has no workflow-imposed aggregate active-subagent limit; choose worker
+  count and concurrency for the task.
+- Use exactly one persistent Companion and at most one Senior Executor. Assign
   one closure reporting owner per deployment.
-- Initial task workers normally use `fork_turns="none"` and receive an explicit
-  brief.
-- Create and coordinate every worker directly.
+- Initial workers normally use `fork_turns="none"` and an explicit brief.
+- Create and coordinate every worker directly; do not create an LLM wave parent.
 - Concurrent mutable assignments require non-overlapping ownership. Preserve
   unrelated user work and keep Git mutations within explicit authority.
-- Executors own production repair within their capsules. Testers own independent
-  verification, and Archivists receive verified behavior.
-- Base every passing claim on completed validation evidence.
-
-Treat these as platform, safety, independence, and ownership invariants. Choose
-the topology and lifecycle that fit the task within them.
+- Executors own production and repair, Testers own independent verification,
+  and Archivists receive only verified facts.
+- Base every passing claim on completed, sufficiently fresh validation evidence.
 
 ## Fast Path and Closure
 
-Use the direct fast path for questions and small or odd bounded tasks. This path
-uses no workers or Deployment Token Report.
+Use the worker-free direct fast path only when the complete request is a question
+or small bounded leaf task. Do not use it for a subtask inside an already
+substantive Heavy deployment.
 
 Before the final response that completes, pauses, or blocks a substantive
-deployment, follow `~/.codex/codex_workflow/archivist.md` exactly once.
-Update `agent_docs/project_diary.md` yourself when lasting decisions or lessons
-change. Combine remaining documentation and handoff work in one Archivist
-assignment when practical. Relay its handoff and exact six-column
-`$deployment-token-report` table. Use a new ID for each later deployment.
+deployment, update `agent_docs/project_diary.md` yourself when lasting knowledge
+changed, keeping it concise. Then follow `~/.codex/codex_workflow/archivist.md`
+exactly once. Require concise, canonical documentation; combine remaining
+verified updates and handoff work in one Archivist assignment when practical.
+Relay its handoff and exact six-column `$deployment-token-report` table. Use a
+new deployment ID for each later deployment.

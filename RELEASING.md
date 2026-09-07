@@ -47,10 +47,10 @@ Use SemVer 2.0.0. Keep the plain version in
 `codex_workflow/operate/VERSION` and the `codex-workflow-version` marker in
 `codex_workflow/operate/user_AGENTS.md` identical.
 The release tag is the same value with an optional leading `v`, for example
-`VERSION=1.1.14` and tag `v1.1.14`. GitHub's prerelease flag is independent of
+`VERSION=1.1.15` and tag `v1.1.15`. GitHub's prerelease flag is independent of
 the SemVer string; the initial releases are marked as prereleases by the
 workflow.
-The command examples below use the current package version, `1.1.14`; replace
+The command examples below use the current package version, `1.1.15`; replace
 that value consistently when preparing a later release.
 
 ## Local build and validation
@@ -64,8 +64,8 @@ Linux/macOS:
 ```sh
 python3 -B scripts/test_workflow_runtime.py -v
 python3 -B scripts/test_deployment_token_report.py -v
-python3 scripts/package_release.py --release-tag v1.1.14 --output-dir dist
-python3 scripts/package_release.py --verify dist/codex_workflow-1.1.14.zip --version 1.1.14
+python3 scripts/package_release.py --release-tag v1.1.15 --output-dir dist
+python3 scripts/package_release.py --verify dist/codex_workflow-1.1.15.zip --version 1.1.15
 ```
 
 Windows PowerShell:
@@ -73,8 +73,8 @@ Windows PowerShell:
 ```powershell
 py -3.11 -B scripts\test_workflow_runtime.py -v
 py -3.11 -B scripts\test_deployment_token_report.py -v
-py -3.11 scripts/package_release.py --release-tag v1.1.14 --output-dir dist
-py -3.11 scripts/package_release.py --verify dist\codex_workflow-1.1.14.zip --version 1.1.14
+py -3.11 scripts/package_release.py --release-tag v1.1.15 --output-dir dist
+py -3.11 scripts/package_release.py --verify dist\codex_workflow-1.1.15.zip --version 1.1.15
 ```
 
 The build validates the version, marker, lifecycle runtime, and required
@@ -89,8 +89,8 @@ and prerelease setting have been approved:
 
 ```sh
 git status --short
-git tag -a v1.1.14 -m "codex_workflow v1.1.14"
-git push origin v1.1.14
+git tag -a v1.1.15 -m "codex_workflow v1.1.15"
+git push origin v1.1.15
 ```
 
 Pushing a semantic `v*` tag starts `.github/workflows/release.yml`. It rebuilds
@@ -104,10 +104,10 @@ separate decision to promote the project to stable releases.
 If the workflow is unavailable, the equivalent manual publication command is:
 
 ```sh
-gh release create v1.1.14 \
-  dist/codex_workflow-1.1.14.zip \
+gh release create v1.1.15 \
+  dist/codex_workflow-1.1.15.zip \
   dist/SHA256SUMS \
-  --title "codex_workflow v1.1.14" \
+  --title "codex_workflow v1.1.15" \
   --generate-notes \
   --prerelease
 ```
