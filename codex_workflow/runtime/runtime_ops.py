@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from .platform_settings import (
@@ -9,9 +10,14 @@ from .platform_settings import (
     remove_workflow_owned_settings,
 )
 from .errors import ValidationError
-from .layout import USER_STATE, WORKER_MARKER, PackageLayout, RuntimePaths
+from .layout import (
+    SKILL_MARKER,
+    USER_STATE,
+    WORKER_MARKER,
+    PackageLayout,
+    RuntimePaths,
+)
 from .markers import (
-    AUTO_CHECK_UPDATE_PLACEHOLDER,
     USER_MANAGED,
     append_region,
     extract,
@@ -25,14 +31,14 @@ from .transaction import Mutation
 def plan_runtime_files(
     package: PackageLayout,
     runtime: RuntimePaths,
-    auto_check_update: bool,
-) -> tuple[list[Mutation], set[str]]:
+) -> tuple[list[Mutation], set[str], list[Path]]:
     mutations: list[Mutation] = []
     owned: set[str] = set()
     excluded = {
         "AGENTS.md",
         "agents",
         "project_docs",
+        "skills",
         "templates",
         ".source_backup",
         ".backups",
@@ -59,11 +65,37 @@ def plan_runtime_files(
         (source, runtime.runtime / "templates" / "project_docs" / source.name)
         for source in package.project_docs.glob("*.md")
     )
+    for skill in sorted(package.skill_names):
+        source_root = package.skill_templates / skill
+        template_targets.extend(
+            (
+                source,
+                runtime.runtime
+                / "templates"
+                / "skills"
+                / skill
+                / source.relative_to(source_root),
+            )
+            for source in source_root.rglob("*")
+            if source.is_file()
+            and "__pycache__" not in source.parts
+            and source.suffix != ".pyc"
+        )
     for source, target in template_targets:
         mutations.append(Mutation(target, source.read_bytes()))
         owned.add(target.relative_to(runtime.runtime).as_posix())
-    mutations.extend(plan_user_agents(package, runtime, enabled=auto_check_update))
+    incoming_workers = package.worker_names
+    installed_worker_templates = runtime.runtime / "templates" / "agents"
+    if installed_worker_templates.is_dir():
+        for target in sorted(installed_worker_templates.glob("*.toml")):
+            if target.stem in incoming_workers:
+                continue
+            validate_worker_owner(target, target.stem)
+            mutations.append(Mutation(target, None))
+    mutations.extend(plan_user_agents(package, runtime))
     mutations.extend(plan_platform_and_workers(runtime, package=package))
+    skill_mutations, skill_cleanup = plan_skills(runtime, package=package)
+    mutations.extend(skill_mutations)
     backup = runtime.runtime / ".source_backup" / package.version
     for source in sorted(package.root.rglob("*")):
         if (
@@ -76,33 +108,15 @@ def plan_runtime_files(
             mutations.append(
                 Mutation(backup / source.relative_to(package.root), source.read_bytes())
             )
-    return mutations, owned
+    return mutations, owned, skill_cleanup
 
 
-def _render_user_managed(source: str, instruction: str, *, enabled: bool) -> str:
-    managed = extract(source, USER_MANAGED)
-    if managed.count(AUTO_CHECK_UPDATE_PLACEHOLDER) != 1:
-        raise ValidationError(
-            "user_AGENTS.md auto-check placeholder is missing or duplicated"
-        )
-    before, after = managed.split(AUTO_CHECK_UPDATE_PLACEHOLDER)
-    sections = [before.strip()]
-    if enabled:
-        sections.append(instruction.strip())
-    sections.append(after.strip())
-    return "\n\n".join(section for section in sections if section)
-
-
-def _plan_user_agents_from_sources(
+def _plan_user_agents_from_source(
     source_path: Path,
-    instruction_path: Path,
     runtime: RuntimePaths,
-    *,
-    enabled: bool,
 ) -> list[Mutation]:
     source = source_path.read_text(encoding="utf-8")
-    instruction = instruction_path.read_text(encoding="utf-8")
-    managed = _render_user_managed(source, instruction, enabled=enabled)
+    managed = extract(source, USER_MANAGED)
     if runtime.user_agents.is_file():
         current = runtime.user_agents.read_text(encoding="utf-8")
         if USER_MANAGED.start in current or USER_MANAGED.end in current:
@@ -115,24 +129,11 @@ def _plan_user_agents_from_sources(
 
 
 def plan_user_agents(
-    package: PackageLayout, runtime: RuntimePaths, *, enabled: bool
+    package: PackageLayout, runtime: RuntimePaths
 ) -> list[Mutation]:
-    return _plan_user_agents_from_sources(
-        package.root / "user_AGENTS.md",
-        package.root / "resources" / "auto_check_update.md",
+    return _plan_user_agents_from_source(
+        package.operate / "user_AGENTS.md",
         runtime,
-        enabled=enabled,
-    )
-
-
-def plan_installed_user_agents(
-    runtime: RuntimePaths, *, enabled: bool
-) -> list[Mutation]:
-    return _plan_user_agents_from_sources(
-        runtime.runtime / "user_AGENTS.md",
-        runtime.runtime / "resources" / "auto_check_update.md",
-        runtime,
-        enabled=enabled,
     )
 
 
@@ -172,11 +173,90 @@ def plan_platform_and_workers(
     return mutations
 
 
+def plan_skills(
+    runtime: RuntimePaths,
+    *,
+    package: PackageLayout,
+) -> tuple[list[Mutation], list[Path]]:
+    """Materialize workflow-owned skills without touching unrelated skills."""
+
+    mutations: list[Mutation] = []
+    cleanup_dirs: list[Path] = []
+    current_state = read_json(runtime.runtime / USER_STATE, default={})
+    previous_owned = set(read_string_list(current_state, "owned_skills"))
+    incoming = package.skill_names
+
+    for skill in sorted(incoming):
+        source_root = package.skill_templates / skill
+        target_root = resolve_owned_skill_path(runtime, skill)
+        if target_root.exists():
+            validate_skill_owner(target_root, skill)
+        source_files = {
+            source.relative_to(source_root): source
+            for source in source_root.rglob("*")
+            if source.is_file()
+            and "__pycache__" not in source.parts
+            and source.suffix != ".pyc"
+        }
+        target_files = (
+            {
+                target.relative_to(target_root): target
+                for target in target_root.rglob("*")
+                if target.is_file()
+            }
+            if target_root.is_dir()
+            else {}
+        )
+        for relative, source in sorted(source_files.items(), key=lambda item: str(item[0])):
+            mutations.append(Mutation(target_root / relative, source.read_bytes()))
+        for relative, target in sorted(target_files.items(), key=lambda item: str(item[0])):
+            if relative not in source_files:
+                mutations.append(Mutation(target, None))
+        cleanup_dirs.extend(
+            path
+            for path in target_root.rglob("*")
+            if path.is_dir()
+        )
+
+    for skill in sorted(previous_owned - incoming):
+        target_root = resolve_owned_skill_path(runtime, skill)
+        if not target_root.exists():
+            continue
+        validate_skill_owner(target_root, skill)
+        for path in target_root.rglob("*"):
+            if path.is_file():
+                mutations.append(Mutation(path, None))
+            elif path.is_dir():
+                cleanup_dirs.append(path)
+        cleanup_dirs.append(target_root)
+    return mutations, cleanup_dirs
+
+
 def validate_worker_owner(path: Path, worker: str) -> None:
     text = path.read_text(encoding="utf-8")
     match = WORKER_MARKER.search(text)
     if match is None or match.group(1) != worker:
         raise ValidationError(f"refusing to remove non-owned worker file: {path}")
+
+
+def validate_skill_owner(path: Path, skill: str) -> None:
+    if path.is_symlink() or not path.is_dir():
+        raise ValidationError(f"skill path is not a regular directory: {path}")
+    symlinks = [candidate for candidate in path.rglob("*") if candidate.is_symlink()]
+    if symlinks:
+        raise ValidationError(f"workflow skill contains symlinks: {symlinks[:3]}")
+    entry = path / "SKILL.md"
+    if entry.is_symlink() or not entry.is_file():
+        raise ValidationError(f"refusing to replace unowned skill directory: {path}")
+    match = SKILL_MARKER.search(entry.read_text(encoding="utf-8"))
+    if match is None or match.group(1) != skill:
+        raise ValidationError(f"refusing to replace unowned skill directory: {path}")
+
+
+def resolve_owned_skill_path(runtime: RuntimePaths, skill: str) -> Path:
+    if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,63}", skill):
+        raise ValidationError(f"state field owned_skills has an unsafe name: {skill!r}")
+    return runtime.skills / skill
 
 
 def plan_runtime_remove(
@@ -189,7 +269,26 @@ def plan_runtime_remove(
     warnings = [
         "unrelated content in the user AGENTS.md and config.toml will be preserved",
         "unrelated worker TOMLs will be preserved",
+        "unrelated skills will be preserved",
     ]
+
+    current_state = read_json(runtime.runtime / USER_STATE, default={})
+    for skill in read_string_list(current_state, "owned_skills"):
+        target_root = resolve_owned_skill_path(runtime, skill)
+        if not target_root.exists():
+            continue
+        validate_skill_owner(target_root, skill)
+        for path in sorted(target_root.rglob("*")):
+            if path.is_symlink():
+                raise ValidationError(f"refusing to remove symlink in workflow skill: {path}")
+            if path.is_file():
+                mutations.append(Mutation(path, None))
+            elif path.is_dir():
+                cleanup_dirs.append(path)
+            elif path.exists():
+                raise ValidationError(f"workflow skill contains a non-file entry: {path}")
+        cleanup_dirs.append(target_root)
+    cleanup_dirs.append(runtime.skills)
 
     if runtime.user_agents.is_symlink() or (
         runtime.user_agents.exists() and not runtime.user_agents.is_file()

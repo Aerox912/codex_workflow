@@ -7,6 +7,7 @@ import contextlib
 import io
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 import zipfile
@@ -16,16 +17,24 @@ from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE = ROOT / "codex_workflow"
-PACKAGE_VERSION = (PACKAGE / "VERSION").read_text(encoding="utf-8").strip()
+PACKAGE_VERSION = (PACKAGE / "operate" / "VERSION").read_text(encoding="utf-8").strip()
 
-import sys
+
+def next_patch_version(version: str) -> str:
+    if "-patch." in version:
+        base, patch = version.rsplit("-patch.", 1)
+        return f"{base}-patch.{int(patch) + 1}"
+    major, minor, patch = version.split(".")
+    return f"{major}.{minor}.{int(patch) + 1}"
+
+
+NEXT_PACKAGE_VERSION = next_patch_version(PACKAGE_VERSION)
 
 sys.path.insert(0, str(PACKAGE))
+sys.path.insert(0, str(PACKAGE / "runtime"))
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import workflow as workflow_cli
-from runtime._toml import tomllib
-from set_fork_version import ForkVersionError, set_fork_version
 from package_release import (
     ReleaseError as PackageReleaseError,
     _verify_member_names,
@@ -38,14 +47,13 @@ from runtime.platform_settings import (
     remove_workflow_owned_settings,
 )
 from runtime.backup import append_backup_mutations
-from runtime.errors import TransactionError, ValidationError, WorkflowError
+from runtime.errors import TransactionError, ValidationError
 from runtime.lifecycle import (
     PackageLayout,
     ProjectPaths,
     RuntimePaths,
     materialize_personalization,
     plan_bootstrap,
-    plan_auto_check_update_setting,
     plan_enable,
     plan_personalize,
     plan_project_install,
@@ -53,7 +61,6 @@ from runtime.lifecycle import (
     plan_update,
 )
 from runtime.markers import (
-    AUTO_CHECK_UPDATE_PLACEHOLDER,
     PROJECT_LOCAL,
     PROJECT_PERSONALIZATION,
     USER_MANAGED,
@@ -70,90 +77,13 @@ from runtime.release import (
 from runtime.transaction import Mutation, apply
 
 
-class ForkVersionTests(unittest.TestCase):
-    def test_repository_plugin_version_matches_runtime(self) -> None:
-        plugin = json.loads(
-            (
-                ROOT
-                / "plugins"
-                / "codex-workflow"
-                / ".codex-plugin"
-                / "plugin.json"
-            ).read_text(encoding="utf-8")
-        )
-        self.assertEqual(plugin["version"], PACKAGE_VERSION)
-
-    def make_root(self, root: Path, version: str = "1.1.3") -> Path:
-        package = root / "codex_workflow"
-        plugin = root / "plugins" / "codex-workflow" / ".codex-plugin"
-        package.mkdir(parents=True)
-        plugin.mkdir(parents=True)
-        (package / "VERSION").write_text(version + "\n", encoding="utf-8")
-        (package / "user_AGENTS.md").write_text(
-            f"<!-- codex-workflow-version: {version} -->\n", encoding="utf-8"
-        )
-        (plugin / "plugin.json").write_text(
-            json.dumps({"name": "codex-workflow", "version": version}, indent=2)
-            + "\n",
-            encoding="utf-8",
-        )
-        return root
-
-    def test_sets_idempotent_upstream_patch_version(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            root = self.make_root(Path(temporary))
-            result = set_fork_version(root, "v1.1.3", 1)
-            self.assertEqual(result["version"], "1.1.3-patch.1")
-            self.assertEqual(len(result["changed"]), 3)
-            self.assertEqual(
-                (root / "codex_workflow" / "VERSION").read_text().strip(),
-                "1.1.3-patch.1",
-            )
-            self.assertIn(
-                "codex-workflow-version: 1.1.3-patch.1",
-                (root / "codex_workflow" / "user_AGENTS.md").read_text(),
-            )
-            plugin = json.loads(
-                (
-                    root
-                    / "plugins"
-                    / "codex-workflow"
-                    / ".codex-plugin"
-                    / "plugin.json"
-                ).read_text()
-            )
-            self.assertEqual(plugin["version"], "1.1.3-patch.1")
-            self.assertEqual(
-                set_fork_version(root, "1.1.3", 1)["changed"], []
-            )
-
-    def test_rejects_version_surface_drift(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            root = self.make_root(Path(temporary))
-            (root / "codex_workflow" / "VERSION").write_text(
-                "1.1.3-patch.1\n", encoding="utf-8"
-            )
-            with self.assertRaises(ForkVersionError):
-                set_fork_version(root, "1.1.3", 2)
-
-
 class MarkerTests(unittest.TestCase):
-    def test_user_command_contract_keeps_automatic_check_optional(self) -> None:
-        instructions = (PACKAGE / "user_AGENTS.md").read_text(encoding="utf-8")
-        auto_check = (PACKAGE / "resources" / "auto_check_update.md").read_text(
-            encoding="utf-8"
-        )
-        self.assertNotIn("auto-check-update --json", instructions)
-        self.assertEqual(instructions.count(AUTO_CHECK_UPDATE_PLACEHOLDER), 1)
-        self.assertIn("auto-check-update --json", auto_check)
+    def test_user_command_contract_exposes_only_supported_lifecycle_prompts(self) -> None:
+        instructions = (PACKAGE / "operate" / "user_AGENTS.md").read_text(encoding="utf-8")
         self.assertIn("codex_workflow --check-update", instructions)
-        self.assertIn("codex_workflow --enable_auto_check_update", instructions)
-        self.assertIn("codex_workflow --disable_auto_check_update", instructions)
-        self.assertIn("codex_workflow --enable_auto_update", instructions)
-        self.assertIn("codex_workflow --disable_auto_update", instructions)
         self.assertIn("codex_workflow --remove", instructions)
 
-        personalization = (PACKAGE / "personalization_guide.md").read_text(
+        personalization = (PACKAGE / "operate" / "personalization_guide.md").read_text(
             encoding="utf-8"
         )
         self.assertIn("resources/personalization.md", personalization)
@@ -175,134 +105,195 @@ class MarkerTests(unittest.TestCase):
             "AGENTS.md",
             "medium_route.md",
             "heavy_route.md",
-            "companion.md",
-            "investigation_team.md",
         )
         policies = {
             name: (PACKAGE / name).read_text(encoding="utf-8") for name in names
         }
+        line_limits = {
+            "AGENTS.md": 115,
+            "medium_route.md": 140,
+            "heavy_route.md": 200,
+        }
         for name, text in policies.items():
-            limit = 235 if name == "heavy_route.md" else 200
-            self.assertLess(len(text.splitlines()), limit, name)
+            self.assertLess(len(text.splitlines()), line_limits[name], name)
 
         heavy = policies["heavy_route.md"]
-        self.assertIn("Visible host surfaces are not delegable", heavy)
-        self.assertIn("primary task exclusively owns", heavy)
-        self.assertIn("means delegate to ChatGPT", heavy)
-        self.assertIn("recommended approach", heavy.lower())
-        self.assertIn("canonical task names", heavy)
-        self.assertIn("Decision required: none", heavy)
-        self.assertIn("knowledge-delta brief", heavy)
-        self.assertIn("When the assigned worker is `default_executor`", heavy)
-        self.assertIn("ordered implementation sequence", heavy)
-        self.assertIn("Do not add this Execution Guide requirement", heavy)
-        self.assertIn("not spawn, message, or otherwise call subagents", heavy)
-        self.assertIn("skips Closure Steward and worker statistics", heavy)
-        self.assertIn("before the final response", heavy)
-        self.assertIn("automatic handoff context fork", heavy)
-        self.assertIn("gpt-6-astra", heavy)
-        self.assertIn("gpt-5.6-sol", heavy)
-        self.assertIn("gpt-5.6-terra", heavy)
-        self.assertIn("session's currently selected main agent", heavy)
-        self.assertIn("sends routine production defects directly", heavy)
-        self.assertIn("does not relay, acknowledge, or rediagnose", heavy)
-        self.assertIn("follow `investigation_team.md`", heavy)
-        self.assertIn("alone identifies the actual defect", heavy)
-        self.assertIn("directly reads and understands task-critical", heavy)
-        self.assertIn("default wrapper for coherent operational-report", heavy)
-        self.assertIn("never relay or invoke Companion per completion", heavy)
-        self.assertIn("receives only a minimal\ndispatch envelope", heavy)
-        self.assertIn("Only executors receive an implementation capsule", heavy)
-        self.assertIn("Testers receive a verification capsule instead", heavy)
-        self.assertIn("Other roles receive only the short brief", heavy)
-        self.assertNotIn("compact ledger", heavy)
+        heavy_flat = " ".join(heavy.split())
+        self.assertIn("## Main Role and Optimization Target", heavy)
+        self.assertIn("You are the main agent and central knowledge director", heavy)
+        self.assertIn("do not become a production Executor", heavy_flat)
+        self.assertIn("Aggregate subagent token use is not an optimization target", heavy)
+        self.assertIn("exception is Senior Executor", heavy)
+        self.assertIn("## Agents and Ownership", heavy)
+        self.assertIn("One required persistent read-only secretary", heavy)
+        self.assertIn("bounded project or Internet context gap", heavy)
+        self.assertIn("## Shared Deployment-State Entry", heavy)
+        self.assertIn("complete the shared first-entry", heavy)
+        self.assertIn("Companion and `agent_docs/` contract in `AGENTS.md`", heavy)
+        self.assertIn("Do not repeat that intake", heavy)
+        self.assertNotIn("directly read the complete current `agent_docs/`", heavy_flat)
+        self.assertIn("## Context Routing After Intake", heavy)
+        self.assertIn("create a compact working-context map", heavy_flat)
+        self.assertIn("**Direct**: decision-critical code", heavy)
+        self.assertIn("**Companion**: supporting modules, tools, configuration", heavy)
+        self.assertIn("**Investigator**: one bounded unfamiliar", heavy)
+        self.assertIn("Do not directly explore a Companion", heavy)
+        self.assertIn("unless it becomes decision-critical", heavy)
+        self.assertIn("## Deployment Boundary", heavy)
+        self.assertNotIn('agent_type="companion"', heavy)
+        self.assertNotIn('task_name="companion"', heavy)
+        self.assertIn("<!-- codex-workflow-deployment-start", heavy)
+        self.assertIn("## Role-Specific Work Packages", heavy)
+        self.assertIn("**Task ID**", heavy)
+        self.assertIn("**Project Context Scope**", heavy)
+        self.assertIn("**Evidence Question + Goal**", heavy)
+        self.assertIn("**Implementation Context + Ownership**", heavy)
+        self.assertIn("**Verification Context**", heavy)
+        self.assertIn("**Documentation Context + Audience**", heavy)
+        self.assertIn("## Main-Agent Execution Boundary", heavy)
+        self.assertIn("must not write production code or\ntests", heavy)
+        self.assertIn("defining gates, assigning execution", heavy)
+        self.assertIn("main may reason about root cause", heavy)
+        self.assertIn("Worker unavailability does not authorize", heavy)
+        self.assertIn("## Orchestration, Repair, and Lifecycle", heavy)
+        self.assertIn("Do not poll workers", heavy)
+        self.assertIn("status-only updates", heavy)
+        self.assertIn("instead of starting a main-agent diagnostic loop", heavy)
+        self.assertIn("owning Executor for repair", heavy)
+        self.assertIn("same\n  Tester for recheck", heavy)
+        self.assertNotIn("at most 20 active subagents", heavy)
+        self.assertIn("no workflow-imposed aggregate active-subagent limit", heavy_flat)
+        self.assertIn("exactly one persistent Companion", heavy)
+        self.assertIn("at most one Senior Executor", heavy)
+        self.assertIn("Create and coordinate every worker directly", heavy)
+        self.assertIn("direct fast path", heavy)
+        self.assertIn("Do not use it for a subtask", heavy)
+        self.assertIn("keeping it concise", heavy)
+        self.assertIn("`$deployment-token-report`", heavy)
+        for retired_contract in (
+            "investigation_team.md",
+            "repair_needed",
+            "five core",
+            "split intake",
+        ):
+            self.assertNotIn(retired_contract, heavy.lower())
 
         medium = policies["medium_route.md"]
-        self.assertIn("primary task exclusively owns", medium)
-        self.assertIn("means delegate to ChatGPT", medium)
-        self.assertIn("direct main-agent fast path", medium)
-        self.assertIn("do not call `closure_steward`", medium)
+        medium_flat = " ".join(medium.split())
+        self.assertIn("direct fast path", medium)
+        self.assertIn("You are the main agent", medium)
+        self.assertIn("Own planning, root-cause reasoning, implementation", medium)
+        self.assertIn("Medium does not delegate production or verification", medium)
+        self.assertIn("## Shared Deployment-State Entry", medium)
+        self.assertIn("complete the shared first-entry", medium)
+        self.assertIn("Companion and `agent_docs/` contract in `AGENTS.md`", medium)
+        self.assertIn("Do not repeat that intake", medium)
+        self.assertNotIn("directly read the complete current `agent_docs/`", medium_flat)
+        self.assertIn("## Context Routing After Intake", medium)
+        self.assertIn("create a compact working-context map", medium_flat)
+        self.assertIn("**Direct**: code, contracts, interfaces", medium)
+        self.assertIn("**Companion**: supporting modules, tools, configuration", medium)
+        self.assertIn("**Investigator**: one bounded unfamiliar", medium)
+        self.assertIn("Do not directly explore a Companion", medium)
+        self.assertIn("necessary for main-owned production", medium)
+        self.assertIn("## Deployment Boundary", medium)
+        self.assertIn("## Support Packages and Investigation", medium)
+        self.assertNotIn('agent_type="companion"', medium)
+        self.assertNotIn('task_name="companion"', medium)
+        self.assertIn("<!-- codex-workflow-deployment-start", medium)
+        self.assertIn("**Task ID**", medium)
+        self.assertIn("**Project Context Scope**", medium)
+        self.assertIn("**Main-Agent Context Guidance**", medium)
+        self.assertIn("**Investigation Context**", medium)
+        self.assertIn("**Main-Agent Investigation Guidance**", medium)
+        self.assertIn("project inspection or Internet research", medium)
+        self.assertIn("## Rollout-Efficient Support", medium)
+        self.assertIn("synthesize once", medium)
+        self.assertIn("Do not poll support workers", medium)
+        self.assertNotIn("at most 20 active subagents", medium)
+        self.assertIn("no workflow-imposed aggregate active-subagent limit", medium_flat)
+        self.assertIn("Use exactly one persistent Companion", medium)
         self.assertIn("Before the final response", medium)
-        self.assertIn("complete documentation framework", medium)
-        self.assertIn("follow\n`investigation_team.md`", medium)
-        self.assertIn("terminal batch directly to\nCompanion", medium)
-        self.assertIn("alone passes the root-cause gate", medium)
-        self.assertNotIn("usage ledger", medium)
+        self.assertIn("keeping it concise", medium)
+        self.assertIn("`$deployment-token-report`", medium)
+        for retired_contract in (
+            "investigation_team.md",
+            "medium_companion.md",
+        ):
+            self.assertNotIn(retired_contract, medium.lower())
 
         agents_policy = policies["AGENTS.md"]
-        self.assertIn("gpt-6-astra", agents_policy)
-        self.assertIn("primary task exclusively owns", agents_policy)
-        self.assertIn("handoff is not a user command", agents_policy)
-        self.assertIn("session-model requirement", agents_policy)
-        self.assertIn("Never pin or rewrite the main model", agents_policy)
-        self.assertIn("read-only investigators", agents_policy)
-        self.assertIn("directly reads task-critical", agents_policy)
-
-        worker_profiles = sorted((PACKAGE / "agents").glob("*.toml"))
-        self.assertGreater(len(worker_profiles), 0)
-        for worker_profile in worker_profiles:
-            worker_text = worker_profile.read_text(encoding="utf-8")
-            self.assertIn(
-                "Never bootstrap or operate the in-app browser",
-                worker_text,
-                worker_profile.name,
-            )
-            self.assertIn(
-                "stop before browser initialization", worker_text, worker_profile.name
-            )
-            self.assertIn("return it to the parent", worker_text, worker_profile.name)
-
-        companion = policies["companion.md"]
-        self.assertIn("Office-Wrapper Role", companion)
-        self.assertIn("routine read-only work", companion)
-        self.assertIn("director brief", companion)
-        self.assertIn("knowledge-delta brief", companion)
-        self.assertIn("distinct task names", companion)
-        self.assertIn("coherent batch of operational reports", companion)
-        self.assertIn("deliver their\ndetailed terminal reports directly", companion)
-        self.assertIn("project-wide judgment", companion)
-
-        investigation = policies["investigation_team.md"]
-        self.assertIn("Core Context Set", investigation)
-        self.assertIn('agent_type="investigator"', investigation)
-        self.assertIn('fork_turns="none"', investigation)
-        self.assertIn("fixed concurrency ceiling", investigation)
-        self.assertIn("main agent retains access to every", investigation)
-        self.assertIn("treat them as one investigation", investigation)
-        self.assertIn("Wait once for Companion's brief", investigation)
-        self.assertIn("root-cause gate", investigation.lower())
-
-        handoff_contract = (PACKAGE / "closure_steward.md").read_text(
-            encoding="utf-8"
-        )
-        handoff_worker = (PACKAGE / "agents" / "closure_steward.toml").read_text(
-            encoding="utf-8"
-        )
-        self.assertIn('task_name="closure_steward_<deployment_id>"', handoff_contract)
-        self.assertIn("after every substantive Medium or Heavy", handoff_contract)
-        self.assertIn("inherits the deployment context", handoff_contract)
-        self.assertIn("complete `agent_docs/` framework", handoff_contract)
-        self.assertIn("Do not call a second documentation worker", handoff_contract)
-        self.assertNotIn('fork_turns="none"', handoff_contract)
-        self.assertNotIn("compact usage ledger", handoff_contract)
-        self.assertIn(
-            "| Worker name | Quantity | Number of calls |", handoff_worker
-        )
-        self.assertIn(
-            "`Quantity` is the number of distinct task names", handoff_worker
-        )
-        self.assertIn("turn-starting initial assignments", handoff_worker)
-        self.assertIn("read the complete existing", handoff_worker)
-        self.assertIn("Do not delegate or create another worker", handoff_worker)
-        self.assertIn("the parent does not supply or maintain a ledger", handoff_worker)
-        for framework_file in (
-            "project_overview.md",
-            "project_core_tech.md",
-            "project_structure.md",
-            "project_progress.md",
-            "project_diary.md",
-            "latest_session_work.md",
+        self.assertIn("## Design Principles", agents_policy)
+        self.assertIn("## Rollout Efficiency", agents_policy)
+        self.assertIn("Batch independent reads, searches, metadata checks", agents_policy)
+        self.assertIn("wait for the\nrelevant set", agents_policy)
+        self.assertIn("synthesize their reports once", agents_policy)
+        self.assertIn("## Working State", agents_policy)
+        self.assertIn("## Project Documentation", agents_policy)
+        self.assertIn("## Route Selection", agents_policy)
+        self.assertIn("## Platform Paths", agents_policy)
+        self.assertIn("codex_workflow/medium_route.md", agents_policy)
+        self.assertIn("codex_workflow/heavy_route.md", agents_policy)
+        self.assertIn("Select one of these routes", agents_policy)
+        self.assertIn("Follow the user's route selection", agents_policy)
+        self.assertIn("immediately\ncreate one persistent Companion", agents_policy)
+        self.assertIn("directly read the\ncomplete current `agent_docs/`", agents_policy)
+        self.assertIn("Never repeat it later in the session", agents_policy)
+        self.assertIn("Give its first assignment the current route", agents_policy)
+        self.assertIn("Each rollout reloads its persistent context", agents_policy)
+        self.assertIn("avoid status-only requests", agents_policy)
+        self.assertIn("concise, lasting\ndecisions", agents_policy)
+        self.assertNotIn("session-model requirement", agents_policy)
+        for route_owned_contract in (
+            "## Medium and Heavy Contracts",
+            "codex-workflow-deployment-start",
+            "**Task ID**",
+            "directly creates and coordinates",
+            "`$deployment-token-report`",
         ):
+            self.assertNotIn(route_owned_contract, agents_policy)
+        for retired_guide in (
+            "medium_companion.md",
+            "heavy_companion.md",
+            "investigation_team.md",
+        ):
+            self.assertNotIn(retired_guide, agents_policy)
+            self.assertFalse((PACKAGE / retired_guide).exists())
+        self.assertNotIn("There are three routes", agents_policy)
+
+        token_report_skill = (
+            PACKAGE / "skills" / "deployment-token-report" / "SKILL.md"
+        ).read_text(encoding="utf-8")
+        token_report_header = (
+            "| Agent | Quantity | Rollouts | Cached input | Input | Output |"
+        )
+        self.assertIn("The required table template is exactly", token_report_skill)
+        self.assertEqual(token_report_skill.count(token_report_header), 1)
+        self.assertIn(
+            "| --- | ---: | ---: | ---: | ---: | ---: |", token_report_skill
+        )
+        self.assertIn("Keep the columns exactly as shown", token_report_skill)
+        self.assertIn("main agent placed this exact hidden comment", token_report_skill)
+        self.assertIn("assistant message text there", token_report_skill)
+        self.assertIn("find the exact marker in", token_report_skill)
+
+        handoff_contract = (PACKAGE / "archivist.md").read_text(
+            encoding="utf-8"
+        )
+        handoff_worker = (PACKAGE / "agents" / "archivist.toml").read_text(
+            encoding="utf-8"
+        )
+        handoff_contract_flat = " ".join(handoff_contract.split())
+        handoff_worker_flat = " ".join(handoff_worker.split())
+        self.assertIn('agent_type="archivist"', handoff_contract)
+        self.assertIn('fork_turns="200"', handoff_contract)
+        self.assertIn("Reuse an Archivist", handoff_contract)
+        self.assertIn("one reporting owner", handoff_contract)
+        self.assertIn("You are Archivist.", handoff_worker)
+        self.assertIn("`agent_docs/project_diary.md`", handoff_worker)
+        self.assertIn("`$deployment-token-report`", handoff_worker)
+        self.assertIn("at most 200 words", handoff_worker)
+        for framework_file in ("project_progress.md", "latest_session_work.md"):
             self.assertIn(framework_file, handoff_worker)
         for policy in (
             heavy,
@@ -320,51 +311,163 @@ class MarkerTests(unittest.TestCase):
         senior = (PACKAGE / "agents" / "senior_executor.toml").read_text(
             encoding="utf-8"
         )
-        doc_writer = (PACKAGE / "agents" / "doc-writer.toml").read_text(
+        doc_writer = (PACKAGE / "agents" / "archivist.toml").read_text(
             encoding="utf-8"
         )
-        bootstrap = (PACKAGE / "bootstrap.md").read_text(encoding="utf-8")
-        install = (PACKAGE / "install.md").read_text(encoding="utf-8")
+        bootstrap = (PACKAGE / "operate" / "bootstrap.md").read_text(encoding="utf-8")
+        install = (PACKAGE / "operate" / "install.md").read_text(encoding="utf-8")
         companion_worker = (PACKAGE / "agents" / "companion.toml").read_text(
             encoding="utf-8"
         )
         investigator = (PACKAGE / "agents" / "investigator.toml").read_text(
             encoding="utf-8"
         )
-        self.assertIn("send a compact defect packet directly", tester)
-        self.assertIn("Do not involve\n  the parent in routine repair traffic", tester)
-        self.assertIn("return the result\n  directly to that tester", executor)
-        self.assertIn("Keep the parent out of routine repair", executor)
-        self.assertIn("Execution Guide as the primary work sequence", executor)
-        self.assertIn("Track the completion checklist internally", executor)
-        self.assertNotIn("Execution Guide as the primary work sequence", senior)
+        current_instruction_surfaces = {
+            **policies,
+            "archivist.md": handoff_contract,
+            **{
+                f"agents/{path.name}": path.read_text(encoding="utf-8")
+                for path in sorted((PACKAGE / "agents").glob("*.toml"))
+            },
+            "README.md": (ROOT / "README.md").read_text(encoding="utf-8"),
+            "workflow_break_down.md": (
+                ROOT / "workflow_break_down.md"
+            ).read_text(encoding="utf-8"),
+        }
+        retired_architecture_phrases = (
+            "wave barrier",
+            "investigation wave",
+            "execution wave",
+            "evidence ledger",
+            "evidence manifest",
+            "evidence-manifest",
+            "verification_ledger",
+            "repair packet",
+            "repair loop",
+            "root-cause gate",
+            "split intake",
+            "lifecycle parent",
+            "five-file intake",
+            "universal executor-tester",
+            "universal implementation checklist",
+            "fixed execution pipeline",
+            "predefined pipeline",
+        )
+        for name, text in current_instruction_surfaces.items():
+            lowered = text.lower()
+            for retired_phrase in retired_architecture_phrases:
+                self.assertNotIn(retired_phrase, lowered, name)
+
+        tester_flat = " ".join(tester.split())
+        self.assertIn("Receive the intended behavior", tester)
+        self.assertIn("Design the specific tests", tester_flat)
+        self.assertIn("do not repair production\ncode", tester)
+        self.assertIn("Leave repair and re-verification decisions", tester)
+        self.assertIn("bounded local discovery, implementation, self-check", executor)
+        self.assertIn("ordinary repair", executor)
+        self.assertIn("unresolved hard decision", senior)
+        for worker in (
+            companion_worker,
+            investigator,
+            executor,
+            senior,
+            tester,
+        ):
+            normalized_worker = " ".join(worker.split())
+            self.assertIn("You are", worker)
+            self.assertIn("`Task ID`", worker)
+            self.assertIn("follow-up to repeat task id", normalized_worker.lower())
+            self.assertIn("Task ID in every", normalized_worker)
+            self.assertIn("complete capsule structure", normalized_worker)
+            for descriptive_instruction in (
+                "The initial package",
+                "An initial package",
+                "The main owns",
+                "The main supplies",
+            ):
+                self.assertNotIn(descriptive_instruction, worker)
+        self.assertIn("`Project Context Scope`", companion_worker)
+        self.assertIn("`Main-Agent Context Guidance`", companion_worker)
+        self.assertIn("`Investigation Context`", investigator)
+        self.assertIn("`Evidence Question + Goal`", investigator)
+        self.assertIn("`Main-Agent Investigation Guidance`", investigator)
+        for worker in (executor, senior):
+            self.assertIn("`Implementation Context + Ownership`", worker)
+            self.assertIn("`Implementation Task + Goal`", worker)
+            self.assertIn("`Main-Agent Implementation Guidance`", worker)
+        self.assertIn("`Verification Context`", tester)
+        self.assertIn("`Verification Goal`", tester)
+        self.assertIn("`Main-Agent Verification Guidance`", tester)
+        self.assertIn("`Documentation Context + Audience`", doc_writer)
+        self.assertIn("`Documentation Task + Goal`", doc_writer)
+        self.assertIn("`Main-Agent Documentation Guidance`", doc_writer)
+        for worker in (executor, senior, tester):
+            self.assertNotIn("evidence-manifest", worker)
+            self.assertNotIn("verification_ledger", worker)
+        for worker in (executor, senior, tester):
+            self.assertIn("intermediate update only when new evidence changes", worker)
+            self.assertIn("at most 100 words", worker)
+            self.assertIn("routine report at most 120 words", worker)
+            self.assertIn("material escalation", worker)
+            self.assertIn("at most 200 words", worker)
+        self.assertIn("at most 100 words", companion_worker)
+        self.assertIn("assignment report at\nmost 220 words", companion_worker)
+        self.assertIn("at most 100 words", investigator)
+        self.assertIn("final\nreport at most 120 words", investigator)
+        self.assertIn("at most 180 words", investigator)
+        self.assertIn("at most 80 words", doc_writer)
+        self.assertIn("routine reports at most 120 words", doc_writer)
+        self.assertIn("at most 200 words", doc_writer)
         self.assertIn('model = "gpt-6-astra"', executor)
         self.assertIn('model = "gpt-6-astra"', senior)
         self.assertFalse((PACKAGE / "agents" / "executor_terra.toml").exists())
-        self.assertIn("model_context_window = 1_050_000", companion_worker)
+        self.assertIn("# model_context_window = 520000", companion_worker)
         self.assertIn(
-            "model_auto_compact_token_limit = 900_000", companion_worker
+            "# model_auto_compact_token_limit = 450000", companion_worker
         )
-        self.assertIn("secretary and office", companion_worker)
-        self.assertIn("complete routine read-only work", companion_worker)
-        self.assertIn("For a coherent report batch", companion_worker)
-        self.assertIn("sent directly\nby those workers", companion_worker)
+        self.assertIn("secretary, and office wrapper", companion_worker)
+        self.assertIn("source domain is the project ecosystem", companion_worker)
+        self.assertIn("sibling project", companion_worker)
+        self.assertIn("sources beyond the project ecosystem", companion_worker)
+        self.assertIn("Retain compact, source-linked\noperational context", companion_worker)
+        self.assertIn("each later rollout reloads it", companion_worker)
+        self.assertIn("diary/module\nintake", companion_worker)
+        self.assertIn("log triage", companion_worker)
+        self.assertNotIn("deployment-start: <deployment_id>", companion_worker)
+        self.assertNotIn("`$deployment-token-report`", companion_worker)
         self.assertIn('model = "gpt-6-astra"', investigator)
         self.assertNotIn("terra", investigator.lower())
         self.assertIn('sandbox_mode = "read-only"', investigator)
-        self.assertIn("never declare the authoritative", investigator.lower())
-        self.assertIn("Do not modify source", investigator)
-        self.assertIn("terminal package (<=180 words)", investigator)
-        self.assertIn("return the parent a <=40-word receipt", investigator)
-        self.assertIn("lane brief names Companion", investigator)
-        self.assertNotIn("the capsule names Companion", investigator)
-        self.assertIn("Do not\n  emit routine progress", investigator)
-        self.assertIn("always contains one required", bootstrap)
-        self.assertIn("check-compatibility --json", bootstrap)
-        self.assertIn("Codex 0.147.0", bootstrap)
-        self.assertIn("explicitly labeled bootstrap/project-install action", doc_writer)
-        self.assertIn("assignment brief", doc_writer)
-        self.assertNotIn("task capsule", doc_writer)
+        self.assertIn("disposable read-only evidence researcher", investigator)
+        self.assertIn("project evidence, Internet sources, or both", investigator)
+        self.assertIn("bounded project surface", investigator)
+        self.assertIn("Prefer primary or authoritative sources\nwhen appropriate", investigator)
+        self.assertIn("exact project references and direct source links", investigator)
+        self.assertIn("supplement only\nthe assigned context gap", investigator)
+        self.assertIn("Do not modify project files", investigator)
+        self.assertIn("Keep every document concise enough", doc_writer)
+        self.assertIn("fewest words that preserve decisions", doc_writer)
+        self.assertNotIn("known bugs", investigator.lower())
+        self.assertNotIn("package version", investigator.lower())
+        self.assertNotIn("arm64", investigator.lower())
+        for worker_policy in (executor, senior, tester, doc_writer, investigator):
+            self.assertNotIn("terminal receipt", worker_policy)
+            self.assertNotIn("report-batch", worker_policy)
+            self.assertTrue(
+                "concise" in worker_policy or "smallest decision-ready" in worker_policy
+            )
+        self.assertIn("verified facts", doc_writer)
+        diary_template = (PACKAGE / "project_docs" / "project_diary.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("prevents repeated mistakes", diary_template)
+        self.assertIn("Do not record\nsession chronology", diary_template)
+        self.assertIn("Expect one required", bootstrap)
+        self.assertIn("For bootstrap or installation", doc_writer)
+        self.assertIn("`Task ID`", doc_writer)
+        self.assertIn("`agent_docs/project_diary.md`", doc_writer)
+        self.assertFalse((PACKAGE / "verification_ledger.py").exists())
+        self.assertFalse((PACKAGE / "agents" / "wave_barrier.toml").exists())
         for required_context in (
             "project_structure.md",
             "project_overview.md",
@@ -394,42 +497,10 @@ class MarkerTests(unittest.TestCase):
                 root,
                 ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
             )
-            path = root / "user_AGENTS.md"
+            path = root / "operate" / "user_AGENTS.md"
             text = path.read_text(encoding="utf-8")
             path.write_text(
                 text.replace(USER_MANAGED.start, "", 1), encoding="utf-8"
-            )
-            with self.assertRaises(ValidationError):
-                PackageLayout.resolve(root)
-
-    def test_package_requires_auto_check_placeholder(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary) / "codex_workflow"
-            shutil.copytree(
-                PACKAGE,
-                root,
-                ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
-            )
-            path = root / "user_AGENTS.md"
-            path.write_text(
-                path.read_text(encoding="utf-8").replace(
-                    AUTO_CHECK_UPDATE_PLACEHOLDER, "", 1
-                ),
-                encoding="utf-8",
-            )
-            with self.assertRaises(ValidationError):
-                PackageLayout.resolve(root)
-
-    def test_package_requires_auto_check_instruction_command(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary) / "codex_workflow"
-            shutil.copytree(
-                PACKAGE,
-                root,
-                ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
-            )
-            (root / "resources" / "auto_check_update.md").write_text(
-                "Missing command.\n", encoding="utf-8"
             )
             with self.assertRaises(ValidationError):
                 PackageLayout.resolve(root)
@@ -443,15 +514,27 @@ class MarkerTests(unittest.TestCase):
                 ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
             )
             (root / "agents" / "tester.toml").unlink()
-            (root / "agents" / "doc-writer.toml").unlink()
+            (root / "agents" / "archivist.toml").unlink()
             with self.assertRaisesRegex(
                 ValidationError, "package worker set is incomplete"
             ):
                 PackageLayout.resolve(root)
 
+    def test_package_requires_builtin_skill(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "codex_workflow"
+            shutil.copytree(
+                PACKAGE,
+                root,
+                ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+            )
+            shutil.rmtree(root / "skills" / "deployment-token-report")
+            with self.assertRaisesRegex(ValidationError, "package skill set"):
+                PackageLayout.resolve(root)
+
     def test_update_help_does_not_publish_local_source_option(self) -> None:
         completed = subprocess.run(
-            [sys.executable, "-B", str(PACKAGE / "workflow.py"), "update", "--help"],
+            [sys.executable, "-B", str(PACKAGE / "runtime" / "workflow.py"), "update", "--help"],
             check=False,
             capture_output=True,
             text=True,
@@ -460,21 +543,14 @@ class MarkerTests(unittest.TestCase):
         self.assertNotIn("--source", completed.stdout)
         self.assertNotIn("--apply", completed.stdout)
 
-    def test_explicit_auto_check_commands_and_legacy_aliases_are_available(self) -> None:
-        for command in (
-            "enable-auto-check-update",
-            "disable-auto-check-update",
-            "enable-auto-update",
-            "disable-auto-update",
-            "check-update",
-        ):
-            completed = subprocess.run(
-                [sys.executable, "-B", str(PACKAGE / "workflow.py"), command, "--help"],
-                check=False,
-                capture_output=True,
-                text=True,
-            )
-            self.assertEqual(completed.returncode, 0, completed.stderr)
+    def test_check_update_command_is_available(self) -> None:
+        completed = subprocess.run(
+            [sys.executable, "-B", str(PACKAGE / "runtime" / "workflow.py"), "check-update", "--help"],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
 
     def test_removed_tuning_command_is_unavailable(self) -> None:
         retired = "con" + "figure"
@@ -482,7 +558,7 @@ class MarkerTests(unittest.TestCase):
             [
                 sys.executable,
                 "-B",
-                str(PACKAGE / "workflow.py"),
+                str(PACKAGE / "runtime" / "workflow.py"),
                 retired,
                 "--help",
             ],
@@ -495,7 +571,7 @@ class MarkerTests(unittest.TestCase):
 
     def test_remove_help_hides_internal_confirmation_flag(self) -> None:
         completed = subprocess.run(
-            [sys.executable, "-B", str(PACKAGE / "workflow.py"), "remove", "--help"],
+            [sys.executable, "-B", str(PACKAGE / "runtime" / "workflow.py"), "remove", "--help"],
             check=False,
             capture_output=True,
             text=True,
@@ -537,7 +613,7 @@ class PlatformSettingsTests(unittest.TestCase):
         self.assertIn('model = "custom"', rendered)
         self.assertIn("other = 7", rendered)
         self.assertIn("[agents]", rendered)
-        self.assertIn("max_concurrent_threads_per_session = 20", rendered)
+        self.assertNotIn("max_concurrent_threads_per_session", rendered)
         self.assertIn("[features]", rendered)
         self.assertIn("multi_agent = true", rendered)
         self.assertNotIn("[features.multi_agent_v2]", rendered)
@@ -556,15 +632,28 @@ class PlatformSettingsTests(unittest.TestCase):
         self.assertIn("[features.multi_agent_v2]", rendered)
         self.assertIn('keep_legacy = "keep"', rendered)
         self.assertNotIn("hide_spawn_agent_metadata", rendered)
-        self.assertEqual(rendered.count("max_concurrent_threads_per_session"), 1)
         self.assertIn("[agents]", rendered)
-        self.assertIn("max_concurrent_threads_per_session = 20", rendered)
+        self.assertNotIn("max_concurrent_threads_per_session", rendered)
         self.assertIn("[features]", rendered)
         self.assertIn("multi_agent = true", rendered)
         v2_section = rendered.split("[features.multi_agent_v2]", 1)[1].split(
             "[agents]", 1
         )[0]
         self.assertNotIn("enabled = true", v2_section)
+
+    def test_toml_patch_removes_legacy_agents_alias(self) -> None:
+        original = (
+            "[agents]\n"
+            "max_concurrent_threads_per_session = 20\n"
+            "max_threads = 8\n"
+            "max_depth = 1\n"
+            "job_max_runtime_seconds = 1800\n"
+        )
+        rendered = patch_codex_settings(original)
+        self.assertNotIn("max_threads", rendered)
+        self.assertIn("max_depth = 1", rendered)
+        self.assertIn("job_max_runtime_seconds = 1800", rendered)
+        self.assertNotIn("max_concurrent_threads_per_session", rendered)
 
     def test_toml_patch_removes_owned_v2_gate(self) -> None:
         rendered = patch_codex_settings(
@@ -611,31 +700,27 @@ class PlatformSettingsTests(unittest.TestCase):
         self.assertIn('model_reasoning_effort = "medium"', default)
         self.assertIn(
             'fork_turns="200"',
-            (PACKAGE / "closure_steward.md").read_text(encoding="utf-8"),
+            (PACKAGE / "archivist.md").read_text(encoding="utf-8"),
         )
 
 
-class WorkerDistributionTests(unittest.TestCase):
-    def test_all_astra_worker_effort_distribution(self) -> None:
-        expected = {
-            "default_executor": "medium",
-            "senior_executor": "xhigh",
-            "investigator": "high",
-            "tester": "high",
-            "companion": "medium",
-            "doc-writer": "medium",
-            "closure_steward": "high",
-        }
-        profiles = {path.stem: path for path in (PACKAGE / "agents").glob("*.toml")}
-        self.assertEqual(set(profiles), set(expected))
-        for name, effort in expected.items():
-            with self.subTest(worker=name):
-                profile = tomllib.loads(profiles[name].read_text(encoding="utf-8"))
-                self.assertEqual(profile["model"], "gpt-6-astra")
-                self.assertEqual(profile["model_reasoning_effort"], effort)
-
-
 class ReleaseTests(unittest.TestCase):
+    def test_fork_workers_use_astra_and_host_only_browser_control(self) -> None:
+        expected = {
+            "default_executor": "medium", "senior_executor": "xhigh",
+            "companion": "medium", "tester": "high",
+            "investigator": "high", "archivist": "high",
+        }
+        actual = {path.stem for path in (PACKAGE / "agents").glob("*.toml")}
+        self.assertEqual(actual, set(expected))
+        for role, effort in expected.items():
+            text = (PACKAGE / "agents" / f"{role}.toml").read_text(encoding="utf-8")
+            self.assertIn('model = "gpt-6-astra"', text)
+            self.assertIn(f'model_reasoning_effort = "{effort}"', text)
+        for name in ("AGENTS.md", "heavy_route.md"):
+            text = (PACKAGE / name).read_text(encoding="utf-8")
+            self.assertIn("main task exclusively owns visible browser", text)
+
     def _archive_without(self, relative: str) -> Path:
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
@@ -664,7 +749,7 @@ class ReleaseTests(unittest.TestCase):
             if name
             not in {
                 "codex_workflow/agents/tester.toml",
-                "codex_workflow/agents/doc-writer.toml",
+                "codex_workflow/agents/archivist.toml",
             }
         ]
         with self.assertRaisesRegex(PackageReleaseError, "archive is missing"):
@@ -690,10 +775,34 @@ class ReleaseTests(unittest.TestCase):
                 ):
                     verify_archive(self._archive_without(missing))
 
+    def test_archive_rejects_retired_wave_barrier(self) -> None:
+        names = ["codex_workflow"]
+        names.extend(
+            f"codex_workflow/{path.relative_to(PACKAGE).as_posix()}"
+            for path in PACKAGE.rglob("*")
+        )
+        names.append("codex_workflow/agents/wave_barrier.toml")
+        with self.assertRaisesRegex(PackageReleaseError, "retired worker roles"):
+            _verify_member_names(names)
+
+    def test_archive_does_not_require_retired_orchestration_guides(self) -> None:
+        names = ["codex_workflow"]
+        names.extend(
+            f"codex_workflow/{path.relative_to(PACKAGE).as_posix()}"
+            for path in PACKAGE.rglob("*")
+        )
+        for guide in (
+            "medium_companion.md",
+            "heavy_companion.md",
+            "investigation_team.md",
+        ):
+            self.assertNotIn(f"codex_workflow/{guide}", names)
+        _verify_member_names(names)
+
     def test_archive_verification_rejects_duplicate_members(self) -> None:
         archive = self._archive_without("not-present")
         with zipfile.ZipFile(archive, "a", compression=zipfile.ZIP_DEFLATED) as bundle:
-            bundle.writestr("codex_workflow/VERSION", PACKAGE_VERSION + "\n")
+            bundle.writestr("codex_workflow/operate/VERSION", PACKAGE_VERSION + "\n")
         with self.assertRaisesRegex(PackageReleaseError, "duplicate members"):
             verify_archive(archive)
 
@@ -736,26 +845,6 @@ class ReleaseTests(unittest.TestCase):
                     ):
                         self.assertEqual(workflow_cli.main(), 1)
                     self.assertIn(expected_error, json.loads(output.getvalue())["error"])
-
-    def test_codex_compatibility_accepts_leaf_model_release(self) -> None:
-        completed = subprocess.CompletedProcess(
-            ["codex", "--version"], 0, "codex-cli 0.147.0\n", ""
-        )
-        with mock.patch.object(workflow_cli.subprocess, "run", return_value=completed):
-            result = workflow_cli._require_compatible_codex()
-        self.assertTrue(result["compatible"])
-        self.assertEqual(result["codex_version"], "0.147.0")
-        self.assertEqual(result["minimum_codex_version"], "0.147.0")
-
-    def test_codex_compatibility_rejects_pre_leaf_model_release(self) -> None:
-        completed = subprocess.CompletedProcess(
-            ["codex", "--version"], 0, "codex-cli 0.146.0\n", ""
-        )
-        with (
-            mock.patch.object(workflow_cli.subprocess, "run", return_value=completed),
-            self.assertRaisesRegex(WorkflowError, "0.147.0 or newer"),
-        ):
-            workflow_cli._require_compatible_codex()
 
     def test_check_update_reports_new_release_notes_without_mutation(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -887,9 +976,9 @@ class LifecycleIntegrationTests(unittest.TestCase):
             incoming_root,
             ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
         )
-        (incoming_root / "VERSION").write_text(f"{version}\n", encoding="utf-8")
-        user_agents = (incoming_root / "user_AGENTS.md").read_text(encoding="utf-8")
-        (incoming_root / "user_AGENTS.md").write_text(
+        (incoming_root / "operate" / "VERSION").write_text(f"{version}\n", encoding="utf-8")
+        user_agents = (incoming_root / "operate" / "user_AGENTS.md").read_text(encoding="utf-8")
+        (incoming_root / "operate" / "user_AGENTS.md").write_text(
             user_agents.replace(
                 f"codex-workflow-version: {PACKAGE_VERSION}",
                 f"codex-workflow-version: {version}",
@@ -907,28 +996,43 @@ class LifecycleIntegrationTests(unittest.TestCase):
             extract(entry, PROJECT_LOCAL),
             "# Existing instructions\nKeep local policy.",
         )
-        self.assertTrue((self.runtime.runtime / "workflow.py").is_file())
+        self.assertTrue((self.runtime.runtime / "runtime" / "workflow.py").is_file())
         self.assertTrue((self.runtime.runtime / "templates" / "AGENTS.md").is_file())
         self.assertTrue((self.runtime.agents / "default_executor.toml").is_file())
         self.assertTrue((self.runtime.agents / "senior_executor.toml").is_file())
         self.assertTrue((self.runtime.agents / "investigator.toml").is_file())
+        self.assertFalse((self.runtime.agents / "wave_barrier.toml").exists())
         self.assertFalse((self.runtime.agents / "executor_terra.toml").exists())
-        self.assertTrue((self.runtime.agents / "closure_steward.toml").is_file())
+        self.assertTrue((self.runtime.agents / "archivist.toml").is_file())
         self.assertTrue((self.runtime.agents / "companion.toml").is_file())
-        self.assertIn(
-            "max_concurrent_threads_per_session = 20",
+        self.assertTrue(
+            (
+                self.runtime.skills
+                / "deployment-token-report"
+                / "scripts"
+                / "report_tokens.py"
+            ).is_file()
+        )
+        self.assertTrue(
+            (
+                self.runtime.runtime
+                / "templates"
+                / "skills"
+                / "deployment-token-report"
+                / "SKILL.md"
+            ).is_file()
+        )
+        self.assertNotIn(
+            "max_concurrent_threads_per_session",
             self.runtime.config_toml.read_text(encoding="utf-8"),
         )
         self.assertNotIn(
             "[features.multi_agent_v2]",
             self.runtime.config_toml.read_text(encoding="utf-8"),
         )
-        installed_user_agents = self.runtime.user_agents.read_text(encoding="utf-8")
-        self.assertNotIn("auto-check-update --json", installed_user_agents)
-        self.assertNotIn(AUTO_CHECK_UPDATE_PLACEHOLDER, installed_user_agents)
         self.assertEqual(len(plan.agent_actions), 1)
         action = plan.agent_actions[0]
-        self.assertEqual(action["role"], "doc-writer")
+        self.assertEqual(action["role"], "archivist")
         self.assertTrue(action["required"])
         self.assertEqual(set(action["files"]), set(action["framework"]))
         self.assertEqual(
@@ -953,7 +1057,17 @@ class LifecycleIntegrationTests(unittest.TestCase):
             set(repeated.agent_actions[0]["framework"]),
         )
 
-    def test_bootstrap_cleans_project_staging_and_updates_gitignore(self) -> None:
+    def test_bootstrap_rejects_unowned_skill_collision(self) -> None:
+        collision = self.runtime.skills / "deployment-token-report"
+        collision.mkdir(parents=True)
+        (collision / "SKILL.md").write_text(
+            "---\nname: deployment-token-report\ndescription: local\n---\n",
+            encoding="utf-8",
+        )
+        with self.assertRaisesRegex(ValidationError, "unowned skill directory"):
+            plan_bootstrap(self.package, self.runtime, self.project)
+
+    def test_bootstrap_cleans_staging_and_keeps_agent_docs_trackable(self) -> None:
         staging = self.project_root / "Codex_Workflow"
         (staging / "nested").mkdir(parents=True)
         (staging / "nested" / "package.txt").write_text("staged", encoding="utf-8")
@@ -964,8 +1078,8 @@ class LifecycleIntegrationTests(unittest.TestCase):
         self.assertFalse(staging.exists())
         gitignore = (self.project_root / ".gitignore").read_text(encoding="utf-8")
         self.assertIn("# local rules\n", gitignore)
+        self.assertNotIn("agent_docs/", gitignore)
         for entry in (
-            "agent_docs/",
             ".codex_workflow_hidden_resources/",
             "AGENTS.md",
         ):
@@ -976,8 +1090,8 @@ class LifecycleIntegrationTests(unittest.TestCase):
         # A repeated project install is idempotent and does not duplicate rules.
         plan_project_install(self.package, self.project).apply()
         repeated = (self.project_root / ".gitignore").read_text(encoding="utf-8")
+        self.assertNotIn("agent_docs/", repeated)
         for entry in (
-            "agent_docs/",
             ".codex_workflow_hidden_resources/",
             "AGENTS.md",
         ):
@@ -1012,6 +1126,65 @@ class LifecycleIntegrationTests(unittest.TestCase):
         ):
             self.assertNotIn(entry, remaining_gitignore)
 
+    def test_install_preserves_user_owned_agent_docs_ignore(self) -> None:
+        self.project.gitignore.write_text("agent_docs/\n", encoding="utf-8")
+
+        self.bootstrap()
+
+        gitignore = self.project.gitignore.read_text(encoding="utf-8")
+        self.assertEqual(gitignore.splitlines().count("agent_docs/"), 1)
+        self.assertLess(
+            gitignore.splitlines().index("agent_docs/"),
+            gitignore.splitlines().index("# codex-workflow-managed-start"),
+        )
+
+    def test_new_install_preserves_user_owned_legacy_shaped_ignore(self) -> None:
+        self.project.gitignore.write_text(
+            "agent_docs/\n.codex_workflow_hidden_resources/\nAGENTS.md\n",
+            encoding="utf-8",
+        )
+
+        self.bootstrap()
+
+        gitignore = self.project.gitignore.read_text(encoding="utf-8")
+        for entry in (
+            "agent_docs/",
+            ".codex_workflow_hidden_resources/",
+            "AGENTS.md",
+        ):
+            self.assertEqual(gitignore.splitlines().count(entry), 1)
+        self.assertNotIn("# codex-workflow-managed-start", gitignore)
+
+    def test_install_retires_legacy_unmarked_agent_docs_ignore(self) -> None:
+        self.bootstrap()
+        self.project.gitignore.write_text(
+            "# local\nagent_docs/\n.codex_workflow_hidden_resources/\nAGENTS.md\n",
+            encoding="utf-8",
+        )
+
+        plan_project_install(self.package, self.project).apply()
+
+        gitignore = self.project.gitignore.read_text(encoding="utf-8")
+        self.assertIn("# local\n", gitignore)
+        self.assertNotIn("agent_docs/", gitignore)
+        self.assertIn("# codex-workflow-managed-start", gitignore)
+        self.assertIn("# codex-workflow-managed-end", gitignore)
+
+    def test_remove_restores_project_local_instructions_from_disabled_entry(self) -> None:
+        self.bootstrap(existing_agents="# Original project instructions\nKeep this.\n")
+        plan_enable(self.project, enable=False).apply()
+        self.assertFalse(self.project.active.exists())
+        self.assertTrue(self.project.disabled.exists())
+
+        plan_remove(self.runtime, self.project).apply()
+
+        self.assertEqual(
+            self.project.active.read_text(encoding="utf-8"),
+            "# Original project instructions\nKeep this.\n",
+        )
+        self.assertFalse(self.project.disabled.exists())
+        self.assertFalse(self.project.workflow_dir.exists())
+
     def test_unactivated_workers_are_materialized_for_codex(self) -> None:
         self.bootstrap()
         for worker in self.package.worker_names:
@@ -1021,7 +1194,7 @@ class LifecycleIntegrationTests(unittest.TestCase):
             )
         state = json.loads((self.runtime.runtime / "install_state.json").read_text())
         self.assertEqual(set(state["owned_workers"]), self.package.worker_names)
-        self.assertFalse(state["auto_check_update"])
+        self.assertEqual(set(state["owned_skills"]), self.package.skill_names)
 
     def test_personalize_and_enable_disable_preserve_regions(self) -> None:
         self.bootstrap(existing_agents="Local policy.\n")
@@ -1066,24 +1239,29 @@ class LifecycleIntegrationTests(unittest.TestCase):
         with self.assertRaises(ValidationError):
             plan_project_install(self.package, self.project)
 
-    def test_update_restores_workers_and_preserves_user_preferences(self) -> None:
+    def test_update_restores_workers_and_preserves_project_state(self) -> None:
         self.bootstrap(existing_agents="Local policy.\n")
-        plan_auto_check_update_setting(self.runtime, enabled=True).apply()
-        self.assertIn(
-            "auto-check-update --json",
-            self.runtime.user_agents.read_text(encoding="utf-8"),
+        gitignore = self.project.gitignore
+        gitignore.write_text(
+            gitignore.read_text(encoding="utf-8").replace(
+                "# codex-workflow-managed-start\n",
+                "# codex-workflow-managed-start\nagent_docs/\n",
+            ),
+            encoding="utf-8",
         )
         (self.runtime.agents / "default_executor.toml").write_text(
             "# local worker override\n", encoding="utf-8"
         )
         incoming_root = self.root / "incoming" / "codex_workflow"
         shutil.copytree(PACKAGE, incoming_root, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
-        (incoming_root / "VERSION").write_text("1.1.5\n", encoding="utf-8")
-        user_agents = (incoming_root / "user_AGENTS.md").read_text(encoding="utf-8")
-        (incoming_root / "user_AGENTS.md").write_text(
+        (incoming_root / "operate" / "VERSION").write_text(
+            f"{NEXT_PACKAGE_VERSION}\n", encoding="utf-8"
+        )
+        user_agents = (incoming_root / "operate" / "user_AGENTS.md").read_text(encoding="utf-8")
+        (incoming_root / "operate" / "user_AGENTS.md").write_text(
             user_agents.replace(
                 f"codex-workflow-version: {PACKAGE_VERSION}",
-                "codex-workflow-version: 1.1.5",
+                f"codex-workflow-version: {NEXT_PACKAGE_VERSION}",
             ),
             encoding="utf-8",
         )
@@ -1091,75 +1269,81 @@ class LifecycleIntegrationTests(unittest.TestCase):
         plan_update(incoming, self.runtime, self.project).apply()
         entry = self.project.active.read_text(encoding="utf-8")
         self.assertEqual(extract(entry, PROJECT_LOCAL), "Local policy.")
-        self.assertEqual((self.runtime.runtime / "VERSION").read_text(), "1.1.5\n")
-        updated_state = json.loads(
-            (self.runtime.runtime / "install_state.json").read_text(encoding="utf-8")
-        )
-        self.assertTrue(updated_state["auto_check_update"])
-        self.assertIn(
-            "auto-check-update --json",
-            self.runtime.user_agents.read_text(encoding="utf-8"),
+        self.assertEqual(
+            (self.runtime.runtime / "operate" / "VERSION").read_text(),
+            f"{NEXT_PACKAGE_VERSION}\n",
         )
         self.assertNotIn(
             "local worker override",
             (self.runtime.agents / "default_executor.toml").read_text(encoding="utf-8"),
         )
+        updated_gitignore = gitignore.read_text(encoding="utf-8")
+        self.assertNotIn("agent_docs/", updated_gitignore)
+        self.assertIn(".codex_workflow_hidden_resources/", updated_gitignore)
+        self.assertIn("AGENTS.md", updated_gitignore)
+        installed_skill = self.runtime.skills / "deployment-token-report"
+        self.assertEqual(
+            (installed_skill / "SKILL.md").read_text(encoding="utf-8"),
+            (PACKAGE / "skills" / "deployment-token-report" / "SKILL.md").read_text(
+                encoding="utf-8"
+            ),
+        )
         self.assertTrue(any((self.runtime.runtime / ".backups").iterdir()))
 
-    def test_update_migrates_legacy_auto_check_preference(self) -> None:
+    def test_update_removes_retired_orchestration_guides(self) -> None:
         self.bootstrap()
-
+        retired = (
+            "companion.md",
+            "medium_companion.md",
+            "heavy_companion.md",
+            "investigation_team.md",
+        )
+        for relative in retired:
+            (self.runtime.runtime / relative).write_text(
+                "# Retired orchestration guide\n", encoding="utf-8"
+            )
         state_path = self.runtime.runtime / "install_state.json"
         state = json.loads(state_path.read_text(encoding="utf-8"))
-        state.pop("auto_check_update")
-        # This is the ownership manifest written by the legacy runtime.  The
-        # new runtime must read the file before removing it as obsolete.
-        state["owned_runtime_files"].append("workflow_config.json")
+        state["owned_runtime_files"].extend(retired)
         state_path.write_text(json.dumps(state) + "\n", encoding="utf-8")
-        legacy_config = self.runtime.runtime / "workflow_config.json"
-        legacy_config.write_text(
-            json.dumps({"auto_check_update": True}) + "\n", encoding="utf-8"
-        )
 
-        plan_update(
-            self.incoming_package("legacy-auto-check-incoming", "1.2.0"),
-            self.runtime,
-            self.project,
-        ).apply()
+        incoming = self.incoming_package("capability-routes-incoming", "1.2.0")
+        plan_update(incoming, self.runtime, self.project).apply()
 
-        migrated_state = json.loads(state_path.read_text(encoding="utf-8"))
-        self.assertTrue(migrated_state["auto_check_update"])
-        self.assertIn(
-            "auto-check-update --json",
-            self.runtime.user_agents.read_text(encoding="utf-8"),
-        )
-        self.assertFalse(legacy_config.exists())
+        for relative in retired:
+            self.assertFalse((self.runtime.runtime / relative).exists())
 
-    def test_update_state_preference_overrides_legacy_config(self) -> None:
+    def test_update_restores_owned_skill_and_removes_stale_skill_files(self) -> None:
         self.bootstrap()
-
-        state_path = self.runtime.runtime / "install_state.json"
-        state = json.loads(state_path.read_text(encoding="utf-8"))
-        state["auto_check_update"] = False
-        state_path.write_text(json.dumps(state) + "\n", encoding="utf-8")
-        legacy_config = self.runtime.runtime / "workflow_config.json"
-        legacy_config.write_text(
-            json.dumps({"auto_check_update": True}) + "\n", encoding="utf-8"
+        installed_skill = self.runtime.skills / "deployment-token-report"
+        (installed_skill / "SKILL.md").write_text(
+            (installed_skill / "SKILL.md")
+            .read_text(encoding="utf-8")
+            .replace("Compile per-agent", "Locally changed per-agent"),
+            encoding="utf-8",
         )
-
-        plan_update(
-            self.incoming_package("state-precedence-incoming", "1.2.0"),
-            self.runtime,
-            self.project,
-        ).apply()
-
-        migrated_state = json.loads(state_path.read_text(encoding="utf-8"))
-        self.assertFalse(migrated_state["auto_check_update"])
-        self.assertNotIn(
-            "auto-check-update --json",
-            self.runtime.user_agents.read_text(encoding="utf-8"),
+        stale = installed_skill / "stale.txt"
+        stale.write_text("stale", encoding="utf-8")
+        incoming = self.incoming_package("skill-update-incoming", "1.2.0")
+        plan = plan_update(incoming, self.runtime, self.project)
+        backup = Path(plan.details["backup"])
+        plan.apply()
+        self.assertEqual(
+            (installed_skill / "SKILL.md").read_text(encoding="utf-8"),
+            (incoming.skill_templates / "deployment-token-report" / "SKILL.md").read_text(
+                encoding="utf-8"
+            ),
         )
-        self.assertFalse(legacy_config.exists())
+        self.assertFalse(stale.exists())
+        self.assertTrue(
+            (
+                backup
+                / "user"
+                / "skills"
+                / "deployment-token-report"
+                / "SKILL.md"
+            ).is_file()
+        )
 
     def test_projects_update_against_their_recorded_historical_sources(self) -> None:
         self.bootstrap()
@@ -1185,18 +1369,26 @@ class LifecycleIntegrationTests(unittest.TestCase):
             "## Working State (1.2)", second.active.read_text(encoding="utf-8")
         )
 
-    def test_update_removes_retired_workers(self) -> None:
+    def test_update_removes_retired_architecture_assets(self) -> None:
         self.bootstrap()
         state_path = self.runtime.runtime / "install_state.json"
         state = json.loads(state_path.read_text(encoding="utf-8"))
+        retired_verification_utility = self.runtime.runtime / "verification_ledger.py"
+        retired_verification_utility.write_text("# retired\n", encoding="utf-8")
+        state["owned_runtime_files"].append("verification_ledger.py")
         for legacy_worker in (
             "executor_luna",
             "executor_sol",
             "executor_terra",
             "explorer",
             "end_of_session",
+            "wave_barrier",
         ):
             (self.runtime.agents / f"{legacy_worker}.toml").write_text(
+                f"# codex-workflow-worker: {legacy_worker}\n",
+                encoding="utf-8",
+            )
+            (self.runtime.runtime / "templates" / "agents" / f"{legacy_worker}.toml").write_text(
                 f"# codex-workflow-worker: {legacy_worker}\n",
                 encoding="utf-8",
             )
@@ -1205,21 +1397,32 @@ class LifecycleIntegrationTests(unittest.TestCase):
 
         incoming = self.incoming_package("worker-migration-incoming", "1.2.0")
         plan_update(incoming, self.runtime, self.project).apply()
+        self.assertFalse(retired_verification_utility.exists())
         for legacy_worker in (
             "executor_luna",
             "executor_sol",
             "executor_terra",
             "explorer",
             "end_of_session",
+            "wave_barrier",
         ):
             self.assertFalse((self.runtime.agents / f"{legacy_worker}.toml").exists())
+            self.assertFalse(
+                (
+                    self.runtime.runtime
+                    / "templates"
+                    / "agents"
+                    / f"{legacy_worker}.toml"
+                ).exists()
+            )
+        PackageLayout.resolve(self.runtime.runtime)
 
     def test_cli_install_reports_enabled_disabled_and_stale_states(self) -> None:
         self.bootstrap()
         command = [
             sys.executable,
             "-B",
-            str(self.runtime.runtime / "workflow.py"),
+            str(self.runtime.runtime / "runtime" / "workflow.py"),
             "install",
             "--codex-home",
             str(self.codex_home),
@@ -1247,6 +1450,18 @@ class LifecycleIntegrationTests(unittest.TestCase):
         self.assertEqual(enabled.returncode, 0, enabled.stderr)
         self.assertEqual(json.loads(enabled.stdout)["status"], "already enabled")
         self.assertEqual(json.loads(enabled.stdout)["instruction"], "No action is required.")
+
+        self.project.state.unlink()
+        self.project.personalization.unlink()
+        self.project.gitignore.unlink()
+        repaired = subprocess.run(command, check=False, capture_output=True, text=True)
+        self.assertEqual(repaired.returncode, 0, repaired.stderr)
+        repaired_summary = json.loads(repaired.stdout)
+        self.assertTrue(repaired_summary["applied"])
+        self.assertEqual(repaired_summary["agent_actions"][0]["files"], [])
+        self.assertTrue(self.project.state.is_file())
+        self.assertTrue(self.project.personalization.is_file())
+        self.assertTrue(self.project.gitignore.is_file())
 
         plan_enable(self.project, enable=False).apply()
         disabled = subprocess.run(command, check=False, capture_output=True, text=True)
@@ -1284,7 +1499,7 @@ class LifecycleIntegrationTests(unittest.TestCase):
             [
                 sys.executable,
                 "-B",
-                str(PACKAGE / "workflow.py"),
+                str(PACKAGE / "runtime" / "workflow.py"),
                 "install",
                 "--package-root",
                 str(PACKAGE),
@@ -1315,6 +1530,15 @@ class LifecycleIntegrationTests(unittest.TestCase):
 
     def test_remove_requires_second_confirmation_and_cleans_owned_files(self) -> None:
         self.bootstrap(existing_agents="Local policy.\n")
+        legacy_resource = (
+            self.project.hidden_dir
+            / "deployments"
+            / "feature_a"
+            / "verification"
+            / "record.json"
+        )
+        legacy_resource.parent.mkdir(parents=True)
+        legacy_resource.write_text("{}\n", encoding="utf-8")
         user_agents = self.runtime.user_agents.read_text(encoding="utf-8")
         self.runtime.user_agents.write_text(
             "# Keep this user policy.\n\n" + user_agents,
@@ -1335,11 +1559,17 @@ class LifecycleIntegrationTests(unittest.TestCase):
         )
         unrelated_worker = self.runtime.agents / "unrelated.toml"
         unrelated_worker.write_text('model = "keep"\n', encoding="utf-8")
+        unrelated_skill = self.runtime.skills / "unrelated-skill"
+        unrelated_skill.mkdir(parents=True)
+        (unrelated_skill / "SKILL.md").write_text(
+            "---\nname: unrelated-skill\ndescription: keep\n---\n",
+            encoding="utf-8",
+        )
 
         command = [
             sys.executable,
             "-B",
-            str(self.runtime.runtime / "workflow.py"),
+            str(self.runtime.runtime / "runtime" / "workflow.py"),
             "remove",
             "--codex-home",
             str(self.codex_home),
@@ -1352,6 +1582,9 @@ class LifecycleIntegrationTests(unittest.TestCase):
         planned_summary = json.loads(planned.stdout)
         self.assertFalse(planned_summary["applied"])
         self.assertTrue(planned_summary["confirmation_required"])
+        self.assertTrue(
+            any("legacy project workflow resources" in warning for warning in planned_summary["warnings"])
+        )
         self.assertTrue(self.project.active.is_file())
         self.assertTrue(self.runtime.runtime.is_dir())
 
@@ -1368,6 +1601,10 @@ class LifecycleIntegrationTests(unittest.TestCase):
         self.assertTrue((self.project.docs / "project_overview.md").is_file())
         self.assertFalse(self.runtime.runtime.exists())
         self.assertTrue(unrelated_worker.is_file())
+        self.assertTrue((unrelated_skill / "SKILL.md").is_file())
+        self.assertFalse(
+            (self.runtime.skills / "deployment-token-report").exists()
+        )
         self.assertEqual(
             self.runtime.user_agents.read_text(encoding="utf-8"),
             "# Keep this user policy.\n",
@@ -1404,94 +1641,18 @@ class LifecycleIntegrationTests(unittest.TestCase):
             )
         self.assertTrue(outside.is_file())
 
-    def test_disable_auto_check_is_scoped_and_skips_network_check(self) -> None:
+    def test_update_rejects_unsafe_owned_skill_state(self) -> None:
         self.bootstrap()
-        default_user_agents = self.runtime.user_agents.read_text(encoding="utf-8")
-        self.assertNotIn("auto-check-update --json", default_user_agents)
-        self.runtime.user_agents.write_text(
-            default_user_agents + "\nUser-level custom instruction.\n",
-            encoding="utf-8",
-        )
-        plan = plan_auto_check_update_setting(self.runtime, enabled=False)
-        self.assertEqual(len(plan.mutations), 2)
-        plan.apply()
-        configured = json.loads(
-            (self.runtime.runtime / "install_state.json").read_text(encoding="utf-8")
-        )
-        self.assertFalse(configured["auto_check_update"])
-        self.assertNotIn(
-            "auto-check-update --json",
-            self.runtime.user_agents.read_text(encoding="utf-8"),
-        )
-        completed = subprocess.run(
-            [
-                sys.executable,
-                "-B",
-                str(self.runtime.runtime / "workflow.py"),
-                "auto-check-update",
-                "--codex-home",
-                str(self.codex_home),
-                "--json",
-            ],
-            check=False,
-            capture_output=True,
-            text=True,
-        )
-        self.assertEqual(completed.returncode, 0, completed.stderr)
-        self.assertEqual(json.loads(completed.stdout)["status"], "disabled")
-
-        completed = subprocess.run(
-            [
-                sys.executable,
-                "-B",
-                str(self.runtime.runtime / "workflow.py"),
-                "enable-auto-check-update",
-                "--codex-home",
-                str(self.codex_home),
-                "--json",
-            ],
-            check=False,
-            capture_output=True,
-            text=True,
-        )
-        self.assertEqual(completed.returncode, 0, completed.stderr)
-        self.assertTrue(
-            json.loads(
-                (self.runtime.runtime / "install_state.json").read_text(
-                    encoding="utf-8"
-                )
-            )["auto_check_update"]
-        )
-        enabled_user_agents = self.runtime.user_agents.read_text(encoding="utf-8")
-        self.assertIn("auto-check-update --json", enabled_user_agents)
-        self.assertIn("User-level custom instruction.", enabled_user_agents)
-        self.assertNotIn(AUTO_CHECK_UPDATE_PLACEHOLDER, enabled_user_agents)
-
-        completed = subprocess.run(
-            [
-                sys.executable,
-                "-B",
-                str(self.runtime.runtime / "workflow.py"),
-                "disable-auto-check-update",
-                "--codex-home",
-                str(self.codex_home),
-                "--json",
-            ],
-            check=False,
-            capture_output=True,
-            text=True,
-        )
-        self.assertEqual(completed.returncode, 0, completed.stderr)
-        self.assertFalse(
-            json.loads(
-                (self.runtime.runtime / "install_state.json").read_text(
-                    encoding="utf-8"
-                )
-            )["auto_check_update"]
-        )
-        disabled_user_agents = self.runtime.user_agents.read_text(encoding="utf-8")
-        self.assertNotIn("auto-check-update --json", disabled_user_agents)
-        self.assertIn("User-level custom instruction.", disabled_user_agents)
+        state_path = self.runtime.runtime / "install_state.json"
+        state = json.loads(state_path.read_text(encoding="utf-8"))
+        state["owned_skills"] = ["../../outside"]
+        state_path.write_text(json.dumps(state) + "\n", encoding="utf-8")
+        with self.assertRaisesRegex(ValidationError, "unsafe name"):
+            plan_update(
+                self.incoming_package("unsafe-skill-state-incoming"),
+                self.runtime,
+                self.project,
+            )
 
     def test_legacy_entry_with_edits_requires_reviewed_local_instructions(self) -> None:
         self.bootstrap()
@@ -1536,20 +1697,20 @@ class LifecycleIntegrationTests(unittest.TestCase):
 
     def test_installed_launcher_delegates_to_incoming_update_runtime(self) -> None:
         self.bootstrap()
-        major, minor, patch = (int(part) for part in PACKAGE_VERSION.split("-", 1)[0].split("."))
-        incoming_version = f"{major}.{minor}.{patch + 1}"
         incoming_root = self.root / "delegated-incoming" / "codex_workflow"
         shutil.copytree(
             PACKAGE,
             incoming_root,
             ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
         )
-        (incoming_root / "VERSION").write_text(f"{incoming_version}\n", encoding="utf-8")
-        user_agents = (incoming_root / "user_AGENTS.md").read_text(encoding="utf-8")
-        (incoming_root / "user_AGENTS.md").write_text(
+        (incoming_root / "operate" / "VERSION").write_text(
+            f"{NEXT_PACKAGE_VERSION}\n", encoding="utf-8"
+        )
+        user_agents = (incoming_root / "operate" / "user_AGENTS.md").read_text(encoding="utf-8")
+        (incoming_root / "operate" / "user_AGENTS.md").write_text(
             user_agents.replace(
                 f"codex-workflow-version: {PACKAGE_VERSION}",
-                f"codex-workflow-version: {incoming_version}",
+                f"codex-workflow-version: {NEXT_PACKAGE_VERSION}",
             ),
             encoding="utf-8",
         )
@@ -1557,7 +1718,7 @@ class LifecycleIntegrationTests(unittest.TestCase):
             [
                 sys.executable,
                 "-B",
-                str(self.runtime.runtime / "workflow.py"),
+                str(self.runtime.runtime / "runtime" / "workflow.py"),
                 "update",
                 "--source",
                 str(incoming_root),
@@ -1573,7 +1734,7 @@ class LifecycleIntegrationTests(unittest.TestCase):
         )
         self.assertEqual(completed.returncode, 0, completed.stderr)
         summary = json.loads(completed.stdout)
-        self.assertEqual(summary["details"]["to_version"], incoming_version)
+        self.assertEqual(summary["details"]["to_version"], NEXT_PACKAGE_VERSION)
         self.assertTrue(summary["applied"])
 
     def test_external_update_delegates_before_launcher_validation(self) -> None:
@@ -1584,10 +1745,12 @@ class LifecycleIntegrationTests(unittest.TestCase):
             incoming_root,
             ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
         )
-        (incoming_root / "VERSION").write_text("1.1.5\n", encoding="utf-8")
+        (incoming_root / "operate" / "VERSION").write_text(
+            f"{NEXT_PACKAGE_VERSION}\n", encoding="utf-8"
+        )
 
         argv = [
-            str(PACKAGE / "workflow.py"),
+            str(PACKAGE / "runtime" / "workflow.py"),
             "update",
             "--source",
             str(incoming_root),

@@ -17,19 +17,20 @@ Use the installed Codex Workflow runtime as the source of truth for lifecycle be
 
 When the user's trimmed message exactly matches a supported `codex_workflow` command, locate the installed runtime under `$CODEX_HOME/codex_workflow` or `~/.codex/codex_workflow`, read the command's guide completely, and follow it:
 
-- `--install`: `install.md`
-- `--update`: `update.md`
-- `--check-update`: `check_update.md`
-- `--remove`: `remove.md`
-- `--enable_auto_check_update`: `enable_auto_check_update.md`
-- `--disable_auto_check_update`: `disable_auto_check_update.md`
-- `--enable_auto_update`: `enable_auto_update.md`
-- `--disable_auto_update`: `disable_auto_update.md`
-- `--personal`: `personalization_guide.md`
-- `--disable`: `disable.md`
-- `--enable`: `enable.md`
+- `--install`: `operate/install.md`
+- `--update`: `operate/update.md`
+- `--check-update`: `operate/check_update.md`
+- `--remove`: `operate/remove.md`
+- `--personal`: `operate/personalization_guide.md`
+- `--disable`: `operate/disable.md`
+- `--enable`: `operate/enable.md`
 
-Use the available Python 3 launcher when a guide invokes `workflow.py`. Run project operations against the current repository root and preserve project-local protected regions.
+Use the available Python 3 launcher with `runtime/workflow.py`. On an older
+installation, read its root-level guide and launcher instead. Automatic-update
+toggle commands are retired in the new upstream design; do not invent an
+equivalent or change agent-system's update ownership.
+Run project operations against the current repository root and preserve
+project-local protected regions.
 
 ## Routes
 

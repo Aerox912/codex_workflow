@@ -8,9 +8,6 @@ from ._toml import tomllib
 from .errors import ValidationError
 
 
-MAX_CONCURRENT_WORKERS = 20
-
-
 def patch_codex_settings(text: str) -> str:
     """Apply the workflow's fixed platform settings without replacing user settings."""
 
@@ -20,10 +17,7 @@ def patch_codex_settings(text: str) -> str:
         except tomllib.TOMLDecodeError as error:
             raise ValidationError(f"existing Codex config is invalid TOML: {error}") from error
     sections: dict[str, dict[str, str]] = {
-        "agents": {
-            "enabled": "true",
-            "max_concurrent_threads_per_session": str(MAX_CONCURRENT_WORKERS),
-        },
+        "agents": {"enabled": "true"},
         "features": {"multi_agent": "true"},
     }
     lines = _remove_owned_keys(text.splitlines(), _LEGACY_OWNED_KEYS)
@@ -77,6 +71,7 @@ def _patch_section(lines: list[str], section: str, values: dict[str, str]) -> li
 
 
 _LEGACY_OWNED_KEYS: dict[str, set[str]] = {
+    "agents": {"max_concurrent_threads_per_session", "max_threads"},
     "features.multi_agent_v2": {
         "enabled",
         "max_concurrent_threads_per_session",
@@ -90,9 +85,9 @@ _LEGACY_OWNED_KEYS: dict[str, set[str]] = {
 
 
 _OWNED_KEYS: dict[str, set[str]] = {
-    "agents": {"enabled", "max_concurrent_threads_per_session"},
+    "agents": {"enabled", "max_concurrent_threads_per_session", "max_threads"},
     "features": {"multi_agent"},
-    **_LEGACY_OWNED_KEYS,
+    "features.multi_agent_v2": set(_LEGACY_OWNED_KEYS["features.multi_agent_v2"]),
 }
 
 

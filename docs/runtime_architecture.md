@@ -7,16 +7,19 @@ generated outputs, and project-owned content.
 
 - Route documents and worker TOMLs: authoritative behavior distributed by a
   release.
-- `~/.codex/codex_workflow/install_state.json`: installed version, ownership
-  manifests, and the independent update-check preference.
-- A legacy `workflow_config.json` is read only during migration when the new
-  state file has no update-check field; it is not retained as configuration.
-- Heavy and Closure Steward contracts: fixed release inputs copied unchanged.
+- `~/.codex/codex_workflow/operate/`: user command guides, the user-level
+  instruction source, and package version metadata.
+- `~/.codex/codex_workflow/install_state.json`: installed version and ownership
+  manifests.
+- Heavy and Archivist contracts: fixed release inputs copied unchanged.
 - Worker TOMLs and workflow-owned Codex settings: materialized outputs.
 - Project personalization: structured project state materialized into its own
   marker region.
 - Project-local instructions: opaque preserved content in a separate marker
   region.
+- Project documentation updates: main owns `project_diary.md`; Archivist owns
+  assigned public and project documents, including closing progress and
+  latest-session updates and the deployment token report.
 
 ## Module boundaries
 
@@ -30,7 +33,7 @@ generated outputs, and project-owned content.
 - `plan.py`: validated mutation plans and compact summaries.
 - `lifecycle.py`: composition only; it owns no low-level transformation.
 - `release.py`: release selection, checksum, and safe extraction.
-- `workflow.py`: CLI parsing, direct application, two-phase removal, and
+- `runtime/workflow.py`: CLI parsing, direct application, two-phase removal, and
   incoming-runtime delegation.
 
 The removal plan deletes the recognized project entry point and private
@@ -45,10 +48,8 @@ cleans the dedicated runtime directory. It deliberately preserves
 2. The incoming CLI validates and applies the update using the target
    version's runtime; the installed launcher does not apply its own
    version-specific package schema to that incoming release.
-3. The incoming release replaces installed routes and worker definitions; the
-   independent update-check preference is carried forward in installation
-   state, falling back to the legacy configuration resource only when the state
-   field is absent. Worker surfaces are copied from the incoming role files.
+3. The incoming release replaces installed routes and worker definitions.
+   Worker surfaces are copied from the incoming role files.
 4. Each project entry point is validated against the source backup for the
    workflow version recorded in its project state. Project-local regions,
    personalization, unrelated user files, and enabled/disabled state are

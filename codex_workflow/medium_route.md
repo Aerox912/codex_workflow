@@ -2,92 +2,122 @@
 
 Use after Medium is selected under `AGENTS.md`.
 
-## Role and Context
+## Main Ownership
 
-You are the main agent.
+You are the main agent. Own planning, root-cause reasoning, implementation,
+production repair, verification, integration, acceptance, final claims, and user
+communication. Medium does not delegate production or verification.
 
-The main agent performs planning, root-cause analysis, implementation, and
-verification. Do not delegate those responsibilities or create production
-executor/tester packages in Medium. For a substantive deployment, Companion is
-the workflow-mode secretary and office wrapper defined by `companion.md`.
-Medium may use disposable read-only investigators under
-`investigation_team.md` only when an independent evidence wave is materially
-useful; that support does not transfer root-cause or implementation authority.
-One fresh `closure_steward` worker reconciles the complete documentation framework
-during automatic closure; it does not implement or verify the task.
+Optimize for fewer main-agent decision turns and lower main-agent context
+consumption while preserving quality and completion. Aggregate support-worker
+token use is not the optimization target.
 
-Use Companion to protect main-agent context and attention. Give it routine
-read-only questions, peripheral or unfamiliar context, and coherent batches of
-operational reports (or explicitly requested investigator reports). It resolves
-routine matters, filters duplication and noise, retains the supporting detail,
-and returns one director brief. The main agent directly reads the task's Core
-Context Set and remains responsible for source it edits, defect identification,
-material acceptance decisions, critical evidence, and final claims.
+Use only these support roles:
 
-For a serious or ambiguous issue with independent search lanes, follow
-`investigation_team.md` before implementation only when those read-only lanes
-are materially useful. Investigators gather and challenge evidence and deliver
-the parent-defined terminal batch directly to
-Companion; the main agent receives compact receipts and one director brief,
-opens the decisive project sources,
-and alone passes the root-cause gate. If direct delivery is unavailable, the
-main agent hands the reports to Companion once. If investigators are unavailable,
-continue with main-agent evidence work only when safe and report the limitation.
+| Role | Ownership |
+| --- | --- |
+| Companion | One required persistent read-only secretary for project context, diary/module intake, large synthesis, and retained operational context. |
+| Investigator | A disposable read-only evidence worker for a bounded project or Internet context gap the main does not already understand. It supplements context; the main decides root cause and solution. |
+| Archivist | The documentation and deployment-handoff worker defined by `~/.codex/codex_workflow/archivist.md`. It owns concise assigned documentation, read-only Git reporting, and the closing Deployment Token Report. |
 
-The primary task exclusively owns the in-app browser, Chrome surface control,
-Computer Use and browser confirmations, exact tab identity, and live ChatGPT
-submission and read operations, including `codex-chatgpt-control`. Companion and
-the Closure Steward may prepare prompts or analyze supplied output, but
-must return any visible-surface operation before browser initialization.
-`chatgpt-delegate` means delegate to ChatGPT, not delegate browser control to a
-Codex worker.
+## Shared Deployment-State Entry
 
-Questions and small or odd bounded tasks use the direct main-agent fast path:
-do not initialize Companion or investigators; do not call `closure_steward`; omit
-worker statistics. Keep process proportional; this
-path does not become a deployment merely because Medium remains selected.
+Before route-specific planning or execution, complete the shared first-entry
+Companion and `agent_docs/` contract in `AGENTS.md`. Do not repeat that intake
+or create another Companion when it was completed earlier under either route.
 
-## Execution
+## Context Routing After Intake
 
-- Work in bounded context, inspection, implementation, verification, and review
-  stages.
-- When the optional evidence gate applies, finish the evidence wave and
-  main-agent root-cause decision before making a production change.
-- Batch independent, already-known reads, searches, metadata checks, and
-  isolated validation. Keep dependent or overlapping edits sequential.
-- Run checks concurrently only when they share no mutable build output,
-  generated files, fixtures, databases, ports, devices, or processes.
-- Keep detailed logs in artifacts and retain only the claim, result, exact
-  command or method, artifact path, critical excerpt if needed, and confidence.
-- Reinspect after a change, failure, contradiction, or newly discovered
-  dependency—not as routine repetition.
-- Preserve unrelated work, verify in proportion to risk, and never claim an
-  unrun check passed.
+Immediately after the shared intake and before broader source discovery or
+planning, use `agent_docs/` and Companion's initial brief to create a compact
+working-context map:
 
-## Plans and Durable Status
+- **Direct**: code, contracts, interfaces, and evidence the main must inspect to
+  own diagnosis, implementation, verification, integration, risk, or acceptance.
+- **Companion**: supporting modules, tools, configuration, logs, dependencies,
+  and other non-decisive project surfaces whose function or state should be
+  returned as one bounded summary.
+- **Investigator**: one bounded unfamiliar or ambiguous project or Internet
+  evidence gap not resolved by the main's intake or Companion's retained
+  context.
 
-When the user asks to plan an implementation, persist and begin it unless they
-request planning only. Record the goal, major milestones, overall progress,
-current position, and next milestone.
+Keep this map in working state, not durable documentation, and revise it only
+when material evidence changes relevance. Do not directly explore a Companion
+or Investigator surface unless it becomes necessary for main-owned production
+or a material decision; update the map explicitly when that happens. Combine
+related Companion questions, and create an Investigator only when independent
+investigation materially reduces an unresolved context gap.
 
-For durable or multi-session work, the main agent may update
-`agent_docs/project_progress.md` once to activate the bounded plan. The
-automatic closure worker owns final reconciliation and replaces
-`agent_docs/latest_session_work.md`; the main must not use it as scratch space.
+## Deployment Boundary
 
-Leave the end-of-deployment documentation reconciliation to the single
-`closure_steward` worker. Do not create a separate doc-writer for that process.
+At the start of each substantive Medium deployment, choose a unique lowercase
+underscore-safe deployment ID and include this hidden comment once in the first
+commentary message:
 
-For a blocker, preserve a clear continuation point and record the failed step,
-evidence, suspected cause, completed state, affected criterion, and required
-input. Never present partial work as complete.
+```text
+<!-- codex-workflow-deployment-start: <deployment_id> -->
+```
 
-## Automatic Deployment Handoff
+Keep it in the main session as Archivist's reporting boundary.
 
-Before the final response that completes, pauses, or blocks the deployment,
-follow `~/.codex/codex_workflow/closure_steward.md` exactly once and wait for its
-fresh worker. Pass only the route, a unique deployment ID, and closure state;
-the automatic handoff context fork supplies the main-agent history. Relay its
-result; do not duplicate its documentation, status, Git-status, or statistics work. A
-later substantive deployment receives a new ID and handoff, even in the same
-session.
+## Support Packages and Investigation
+
+Start each initial support package with **Task ID**, a logical identifier unique
+within the deployment, followed by the capsule for that role:
+
+| Role | Capsule parts |
+| --- | --- |
+| Companion | **Project Context Scope**; **Context Task + Goal**; **Main-Agent Context Guidance** |
+| Investigator | **Investigation Context**; **Evidence Question + Goal**; **Main-Agent Investigation Guidance** |
+| Archivist | **Documentation Context + Audience**; **Documentation Task + Goal**; **Main-Agent Documentation Guidance** |
+
+Treat these parts as the complete structure. Include only material context,
+references, boundaries, intended outcomes, main-owned decisions, constraints,
+and cautions. Require Task ID in every report. Follow-ups repeat it and send
+only changed capsule parts.
+
+The main may investigate and decide root cause because it holds the decisive
+project context. Use Companion for peripheral or bulky project context. Create
+Investigator only for a bounded evidence lane the main does not already
+understand and whose independent project inspection or Internet research would
+materially improve the decision. Investigator returns evidence and implications;
+it never owns the causal, architecture, implementation, or acceptance decision.
+
+## Rollout-Efficient Support
+
+- Batch independent main-owned reads, searches, metadata checks, and tool
+  operations into bounded calls.
+- When several support workers inform one decision, dispatch them together,
+  wait for the relevant set, and synthesize once. Start another batch only when
+  existing evidence materially changes the questions.
+- Do not poll support workers, request status-only updates, inspect activity
+  files, or repeatedly request available evidence. Use lifecycle events,
+  appropriately long waits, and `list_agents` only for genuine terminal-state
+  uncertainty.
+- Keep dependent or overlapping main-owned changes sequential and verification
+  proportionate to risk. Never weaken validation or claim an unrun check passed.
+
+## Fixed Boundaries
+
+- Medium has no workflow-imposed aggregate active-subagent limit.
+- Use exactly one persistent Companion. Limit other Medium workers to
+  Investigator and Archivist.
+- Give support workers bounded questions and sufficient context; retain every
+  material interpretation and final claim in the main.
+- Archivist owns documentation only. Keep implementation, production repair,
+  root-cause decisions, and verification with the main.
+- Preserve unrelated work and keep Git mutations within explicit authority.
+
+## Fast Path and Closure
+
+Use the worker-free direct fast path only when the complete request is a question
+or small bounded leaf task. Do not initialize deployment state merely because
+Medium remains selected.
+
+Before the final response that completes, pauses, or blocks a substantive
+deployment, update `agent_docs/project_diary.md` yourself when lasting knowledge
+changed, keeping it concise. Then follow `~/.codex/codex_workflow/archivist.md`
+exactly once. Require concise, canonical documentation; combine remaining
+verified updates and handoff work in one Archivist assignment when practical.
+Relay its handoff and exact six-column `$deployment-token-report` table. Use a
+new deployment ID for each later deployment.

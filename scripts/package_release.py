@@ -22,8 +22,8 @@ from typing import Iterable, Iterator
 
 
 PACKAGE_DIR_NAME = "codex_workflow"
-VERSION_FILE = "VERSION"
-USER_AGENTS_FILE = "user_AGENTS.md"
+VERSION_FILE = "operate/VERSION"
+USER_AGENTS_FILE = "operate/user_AGENTS.md"
 VERSION_MARKER = re.compile(r"codex-workflow-version:\s*([^\s<]+)")
 IDENTIFIER = re.compile(r"^[0-9A-Za-z-]+$")
 USER_ID_MARKER = "<!-- codex-workflow-user-id: viettran-edgeAI/codex_workflow -->"
@@ -34,12 +34,12 @@ BUILTIN_WORKERS = frozenset(
         "default_executor",
         "senior_executor",
         "tester",
-        "doc-writer",
+        "archivist",
         "companion",
         "investigator",
-        "closure_steward",
     }
 )
+BUILTIN_SKILLS = frozenset({"deployment-token-report"})
 
 
 class ReleaseError(ValueError):
@@ -205,7 +205,7 @@ def _validate_runtime(package_root: Path) -> None:
     command = [
         sys.executable,
         "-B",
-        str(package_root / "workflow.py"),
+        str(package_root / "runtime" / "workflow.py"),
         "validate",
         "--package-root",
         str(package_root),
@@ -286,19 +286,16 @@ def _verify_member_names(names: Iterable[str]) -> list[str]:
     required = {
         f"{PACKAGE_DIR_NAME}/{VERSION_FILE}",
         f"{PACKAGE_DIR_NAME}/{USER_AGENTS_FILE}",
-        f"{PACKAGE_DIR_NAME}/bootstrap.md",
-        f"{PACKAGE_DIR_NAME}/install.md",
-        f"{PACKAGE_DIR_NAME}/update.md",
-        f"{PACKAGE_DIR_NAME}/check_update.md",
-        f"{PACKAGE_DIR_NAME}/remove.md",
-        f"{PACKAGE_DIR_NAME}/enable_auto_check_update.md",
-        f"{PACKAGE_DIR_NAME}/enable_auto_update.md",
-        f"{PACKAGE_DIR_NAME}/disable_auto_update.md",
-        f"{PACKAGE_DIR_NAME}/disable_auto_check_update.md",
-        f"{PACKAGE_DIR_NAME}/companion.md",
-        f"{PACKAGE_DIR_NAME}/closure_steward.md",
-        f"{PACKAGE_DIR_NAME}/investigation_team.md",
-        f"{PACKAGE_DIR_NAME}/workflow.py",
+        f"{PACKAGE_DIR_NAME}/operate/bootstrap.md",
+        f"{PACKAGE_DIR_NAME}/operate/install.md",
+        f"{PACKAGE_DIR_NAME}/operate/update.md",
+        f"{PACKAGE_DIR_NAME}/operate/check_update.md",
+        f"{PACKAGE_DIR_NAME}/operate/remove.md",
+        f"{PACKAGE_DIR_NAME}/operate/personalization_guide.md",
+        f"{PACKAGE_DIR_NAME}/operate/enable.md",
+        f"{PACKAGE_DIR_NAME}/operate/disable.md",
+        f"{PACKAGE_DIR_NAME}/archivist.md",
+        f"{PACKAGE_DIR_NAME}/runtime/workflow.py",
         f"{PACKAGE_DIR_NAME}/runtime/__init__.py",
         f"{PACKAGE_DIR_NAME}/runtime/_toml.py",
         f"{PACKAGE_DIR_NAME}/runtime/backup.py",
@@ -314,11 +311,18 @@ def _verify_member_names(names: Iterable[str]) -> list[str]:
         f"{PACKAGE_DIR_NAME}/runtime/runtime_ops.py",
         f"{PACKAGE_DIR_NAME}/runtime/transaction.py",
         f"{PACKAGE_DIR_NAME}/resources/personalization.md",
-        f"{PACKAGE_DIR_NAME}/resources/auto_check_update.md",
     }
     required.update(
         f"{PACKAGE_DIR_NAME}/agents/{worker}.toml" for worker in BUILTIN_WORKERS
     )
+    for skill in BUILTIN_SKILLS:
+        required.update(
+            {
+                f"{PACKAGE_DIR_NAME}/skills/{skill}/SKILL.md",
+                f"{PACKAGE_DIR_NAME}/skills/{skill}/agents/openai.yaml",
+                f"{PACKAGE_DIR_NAME}/skills/{skill}/scripts/report_tokens.py",
+            }
+        )
     missing = sorted(required.difference(normalized))
     if missing:
         raise ReleaseError("archive is missing: " + ", ".join(missing))
@@ -328,6 +332,7 @@ def _verify_member_names(names: Iterable[str]) -> list[str]:
         f"{PACKAGE_DIR_NAME}/agents/executor_terra.toml",
         f"{PACKAGE_DIR_NAME}/agents/explorer.toml",
         f"{PACKAGE_DIR_NAME}/agents/end_of_session.toml",
+        f"{PACKAGE_DIR_NAME}/agents/wave_barrier.toml",
     }
     present_retired = sorted(retired_workers.intersection(normalized))
     if present_retired:
@@ -348,6 +353,18 @@ def _verify_member_names(names: Iterable[str]) -> list[str]:
         raise ReleaseError(
             "archive contains unsupported worker roles: "
             + ", ".join(unexpected_workers)
+        )
+    present_skills = {
+        parts[2]
+        for name in normalized
+        if name.startswith(f"{PACKAGE_DIR_NAME}/skills/")
+        for parts in [name.split("/")]
+        if len(parts) > 3
+    }
+    unexpected_skills = sorted(present_skills - BUILTIN_SKILLS)
+    if unexpected_skills:
+        raise ReleaseError(
+            "archive contains unsupported skills: " + ", ".join(unexpected_skills)
         )
     return normalized
 
@@ -426,7 +443,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output-dir", type=Path, default=repository_root() / "dist", help="asset directory"
     )
-    parser.add_argument("--release-tag", help="validate a release tag such as v1.1.4")
+    parser.add_argument("--release-tag", help="validate a release tag such as v1.1.15")
     parser.add_argument("--version", help="validate an expected package version")
     parser.add_argument(
         "--verify",

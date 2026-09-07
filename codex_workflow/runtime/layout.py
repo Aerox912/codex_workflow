@@ -9,7 +9,6 @@ from pathlib import Path
 from ._toml import tomllib
 from .errors import ValidationError
 from .markers import (
-    AUTO_CHECK_UPDATE_PLACEHOLDER,
     USER_MANAGED,
     extract,
     validate_project_template,
@@ -20,6 +19,9 @@ from .personalization import materialize_personalization
 PROJECT_ID = "<!-- codex-workflow-id: viettran-edgeAI/codex_workflow -->"
 USER_ID = "<!-- codex-workflow-user-id: viettran-edgeAI/codex_workflow -->"
 WORKER_MARKER = re.compile(r"^# codex-workflow-worker: ([A-Za-z0-9_-]+)$", re.MULTILINE)
+SKILL_MARKER = re.compile(
+    r"^<!-- codex-workflow-skill: ([a-z0-9-]+) -->$", re.MULTILINE
+)
 PROJECT_STATE = "state.json"
 USER_STATE = "install_state.json"
 BUILTIN_WORKERS = frozenset(
@@ -27,41 +29,61 @@ BUILTIN_WORKERS = frozenset(
         "default_executor",
         "senior_executor",
         "tester",
-        "doc-writer",
+        "archivist",
         "companion",
         "investigator",
-        "closure_steward",
     }
 )
+BUILTIN_SKILLS = frozenset({"deployment-token-report"})
 
 
 @dataclass(frozen=True)
 class PackageLayout:
     root: Path
+    operate: Path
     project_template: Path
     agent_templates: Path
     project_docs: Path
+    skill_templates: Path
 
     @classmethod
     def resolve(cls, root: Path, *, allow_legacy: bool = False) -> "PackageLayout":
         root = root.resolve()
-        if not (root / "VERSION").is_file():
+        if not cls._has_version(root):
             nested = root / "codex_workflow"
-            if nested.is_dir() and (nested / "VERSION").is_file():
+            if nested.is_dir() and cls._has_version(nested):
                 root = nested
             else:
                 raise ValidationError(f"package root does not contain VERSION: {root}")
+        operate = (
+            root / "operate" if (root / "operate" / "VERSION").is_file() else root
+        )
+        if operate == root and not allow_legacy:
+            raise ValidationError(f"package operational files are missing: {root / 'operate'}")
         if (root / "templates" / "AGENTS.md").is_file():
             layout = cls(
                 root,
+                operate,
                 root / "templates" / "AGENTS.md",
                 root / "templates" / "agents",
                 root / "templates" / "project_docs",
+                root / "templates" / "skills",
             )
         else:
-            layout = cls(root, root / "AGENTS.md", root / "agents", root / "project_docs")
+            layout = cls(
+                root,
+                operate,
+                root / "AGENTS.md",
+                root / "agents",
+                root / "project_docs",
+                root / "skills",
+            )
         layout.validate(allow_legacy=allow_legacy)
         return layout
+
+    @staticmethod
+    def _has_version(root: Path) -> bool:
+        return (root / "operate" / "VERSION").is_file() or (root / "VERSION").is_file()
 
     def validate(self, *, allow_legacy: bool = False) -> None:
         symlinks = [
@@ -81,7 +103,7 @@ class PackageLayout:
             version,
         ):
             raise ValidationError(f"invalid package VERSION: {version!r}")
-        user_agents = self.root / "user_AGENTS.md"
+        user_agents = self.operate / "user_AGENTS.md"
         if not user_agents.is_file():
             raise ValidationError("package user_AGENTS.md marker is missing")
         user_agents_text = user_agents.read_text(encoding="utf-8")
@@ -89,31 +111,21 @@ class PackageLayout:
             raise ValidationError("package user_AGENTS.md marker is missing")
         if f"<!-- codex-workflow-version: {version} -->" not in user_agents_text:
             raise ValidationError("package version and user marker disagree")
-        managed_user_agents = extract(user_agents_text, USER_MANAGED)
+        extract(user_agents_text, USER_MANAGED)
         if not allow_legacy:
-            if managed_user_agents.count(AUTO_CHECK_UPDATE_PLACEHOLDER) != 1:
-                raise ValidationError(
-                    "package user_AGENTS.md auto-check placeholder is missing or duplicated"
-                )
             required = [
-                "workflow.py",
+                "runtime/workflow.py",
                 "heavy_route.md",
                 "medium_route.md",
-                "companion.md",
-                "investigation_team.md",
-                "closure_steward.md",
-                "install.md",
-                "bootstrap.md",
-                "update.md",
-                "check_update.md",
-                "remove.md",
-                "enable_auto_check_update.md",
-                "enable_auto_update.md",
-                "disable_auto_update.md",
-                "disable_auto_check_update.md",
-                "personalization_guide.md",
-                "enable.md",
-                "disable.md",
+                "archivist.md",
+                "operate/install.md",
+                "operate/bootstrap.md",
+                "operate/update.md",
+                "operate/check_update.md",
+                "operate/remove.md",
+                "operate/personalization_guide.md",
+                "operate/enable.md",
+                "operate/disable.md",
                 "runtime/__init__.py",
                 "runtime/_toml.py",
                 "runtime/backup.py",
@@ -127,19 +139,11 @@ class PackageLayout:
                 "runtime/release.py",
                 "runtime/runtime_ops.py",
                 "runtime/transaction.py",
-                "resources/auto_check_update.md",
                 "resources/personalization.md",
             ]
             missing = [relative for relative in required if not (self.root / relative).is_file()]
             if missing:
                 raise ValidationError(f"package runtime files missing: {missing}")
-            auto_check_instruction = (
-                self.root / "resources" / "auto_check_update.md"
-            ).read_text(encoding="utf-8")
-            if "auto-check-update --json" not in auto_check_instruction:
-                raise ValidationError(
-                    "package automatic-check instruction is missing its command"
-                )
             validate_project_template(self.project_template.read_text(encoding="utf-8"))
         required_docs = {
             "project_overview.md",
@@ -178,10 +182,32 @@ class PackageLayout:
                     encoding="utf-8"
                 )
             )
+            skills = self.skill_names
+            if skills != BUILTIN_SKILLS:
+                raise ValidationError(
+                    "package skill set is incomplete or unsupported; "
+                    f"missing={sorted(BUILTIN_SKILLS - skills)}, "
+                    f"unexpected={sorted(skills - BUILTIN_SKILLS)}"
+                )
+            for skill in skills:
+                skill_root = self.skill_templates / skill
+                required_skill_files = (
+                    skill_root / "SKILL.md",
+                    skill_root / "agents" / "openai.yaml",
+                    skill_root / "scripts" / "report_tokens.py",
+                )
+                if not all(path.is_file() for path in required_skill_files):
+                    raise ValidationError(f"package skill files are incomplete: {skill}")
+                entry = skill_root / "SKILL.md"
+                match = SKILL_MARKER.search(entry.read_text(encoding="utf-8"))
+                if match is None or match.group(1) != skill:
+                    raise ValidationError(
+                        f"skill ownership marker missing or wrong: {skill}"
+                    )
 
     @property
     def version(self) -> str:
-        lines = (self.root / "VERSION").read_text(encoding="utf-8").splitlines()
+        lines = (self.operate / "VERSION").read_text(encoding="utf-8").splitlines()
         if len(lines) != 1 or not lines[0]:
             raise ValidationError("VERSION must contain exactly one non-empty line")
         return lines[0]
@@ -189,6 +215,16 @@ class PackageLayout:
     @property
     def worker_names(self) -> set[str]:
         return {path.stem for path in self.agent_templates.glob("*.toml") if path.is_file()}
+
+    @property
+    def skill_names(self) -> set[str]:
+        if not self.skill_templates.is_dir():
+            return set()
+        return {
+            path.name
+            for path in self.skill_templates.iterdir()
+            if path.is_dir() and (path / "SKILL.md").is_file()
+        }
 
     @property
     def default_personalization(self) -> Path:
@@ -206,6 +242,10 @@ class RuntimePaths:
     @property
     def agents(self) -> Path:
         return self.codex_home / "agents"
+
+    @property
+    def skills(self) -> Path:
+        return self.codex_home / "skills"
 
     @property
     def config_toml(self) -> Path:

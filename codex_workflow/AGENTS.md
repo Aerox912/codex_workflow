@@ -2,126 +2,106 @@
 <!-- codex-workflow-managed-start -->
 # AGENTS.md
 
-## Project Context
-
-
 ## Design Principles
 
 - Keep modules cohesive, interfaces explicit, coupling minimal, and behavior
   testable, replaceable, and reusable.
-- Define proportionate acceptance and verification before implementation. Keep
-  related tests cohesive; never weaken coverage, assertions, or failure
-  visibility to save time or tokens.
-- Preserve unrelated user work and use verified facts in durable documentation.
-
-Project personalization and project-local instructions are in protected regions
-at the end of this file. They override conflicting workflow defaults, but not
-higher-level instructions.
+- Define proportionate acceptance and verification before implementation. Never
+  weaken coverage, assertions, or failure visibility to save time or tokens.
+- Avoid unnecessary process or safeguards; preserve unrelated user work and use
+  verified facts in durable documentation.
 
 ## Working State
 
 - `deployment state`: planning or executing a broad, possibly multi-session
   deployment plan.
-- `leaf state`: work outside that plan, including general questions and small,
-  bounded edits or operations.
+- `leaf state`: otherwise, including general questions and small bounded
+  operations.
 
 ## Project Documentation
 
-The durable project documents are under `agent_docs/`:
+Use the durable project documents under `agent_docs/`:
 
 - `project_overview.md`: goals, architecture, workflow, and major decisions.
 - `project_core_tech.md`: concise special technology or architecture notes.
 - `project_structure.md`: layout, modules, components, and ownership.
 - `project_progress.md`: goal, overall progress, current position, next milestone.
-- `project_diary.md`: lasting decisions, discarded approaches, and lessons.
+- `project_diary.md`: distilled decisions, discarded approaches, mistakes, and
+  reusable lessons.
 - `latest_session_work.md`: detailed handoff evidence and continuation point.
 - Module-specific documents, when present.
 
-`project_progress.md` and `latest_session_work.md` may be edited only in
-`deployment state` or when the user explicitly requests it. The main agent owns
-them during normal execution. During automatic deployment closure, the single
-`closure_steward` worker owns reconciliation of the complete documentation
-framework; no other worker participates in that closure update.
+In deployment state, you own `project_diary.md` and record only concise, lasting
+decisions, discarded approaches, mistakes, and reusable lessons. Archivist owns
+assigned project and public documentation from verified facts, including
+overview, structure, core technologies, and closing updates to progress and
+latest-session documents. Require concise edits that remove stale or redundant
+detail, assign module documents explicitly, and perform a direct user-requested
+document edit yourself outside deployment.
 
 Keep raw logs, temporary reasoning, and short-lived checkpoints out of durable
-documents. Never delete a main project document without warning the user and
-receiving a second explicit confirmation.
+documents; give each fact one canonical home. Never delete a main project
+document without warning and a second explicit confirmation.
 
 ## Route Selection
 
-There are three routes:
+Select one of these routes: **Light** works directly in leaf state without subagents;
+**Medium** keeps planning, diagnosis, implementation, and verification with the
+main agent and uses bounded support from `~/.codex/codex_workflow/medium_route.md`;
+**Heavy** delegates bounded production, verification, documentation,
+project-context, and Internet research under `~/.codex/codex_workflow/heavy_route.md`.
 
-- **Light**: leaf-state work. The main agent works directly; no subagents.
-- **Medium**: deployment-state work performed by the main agent, with no
-  delegated production executor or tester. Companion provides workflow-mode
-  secretary and context support; an optional read-only evidence wave and the
-  documentation-only Closure Steward handoff never own implementation,
-  verification, or root-cause decisions. Read
-  `~/.codex/codex_workflow/medium_route.md`.
-- **Heavy**: deployment-state work orchestrated through specialized workers.
-  Read `~/.codex/codex_workflow/heavy_route.md`.
+Follow the user's route selection. Use Light when none is selected; do not infer
+Medium or Heavy. Keep the route until the user changes it or the session ends.
+Enter deployment state for Medium or Heavy only when the work is substantive.
 
-Heavy requires the session's currently selected main agent to be
-`gpt-6-astra`, `gpt-5.6-sol`, or `gpt-5.6-terra` with subagent support available. This is a
-session-model requirement, not a persistent workflow setting. If the selected
-model is ineligible or its subagent support is unavailable, do not initialize
-Companion or any other worker; ask the user to switch the current session to
-Astra, Sol, or Terra. Never pin or rewrite the main model in `config.toml`.
+## Rollout Efficiency
 
-The user selects the route for the session. If unspecified, use Light; do not
-infer Medium or Heavy. Light implies `leaf state`; Medium and Heavy imply
-`deployment state` only for substantive work. Their direct fast path remains
-`leaf state`. Keep the selected route until the user changes it or the session
-ends.
+Batch independent reads, searches, metadata checks, and other known-input
+operations. Keep dependencies and overlapping mutations sequential. In Medium or
+Heavy, dispatch independent workers, wait for the
+relevant set, and synthesize their reports once.
 
-## Context Loading
+Read personalization and project-local instructions from the protected regions
+at the end of this file. Apply them over workflow defaults subject to higher
+instruction priority.
 
-- In Light, inspect only material needed for the current task.
-- The primary task exclusively owns host-bound visible surfaces: the in-app
-  browser, Chrome surface control, Computer Use and browser confirmations,
-  exact tab identity, and live ChatGPT submission and read operations. Never
-  delegate those operations. Workers may prepare prompts and analyze returned
-  output only.
-- Before initializing deployment state, classify the request. Questions and
-  small or odd bounded tasks use the direct main-agent fast path even when
-  Medium or Heavy is selected: call no worker, including Companion and
-  `closure_steward`, and produce no worker statistics.
-- For every substantive Medium or Heavy deployment, read the selected route and
-  `companion.md`, then initialize or reuse the single persistent Companion.
-  Read `investigation_team.md` before a Heavy evidence wave or an explicitly
-  requested Medium evidence wave.
-- Give Companion the session goal, known constraints, escalation boundaries,
-  and evidence format. It is the main agent's secretary and office wrapper: it
-  completes routine read-only work, retains context, filters coherent batches of
-  operational reports, and returns the director brief defined in its contract.
-- Do not spend main-agent turns reading or re-diagnosing every routine report.
-  When a worker batch exists, register one coherent batch with Companion and
-  name it in the dispatch envelopes; dispatched workers deliver detailed
-  terminal reports directly to it and return compact receipts to the main agent.
-  Companion resolves routine matters and escalates only material knowledge or
-  decisions in one director brief. If direct delivery is unavailable, hand
-  Companion the compact batch once.
-- The main agent directly reads task-critical project documentation, relevant
-  source paths and contracts, and decisive failure evidence. It owns defect
-  identification, root-cause adjudication, architecture, scope, and final claims.
-- For serious or ambiguous issues with independent search lanes, Heavy may use
-  read-only investigators under `investigation_team.md`; Medium may use them
-  only as explicitly requested evidence support. Investigators gather evidence;
-  Companion filters their terminal report batch; the main agent opens decisive
-  evidence and adjudicates the root cause.
-- Resolve stale or conflicting project status with targeted evidence. Load only
-  relevant module documentation and avoid replaying raw logs, large diffs,
-  directory listings, or complete source files into the main context.
-- Before the final response that completes, pauses, or blocks each substantive
-  Medium or Heavy deployment, run the automatic handoff defined in
-  `closure_steward.md` exactly once. Its worker inherits recent main-agent
-  context and performs the complete documentation-framework update. The
-  handoff is not a user command.
+## Required Documentation Read
+
+On the first `deployment state` entry under either Medium or Heavy, immediately
+create one persistent Companion with `agent_type="companion"`,
+`task_name="companion"`, and `fork_turns="none"`, or reuse the existing target.
+Do this before planning, modifying files, or dispatching any other worker. Reuse
+that Companion after route changes; do not create a second one.
+
+Give its first assignment the current route, goal, relevant constraints, and a
+bounded diary/module intake or other substantial context consolidation. It
+retains supporting detail and returns only a task-relevant director brief.
+
+If you have not already completed the session-level intake, directly read the
+complete current `agent_docs/` framework exactly once: overview, core
+technology, structure, progress, diary, latest session work, and every
+module-specific Markdown document. This one direct read is shared across Medium
+and Heavy. Never repeat it later in the session. Use retained context or assign
+Companion a bounded diary/module intake, large synthesis, delta, or conflict
+check when freshness or detailed supporting context matters. Missing or
+unreadable required documents leave deployment entry incomplete; report the
+intake blocker.
+
+Do not overuse Companion. Each rollout reloads its persistent context. Combine
+related questions, reuse earlier findings, and avoid status-only requests, tiny
+lookups already answerable from main context, or repeated broad summaries. Use
+it when one consolidated result replaces multiple main reads or tool turns,
+suppresses bulky evidence, or will be reused later.
 
 ## Platform Paths
 
-Workflow documents use `/` as a platform-neutral separator. Translate paths to
-the current operating system and shell when running filesystem commands.
+The main task exclusively owns visible browser control, screenshots,
+confirmations, exact tab identity, and live ChatGPT submission and read
+operations. Workers may prepare prompts and analyze returned evidence only.
+
+Interpret `/` as a platform-neutral separator and translate paths for the
+current operating system and shell.
 <!-- codex-workflow-managed-end -->
 
 <!-- codex-workflow-project-personalization-start -->

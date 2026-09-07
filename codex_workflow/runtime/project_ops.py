@@ -21,10 +21,10 @@ from .transaction import Mutation
 
 
 GITIGNORE_ENTRIES = (
-    "agent_docs/",
     ".codex_workflow_hidden_resources/",
     "AGENTS.md",
 )
+LEGACY_GITIGNORE_ENTRIES = ("agent_docs/", *GITIGNORE_ENTRIES)
 GITIGNORE_MANAGED_START = "# codex-workflow-managed-start"
 GITIGNORE_MANAGED_END = "# codex-workflow-managed-end"
 BOOTSTRAP_DOC_MARKER = "<!-- codex-workflow-bootstrap-template -->"
@@ -51,17 +51,21 @@ def _append_gitignore_block(current: str, entries: tuple[str, ...]) -> str:
     return prefix + _gitignore_block(entries) + "\n"
 
 
-def _remove_unmarked_gitignore_entries(current: str) -> str:
+def _remove_unmarked_gitignore_entries(
+    current: str, entries: tuple[str, ...]
+) -> str:
     retained = [
         line
         for line in current.splitlines()
-        if not (line.strip() in GITIGNORE_ENTRIES and not line.lstrip().startswith("#"))
+        if not (line.strip() in entries and not line.lstrip().startswith("#"))
     ]
     rendered = "\n".join(retained).rstrip()
     return f"{rendered}\n" if rendered else ""
 
 
-def _plan_gitignore(project: ProjectPaths) -> Mutation | None:
+def _plan_gitignore(
+    project: ProjectPaths, *, migrate_legacy: bool
+) -> Mutation | None:
     """Add a removable, workflow-owned block to ``.gitignore``."""
 
     path = project.gitignore
@@ -77,19 +81,22 @@ def _plan_gitignore(project: ProjectPaths) -> Mutation | None:
         start, end = managed_range
         managed_entries = lines[start + 1 : end]
         if (
-            any(entry not in GITIGNORE_ENTRIES for entry in managed_entries)
+            any(entry not in LEGACY_GITIGNORE_ENTRIES for entry in managed_entries)
             or len(managed_entries) != len(set(managed_entries))
         ):
             raise ValidationError("project .gitignore has invalid workflow-managed rules")
-        existing = {
+        outside_lines = lines[:start] + lines[end + 1 :]
+        outside_entries = {
             line.strip()
-            for line in lines
+            for line in outside_lines
             if line.strip() and not line.lstrip().startswith("#")
         }
-        missing = [entry for entry in GITIGNORE_ENTRIES if entry not in existing]
-        if not missing:
+        desired_managed = [
+            entry for entry in GITIGNORE_ENTRIES if entry not in outside_entries
+        ]
+        if managed_entries == desired_managed:
             return None
-        rendered_lines = lines[:end] + missing + lines[end:]
+        rendered_lines = lines[: start + 1] + desired_managed + lines[end:]
         rendered = "\n".join(rendered_lines).rstrip() + "\n"
         return text_mutation(path, rendered)
 
@@ -99,13 +106,17 @@ def _plan_gitignore(project: ProjectPaths) -> Mutation | None:
         if line.strip() and not line.lstrip().startswith("#")
     }
     # Legacy releases wrote all three entries without markers. A recognized
-    # workflow project containing that complete set can safely adopt it into a
-    # removable block during its next install/update operation.
-    if set(GITIGNORE_ENTRIES).issubset(existing):
+    # workflow project containing that complete set can safely retire the
+    # agent_docs/ rule and adopt the remaining entries into a removable block
+    # during its next install/update operation.
+    if migrate_legacy and set(LEGACY_GITIGNORE_ENTRIES).issubset(existing):
         return text_mutation(
             path,
             _append_gitignore_block(
-                _remove_unmarked_gitignore_entries(current), GITIGNORE_ENTRIES
+                _remove_unmarked_gitignore_entries(
+                    current, LEGACY_GITIGNORE_ENTRIES
+                ),
+                GITIGNORE_ENTRIES,
             ),
         )
     missing = [entry for entry in GITIGNORE_ENTRIES if entry not in existing]
@@ -136,8 +147,11 @@ def _plan_gitignore_remove(project: ProjectPaths) -> Mutation | None:
         for line in lines
         if line.strip() and not line.lstrip().startswith("#")
     }
-    if set(GITIGNORE_ENTRIES).issubset(existing):
-        return text_mutation(path, _remove_unmarked_gitignore_entries(current))
+    if set(LEGACY_GITIGNORE_ENTRIES).issubset(existing):
+        return text_mutation(
+            path,
+            _remove_unmarked_gitignore_entries(current, LEGACY_GITIGNORE_ENTRIES),
+        )
     return None
 
 
@@ -187,11 +201,13 @@ def plan_project_install(package: PackageLayout, project: ProjectPaths) -> Opera
     direct_personalization = materialize_personalization(personalization)
     mutations: list[Mutation] = []
     warnings: list[str] = []
+    recognized_project = False
     entry_path = project.disabled if disabled_exists else project.active
     enabled = not disabled_exists
     if active_exists or disabled_exists:
         current = entry_path.read_text(encoding="utf-8")
         if PROJECT_ID in current:
+            recognized_project = True
             if WORKFLOW_MANAGED.start not in current or PROJECT_LOCAL.start not in current:
                 raise ValidationError(
                     "legacy workflow entry point requires update migration before installation"
@@ -251,8 +267,15 @@ def plan_project_install(package: PackageLayout, project: ProjectPaths) -> Opera
         "workflow_version": package.version,
         "enabled": enabled,
     }
-    mutations.append(json_mutation(project.state, project_state))
-    gitignore_mutation = _plan_gitignore(project)
+    state_mutation = json_mutation(project.state, project_state)
+    if (
+        not project.state.is_file()
+        or project.state.read_bytes() != state_mutation.content
+    ):
+        mutations.append(state_mutation)
+    gitignore_mutation = _plan_gitignore(
+        project, migrate_legacy=recognized_project
+    )
     if gitignore_mutation is not None:
         mutations.append(gitignore_mutation)
     cleanup_mutations, cleanup_dirs = _plan_source_cleanup(project)
@@ -261,7 +284,7 @@ def plan_project_install(package: PackageLayout, project: ProjectPaths) -> Opera
         warnings.append(f"{project.source_dir} will be deleted after installation")
     actions = [
         {
-            "role": "doc-writer",
+            "role": "archivist",
             "action": "initialize or verify the Project Documentation Framework",
             "required": True,
             "files": action_docs,
@@ -397,7 +420,7 @@ def plan_project_update(
         "enabled": not disabled_exists,
     }
     mutations.append(json_mutation(project.state, state))
-    gitignore_mutation = _plan_gitignore(project)
+    gitignore_mutation = _plan_gitignore(project, migrate_legacy=True)
     if gitignore_mutation is not None:
         mutations.append(gitignore_mutation)
     return mutations, []
@@ -434,6 +457,8 @@ def plan_project_remove(
         local_instructions = extract(current, PROJECT_LOCAL)
         if local_instructions:
             mutations.append(text_mutation(project.active, local_instructions.rstrip() + "\n"))
+            if entry == project.disabled:
+                mutations.append(Mutation(entry, None))
             warnings.append(
                 f"workflow wrapper will be removed and project-local instructions restored to {project.active}"
             )
@@ -460,13 +485,25 @@ def plan_project_remove(
 
     cleanup_dirs: list[Path] = []
     if hidden_dir.is_dir():
+        planned_paths = {
+            mutation.path.resolve(strict=False) for mutation in mutations
+        }
+        legacy_resources: list[Path] = []
         for path in sorted(hidden_dir.rglob("*")):
             if path.is_symlink():
                 raise ValidationError(f"refusing to remove symlink in project resource: {path}")
             if path.is_dir():
                 cleanup_dirs.append(path)
+            elif path.is_file():
+                resolved = path.resolve(strict=False)
+                if resolved not in planned_paths:
+                    mutations.append(Mutation(path, None))
+                    planned_paths.add(resolved)
+                    legacy_resources.append(path)
             elif path.exists() and not path.is_file():
                 raise ValidationError(f"project resource contains a non-file entry: {path}")
+        if legacy_resources:
+            warnings.append("legacy project workflow resources will be permanently deleted")
         cleanup_dirs.append(hidden_dir)
 
     return mutations, cleanup_dirs, warnings
