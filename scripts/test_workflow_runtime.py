@@ -705,6 +705,28 @@ class PlatformSettingsTests(unittest.TestCase):
 
 
 class ReleaseTests(unittest.TestCase):
+    def test_fork_version_utility_supports_both_operational_layouts(self) -> None:
+        from set_fork_version import set_fork_version
+
+        for relocated in (False, True):
+            with self.subTest(relocated=relocated), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                operate = root / "codex_workflow"
+                if relocated:
+                    operate /= "operate"
+                operate.mkdir(parents=True)
+                (operate / "VERSION").write_text("1.1.4-patch.3\n", encoding="utf-8")
+                (operate / "user_AGENTS.md").write_text(
+                    "<!-- codex-workflow-version: 1.1.4-patch.3 -->\n", encoding="utf-8"
+                )
+                plugin = root / "plugins/codex-workflow/.codex-plugin/plugin.json"
+                plugin.parent.mkdir(parents=True)
+                plugin.write_text(json.dumps({"name": "codex-workflow", "version": "1.1.4-patch.3"}), encoding="utf-8")
+                result = set_fork_version(root, "1.1.15", 1)
+                self.assertEqual(result["version"], "1.1.15-patch.1")
+                self.assertEqual(len(result["changed"]), 3)
+                self.assertEqual(set_fork_version(root, "1.1.15", 1)["changed"], [])
+
     def test_fork_workers_use_astra_and_host_only_browser_control(self) -> None:
         expected = {
             "default_executor": "medium", "senior_executor": "xhigh",

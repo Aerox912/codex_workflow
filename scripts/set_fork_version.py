@@ -27,8 +27,11 @@ def set_fork_version(root: Path, upstream_version: str, patch_number: int) -> di
     if patch_number < 1:
         raise ForkVersionError("patch number must be at least 1")
 
-    version_path = root / "codex_workflow" / "VERSION"
-    user_agents_path = root / "codex_workflow" / "user_AGENTS.md"
+    operate = root / "codex_workflow" / "operate"
+    if not (operate / "VERSION").is_file():
+        operate = root / "codex_workflow"
+    version_path = operate / "VERSION"
+    user_agents_path = operate / "user_AGENTS.md"
     plugin_path = root / "plugins" / "codex-workflow" / ".codex-plugin" / "plugin.json"
 
     current_version = version_path.read_text(encoding="utf-8").strip()
