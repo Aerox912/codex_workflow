@@ -17,9 +17,10 @@ generated outputs, and project-owned content.
   marker region.
 - Project-local instructions: opaque preserved content in a separate marker
   region.
-- Project documentation updates: main owns `project_diary.md`; Archivist owns
-  assigned public and project documents, including closing progress and
-  latest-session updates and the deployment token report.
+- Project documentation updates: main owns `project_progress.md`,
+  `project_diary.md`, and `latest_session_work.md`; Archivist owns other
+  assigned public and project documents plus the closing read-only Git handoff
+  and deployment token report.
 
 ## Module boundaries
 

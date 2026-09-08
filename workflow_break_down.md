@@ -192,8 +192,9 @@ in the files that own it:
   their complete orchestration contracts and static invariants;
 - `AGENTS.md` defines shared project rules and route selection;
 - `runtime/platform_settings.py` owns the documented Codex platform settings;
-- `archivist.md` and the Deployment Token Report skill own automatic
-  closure and reporting.
+- `archivist.md` and the Deployment Token Report skill define automatic
+  Archivist closure and reporting after the main updates the three
+  deployment-state documents.
 
 The built-in roles are `default_executor`, `senior_executor`, `tester`,
 `archivist`, `companion`, and `investigator`. The default
@@ -262,7 +263,7 @@ lifecycle of every worker directly.
 | Default Executor | Bounded production discovery, implementation, self-check, and ordinary repair | Only its assigned mutable surface |
 | Senior Executor | One exceptionally difficult reasoning or production package | At most one instance; not the default executor |
 | Tester | Independent verification and assigned test assets | Designs suitable tests from acceptance intent and risks; no production fixes |
-| Archivist | Assigned public and project documentation, closing progress and latest-session updates, read-only Git handoff, and token report | Main owns the project diary; documentation uses verified facts; no production or Git mutations |
+| Archivist | Assigned public and project documentation outside the three main-owned deployment-state documents, read-only Git handoff, and token report | Main owns progress, diary, and latest-session updates; Archivist uses verified facts and performs no production or Git mutations |
 
 Companion and Investigator are separated by lifecycle and purpose. Companion is
 the one persistent secretary for broad project context, diary/module intake,
@@ -359,7 +360,7 @@ Heavy keeps only stable platform, safety, and ownership rules rigid:
 - the main directly owns every worker's lifecycle;
 - concurrent mutable packages have non-overlapping ownership;
 - Tester does not repair production code and Archivist does not infer
-  unverified behavior;
+  unverified behavior or edit the main-owned deployment-state documents;
 - workers preserve unrelated user work and do not mutate Git without authority;
 - one Archivist owns closure reporting for each substantive deployment;
 - the Heavy main never performs production, deployment, repair, or independent
@@ -378,7 +379,8 @@ itself.
 
 `project_progress.md` stores the active goal and next milestone;
 `latest_session_work.md` stores the last deployment outcome, evidence, blockers,
-and continuation point. On the first entry to deployment state in a session,
+and continuation point. The main owns both files and `project_diary.md`. On the
+first entry to deployment state in a session,
 Companion is initialized immediately. The main then directly reads all six core
 documents and every module-specific Markdown document under `agent_docs/`
 exactly once. This one read is shared by Medium and Heavy. The main does not
@@ -393,18 +395,18 @@ for each substantive deployment:
 <!-- codex-workflow-deployment-start: <deployment_id> -->
 ```
 
-Before the final response, the main updates `project_diary.md` when needed and
-assigns one Archivist the deployment handoff, combining remaining concise
-documentation updates when practical. The main may reuse an informed worker or
-create one with recent inherited context. Archivist updates the assigned
-documents, progress, and latest-session work, performs compact closing checks,
-and reports read-only Git state. After sealing its writes, it
-invokes `$deployment-token-report` for that deployment ID. The deterministic
-parser finds the boundary in the main-agent rollout and returns `Agent`,
-`Quantity`, `Rollouts`, `Cached input`, `Input`, and `Output`. Companion remains
-the session's required persistent context worker. Closure and reporting are
-reserved for substantive deployments. Both main and Archivist keep
-`agent_docs/` canonical and brief enough for repeated intake.
+Before the final response, the main updates `project_progress.md`,
+`project_diary.md`, and `latest_session_work.md`, then assigns one Archivist the
+deployment handoff, combining other concise documentation updates when
+practical. The main may reuse an informed worker or create one with recent
+inherited context. Archivist updates only its assigned documentation outside
+those three files, performs compact closing checks, and reports read-only Git
+state. After sealing its writes, it invokes `$deployment-token-report` for that
+deployment ID. The deterministic parser finds the boundary in the main-agent
+rollout and returns `Agent`, `Quantity`, `Rollouts`, `Cached input`, `Input`, and
+`Output`. Companion remains the session's required persistent context worker.
+Closure and reporting are reserved for substantive deployments. Both main and
+Archivist keep `agent_docs/` canonical and brief enough for repeated intake.
 
 The report preserves this exact six-column template:
 

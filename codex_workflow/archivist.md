@@ -15,11 +15,13 @@ normally use `agent_type="archivist"` and `fork_turns="none"`.
 ## Deployment Closure
 
 Assign one Archivist to close each substantive deployment before the final
-response, including paused or blocked work. Finish your own required update to
-`agent_docs/project_diary.md` first. Combine remaining verified documentation
-updates with this handoff when practical. Include `project_progress.md` and
-`latest_session_work.md` in the assigned scope, plus the deployment ID, closure
-state (`complete`, `paused`, or `blocked`), and read-only Git handoff.
+response, including paused or blocked work. First finish your own required
+updates to `agent_docs/project_progress.md`, `agent_docs/project_diary.md`, and
+`agent_docs/latest_session_work.md`. Keep those files outside Archivist's write
+scope, but identify them as the canonical deployment-state sources for the
+handoff. Combine other verified documentation updates with this assignment when
+practical. Include the deployment ID, closure state (`complete`, `paused`, or
+`blocked`), and read-only Git handoff.
 
 Reuse an Archivist when its retained context plus a concise delta is sufficient.
 Otherwise create one with `agent_type="archivist"`, a unique task name such as

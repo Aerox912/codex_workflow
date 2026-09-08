@@ -24,16 +24,17 @@ The initial bootstrap will include creating the project documentation framework 
 
 > Requires Python 3.11 or newer for deterministic lifecycle operations.
 
+**Note:** If you are currently using 1.1.3 version, you cannot upgrade directly to a newer version(cause I removed --configure feature). Run `codex_workflow --remove` to uninstall it first, then install the newer version.
+
 ## 2. Workflow usage 
 
 ### This workflow has 3 routes:
 - Light route : No subagents, no workflow, minimal context.
 - Heavy route : Implement the full set of workers, including `companion`, `investigator`, `default executor`, `senior executor`, `tester`, and `archivist`. The main agent orchestrates the work.
-- Medium route: Implement `copmanion` and `investigator` to assist the main agent. The main agent still owns implementation.
-Choose it when you want workflow-mode context support without delegating production work, like front-end design, visualization, or 3D works.
+- Medium route: Deploy `Companion`, `Investigator` and `Archivist` to assistance the Main agent. The main agent handles the deployment itself. Choose this route when you want workflow-mode context support without delegating production work, like front-end design, visualization, or 3D works, but it will burn tokens faster than Heavy route.
 
 ### Built-in project memory - `agent_docs`
-`agent_docs/` is the project's durable documentation framework: it records the goals, architecture, progress, decisions, and latest-session handoff. Medium and Heavy routes will use this framework doc. It is created and managed automatically by `Archivist`.
+`agent_docs/` is the project's durable documentation framework: it records the goals, architecture, progress, decisions, and latest-session handoff. Medium and Heavy routes use it. The main agent updates progress, diary, and latest-session work for each substantive deployment; `Archivist` initializes the framework and handles other assigned documentation plus closure reporting.
 
 ### How to use
 - Normally, for simple work, general Q&A, you don't need to do anything. `light route` is the default route.
@@ -62,13 +63,13 @@ use medium/heavy route. Continue ongoing work.
 | **Default Executor** | Luna · max | **Default implementation worker.** Handles normal production tasks delegated by the Main Agent, including coding, modifications, integration work, and other routine implementation activities. Multiple Default Executors may work in parallel when tasks can be safely decomposed. | As needed |
 | **Senior Executor** | Sol · medium | **High-capability implementation specialist.** Reserved for exceptionally difficult or high-impact work where stronger reasoning is justified, such as project-core changes, complex algorithms, architectural modifications, or mathematically demanding tasks. | 1 maximum |
 | **Tester** | Luna · max | **Independent verification specialist.** Designs, implements, and runs tests; validates requirements and acceptance criteria; identifies regressions or defects; and provides verification evidence before work is accepted. | As needed |
-| **Archivist** | Luna · high | **Documentation and session-record specialist.** Maintains and updates the project's documentation structure, records relevant workflow changes and outcomes, and produces the end-of-session token usage and statistics report. | As needed |
+| **Archivist** | Luna · xhigh | **Documentation and closure specialist.** Handles assigned documentation outside the three main-owned deployment-state documents, performs the read-only Git handoff, and produces the end-of-deployment token report. | 1 per substantive deployment, plus as needed |
 
 ![Heavy Route structure](heavy_route_structure.png)
 
 > `doc-writer` and `closure_steward` have been merged into single role `archivist` since 1.1.14 version.
 
-The coordination process is roughly as follows: The Main Agent receives the task, deploys a `Companion` and swarm of `Investigator` when needed, plans the work, and breaks it into bounded tasks. Each worker receives a work package containing the context scope, task and goal, and a knowledge package with the project-specific guidance needed to complete it.  At the end of the session, the `Archivist` updates the `agent_docs/` project documentation framework and runs the integrated `$deployment-token-report` skill to produce the token-usage report.
+The coordination process is roughly as follows: The Main Agent receives the task -> read agent_docs/ to get a comprehensive understanding of the project context, structure, and timeline -> Identify critical codebase sections and read them on its own + deploys a `Companion` and `Investigator` workers when needed -> plans the work + breaks it into bounded tasks -> Each worker receives a work package containing the context scope, task and goal, and a knowledge package with the project-specific guidance needed to complete it. At substantive deployment closure, update `agent_docs/`, complete the Git handoff, and generate the integrated `$deployment-token-report`.
 
 Illustrating the token-usage report at the end of each deployment in the Heavy route:
 ![End-of-session token report](token_report.png)

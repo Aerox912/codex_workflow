@@ -165,7 +165,13 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("Create and coordinate every worker directly", heavy)
         self.assertIn("direct fast path", heavy)
         self.assertIn("Do not use it for a subtask", heavy)
-        self.assertIn("keeping it concise", heavy)
+        self.assertIn("keeping them concise and canonical", heavy)
+        for main_owned_document in (
+            "`agent_docs/project_progress.md`",
+            "`agent_docs/project_diary.md`",
+            "`agent_docs/latest_session_work.md`",
+        ):
+            self.assertIn(main_owned_document, heavy)
         self.assertIn("`$deployment-token-report`", heavy)
         for retired_contract in (
             "investigation_team.md",
@@ -211,7 +217,13 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("no workflow-imposed aggregate active-subagent limit", medium_flat)
         self.assertIn("Use exactly one persistent Companion", medium)
         self.assertIn("Before the final response", medium)
-        self.assertIn("keeping it concise", medium)
+        self.assertIn("keeping them concise and canonical", medium)
+        for main_owned_document in (
+            "`agent_docs/project_progress.md`",
+            "`agent_docs/project_diary.md`",
+            "`agent_docs/latest_session_work.md`",
+        ):
+            self.assertIn(main_owned_document, medium)
         self.assertIn("`$deployment-token-report`", medium)
         for retired_contract in (
             "investigation_team.md",
@@ -227,6 +239,11 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("synthesize their reports once", agents_policy)
         self.assertIn("## Working State", agents_policy)
         self.assertIn("## Project Documentation", agents_policy)
+        self.assertIn(
+            "you own `project_progress.md`, `project_diary.md`, and\n"
+            "`latest_session_work.md`",
+            agents_policy,
+        )
         self.assertIn("## Route Selection", agents_policy)
         self.assertIn("## Platform Paths", agents_policy)
         self.assertIn("codex_workflow/medium_route.md", agents_policy)
@@ -239,7 +256,10 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("Give its first assignment the current route", agents_policy)
         self.assertIn("Each rollout reloads its persistent context", agents_policy)
         self.assertIn("avoid status-only requests", agents_policy)
-        self.assertIn("concise, lasting\ndecisions", agents_policy)
+        self.assertIn(
+            "directly record the current goal and\ncontinuation state",
+            agents_policy,
+        )
         self.assertNotIn("session-model requirement", agents_policy)
         for route_owned_contract in (
             "## Medium and Heavy Contracts",
@@ -286,12 +306,20 @@ class MarkerTests(unittest.TestCase):
         self.assertIn('fork_turns="200"', handoff_contract)
         self.assertIn("Reuse an Archivist", handoff_contract)
         self.assertIn("one reporting owner", handoff_contract)
+        self.assertIn("Keep those files outside Archivist's write", handoff_contract)
         self.assertIn("You are Archivist.", handoff_worker)
         self.assertIn("`agent_docs/project_diary.md`", handoff_worker)
+        self.assertIn("Do not\nedit those files during a deployment", handoff_worker)
         self.assertIn("`$deployment-token-report`", handoff_worker)
         self.assertIn("at most 200 words", handoff_worker)
         for framework_file in ("project_progress.md", "latest_session_work.md"):
             self.assertIn(framework_file, handoff_worker)
+            framework_template = (
+                PACKAGE / "project_docs" / framework_file
+            ).read_text(encoding="utf-8")
+            self.assertNotIn("updates this document", framework_template)
+            self.assertNotIn("Keep only", framework_template)
+            self.assertNotIn("Keep one concise", framework_template)
         for policy in (
             heavy,
             medium,
@@ -426,9 +454,9 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("source domain is the project ecosystem", companion_worker)
         self.assertIn("sibling project", companion_worker)
         self.assertIn("sources beyond the project ecosystem", companion_worker)
-        self.assertIn("Retain compact, source-linked\noperational context", companion_worker)
+        self.assertIn("establish compact, source-linked operational context", companion_worker)
         self.assertIn("each later rollout reloads it", companion_worker)
-        self.assertIn("diary/module\nintake", companion_worker)
+        self.assertIn("assigns diary/module intake", companion_worker)
         self.assertIn("log triage", companion_worker)
         self.assertNotIn("deployment-start: <deployment_id>", companion_worker)
         self.assertNotIn("`$deployment-token-report`", companion_worker)
@@ -442,7 +470,7 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("exact project references and direct source links", investigator)
         self.assertIn("supplement only\nthe assigned context gap", investigator)
         self.assertIn("Do not modify project files", investigator)
-        self.assertIn("Keep every document concise enough", doc_writer)
+        self.assertIn("Keep those documents concise enough", doc_writer)
         self.assertIn("fewest words that preserve decisions", doc_writer)
         self.assertNotIn("known bugs", investigator.lower())
         self.assertNotIn("package version", investigator.lower())
@@ -460,7 +488,9 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("prevents repeated mistakes", diary_template)
         self.assertIn("Do not record\nsession chronology", diary_template)
         self.assertIn("Expect one required", bootstrap)
-        self.assertIn("For bootstrap or installation", doc_writer)
+        self.assertIn("## Installation Documentation", doc_writer)
+        self.assertIn("means the workflow installer has just", doc_writer)
+        self.assertIn("the installer's `files`, `created_files`", doc_writer)
         self.assertIn("`Task ID`", doc_writer)
         self.assertIn("`agent_docs/project_diary.md`", doc_writer)
         self.assertFalse((PACKAGE / "verification_ledger.py").exists())
