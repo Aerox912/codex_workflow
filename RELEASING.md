@@ -31,7 +31,7 @@ codex_workflow/
 ```
 
 The package does not contain `README.md`, `illustration.png`,
-`workflow_break_down.md`, `RELEASING.md`, `.github/`, `scripts/`, `.git/`, or any
+`workflow_breakdown.md`, `RELEASING.md`, `.github/`, `scripts/`, `.git/`, or any
 other repository-only file. All files below `codex_workflow/` are included so
 the installed workflow remains self-contained.
 

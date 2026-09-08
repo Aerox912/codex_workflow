@@ -355,8 +355,8 @@ class MarkerTests(unittest.TestCase):
                 for path in sorted((PACKAGE / "agents").glob("*.toml"))
             },
             "README.md": (ROOT / "README.md").read_text(encoding="utf-8"),
-            "workflow_break_down.md": (
-                ROOT / "workflow_break_down.md"
+            "workflow_breakdown.md": (
+                ROOT / "workflow_breakdown.md"
             ).read_text(encoding="utf-8"),
         }
         retired_architecture_phrases = (

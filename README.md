@@ -102,5 +102,5 @@ Send these exact commands to Codex from the relevant project directory:
 | `codex_workflow --disable` / `codex_workflow --enable` | Disable or re-enable the workflow for the current project. |
 | `codex_workflow --remove` | Remove the installed workflow after a destructive dry-run and confirmation. |
 
-For the complete command reference, installed-file map, scripted customization
-guide, and Heavy-route design, see [workflow_break_down.md](workflow_break_down.md).
+For the complete architecture, route, lifecycle, ownership, safety, and release
+analysis, see [workflow_breakdown.md](workflow_breakdown.md).
