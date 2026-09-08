@@ -1383,7 +1383,13 @@ class LifecycleIntegrationTests(unittest.TestCase):
         incoming = PackageLayout.resolve(incoming.root)
 
         plan_update(incoming, self.runtime, self.project).apply()
-        second_plan = plan_update(incoming, self.runtime, second)
+        # The global runtime is current, but this project's managed template is not.
+        # Only the exact installed source may pass the equal-version CLI gate.
+        with self.assertRaisesRegex(Exception, "matches the installed version"):
+            workflow_cli._require_newer_update(incoming.root, self.runtime, allow_downgrade=False)
+        workflow_cli._require_newer_update(self.runtime.runtime, self.runtime, allow_downgrade=False)
+        installed = PackageLayout.resolve(self.runtime.runtime)
+        second_plan = plan_update(installed, self.runtime, second)
         self.assertEqual(second_plan.details["from_version"], "1.2.0")
         self.assertEqual(second_plan.details["project_from_version"], PACKAGE_VERSION)
         second_plan.apply()

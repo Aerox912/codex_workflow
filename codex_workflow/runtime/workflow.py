@@ -177,7 +177,7 @@ def _package_version(root: Path) -> object:
 def _require_newer_update(
     incoming_root: Path, runtime: RuntimePaths, *, allow_downgrade: bool
 ) -> None:
-    """Reject equal or unintended downgrade packages before handing them off."""
+    """Reject replacements at equal versions; allow the installed project source."""
 
     incoming = _package_version(incoming_root)
     try:
@@ -187,7 +187,7 @@ def _require_newer_update(
         raise WorkflowError(f"cannot read installed workflow VERSION: {error}") from error
     except Exception as error:
         raise WorkflowError("installed workflow VERSION is invalid") from error
-    if incoming == installed:
+    if incoming == installed and incoming_root.resolve() != runtime.runtime.resolve():
         raise WorkflowError("incoming version matches the installed version; select a newer release")
     if incoming < installed and not allow_downgrade:
         raise WorkflowError("incoming version is older; pass --allow-downgrade after approval")

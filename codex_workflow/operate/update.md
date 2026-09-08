@@ -51,3 +51,14 @@ the content automatically. Add `--allow-downgrade` for a downgrade.
 
 Report the installed version, backup location, and any failure.
 Do not describe a partial or rolled-back update as successful.
+
+When the user-level runtime is already current but another project's template
+is older, migrate that project from the exact installed source:
+
+```text
+python3 ~/.codex/codex_workflow/runtime/workflow.py update --source ~/.codex/codex_workflow --project <project>
+```
+
+This equal-version exception accepts only the installed runtime directory, not
+another package with the same version. Historical-source validation, backups,
+and project-local preservation still apply.
