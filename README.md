@@ -53,7 +53,8 @@ use medium/heavy route. Continue ongoing work.
 ---------------
 > **⭐ Recommendation:** Assign very large and complex tasks to the `heavy route` to make the most of its capabilities and maximize token usage savings. Don't hesitate to choose Sol xhigh / Astra high for this route. Using much lower reasoning efforts will not actually save tokens and will severely reduce its coordination capabilities.
 
-### Coordinating architecture
+### Coordinating architecture 
+> Read on if you want to learn more about how things work.
 
 | Role | Model | Primary Responsibility | Quantity  |
 |---|---|---|---:|
@@ -69,20 +70,16 @@ use medium/heavy route. Continue ongoing work.
 
 > `doc-writer` and `closure_steward` have been merged into single role `archivist` since 1.1.14 version.
 
-The coordination process is roughly as follows: The Main Agent receives the task -> read agent_docs/ to get a comprehensive understanding of the project context, structure, and timeline -> Identify critical codebase sections and read them on its own + deploys a `Companion` and `Investigator` workers when needed -> plans the work + breaks it into bounded tasks -> Each worker receives a work package containing the context scope, task and goal, and a knowledge package with the project-specific guidance needed to complete it. At substantive deployment closure, update `agent_docs/`, complete the Git handoff, and generate the integrated `$deployment-token-report`.
+What's special about the system:
 
-Illustrating the token-usage report at the end of each deployment in the Heavy route:
-![End-of-session token report](token_report.png)
-
-In this design, the **Companion** helps reduce context pressure on the Main Agent. Together with the **Investigators**, it offloads work that does not require the Main Agent's high intelligence, allowing the Main Agent to remain focused on orchestration, high-level reasoning, and critical decisions without being distracted by lower-value operational work.
-
-Each work package contains instructions enriched with knowledge distilled from the Main Agent, benefiting from its broad understanding of the overall task and project context. Each **default_executor** can therefore focus on a compact, well-scoped package of work. **Luna** is very powerful for this type of bounded work. 
-
-The **Senior Executor** serves as a fallback for exceptionally difficult problems where stronger reasoning is required.
-
-The workflow's **batching guidelines** were derived from extensive experimentation. They are designed to group related coordination and execution work more efficiently, significantly reducing the number of Main Agent rollouts and the repeated context replay associated with them.
-
-End-of-session reporting with deploy_token_report is handled by the Archivist, preserving the Main Agent's token budget 
+- Flexibility: The system doesn't force the main agent into a rigid process: requiring coordination in this way, that way... It provides it with resources and power (specialized agents) and fine-tuning and guidance based on hundreds of trials.
+- Fine-tuned balance: Main agent's control <---> costs & task completion capabilities. based on analysis and observation, not on feeling. 
+- Knowledge distribution: Each task package from the main agent to the workers includes a task completion guide.
+- Batching guidelines prevent excessive main agent rollout.
+- The **Senior Executor** serves as a fallback for exceptionally difficult problems where stronger reasoning is required.
+- Addresses the issue of the main agent waking up workers too often.
+- Built-in token report: End-of-session token statistics for each agent, allowing you to monitor how much each agent rolls out and how they use their tokens.
+......
 
 ## Light benchmark
 **Batching guidelines** techniques(since 1.1.3 version) significantly reduce the main agent's rollout, which in turn reduces the main agent's cached input tokens, a major component of the operation cost, see **New workflow** below :

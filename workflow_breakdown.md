@@ -26,6 +26,193 @@ This revision was reviewed against packaged version `1.1.17`, read from
 release tests prevent that value from drifting from the distributed user
 instruction block.
 
+## 0. A Deep Dive into Codex Orchestration
+
+
+### You Can't Just Tell the Main Agent to Delegate Everything
+
+We can't simply tell the main agent:
+
+> "Hey Sol, make a plan for this task and delegate the implementation to Luna subagents."
+
+There are several aspects that need to be balanced carefully.
+
+### Main-agent control vs. context savings and task completion
+
+- How much of the codebase should the main agent load itself?
+- Should it personally review the output of tests performed by testers?
+- Should it inspect logs and reports to understand what the subagents are doing, or let them work independently and simply accept their final results?
+
+### Main-agent rollouts vs. worker rollouts
+
+In Codex, every time a model stops to call a tool, coordinate a subagent, etc., it consumes another rollout.
+And each rollout reloads the model's entire context, although most of that will usually be cached input tokens.
+So every time the main agent calls or coordinates a worker, that also costs a main-agent rollout.
+
+This means that overly fine-grained coordination with workers, repeatedly retrieving context reports from the Companion, and similar operations can sometimes become counterproductive from a token-cost perspective.
+
+You may successfully move some work to a worker, but in exchange, the main agent has to reload its entire context.
+In practice, you're basically trading **cached input tokens from the main agent** for **input/output tokens from workers**.
+And the main agent is roughly **40x/100x more expensive than the workers** depending on whether you're using Sol/Astra vs. Luna.
+
+This is why I apply **batching guidelines** to reduce the number of main-agent rollouts. I'll explain them later in the `codex_workflow` design section.
+AI isn't going to naturally balance all of these trade-offs for you. You have to experiment, measure, observe, and optimize the workflow yourself.
+
+That's also why I added end-of-session token statistics through the built-in workflow skill:
+
+![End-of-session token report](token_report.png)
+
+---
+
+## Why Not Just Ask Codex to Design an Efficient Orchestration Framework?
+
+Why not simply ask Codex to propose an orchestration architecture that is both efficient and actually feasible on the platform?
+There are several problems.
+
+### 1. Perspective and awareness
+
+There are three different levels of perspective:
+
+- the workflow designer
+- the main agent
+- the workers
+
+The AI doesn't naturally distinguish these perspectives correctly when writing instructions.
+When you ask it to write the instructions itself, it tends to write them from the **workflow designer's perspective**.
+For example, an older revision of `archivist.toml` contained instructions like:
+
+> “For bootstrap or installation, initialize only the listed new or still-template-marked documents... This initialization authority ends with that assignment.”
+
+That's written from the perspective of the workflow designer.
+But the worker — the Archivist in this case — doesn't actually know the surrounding context implied by those instructions.
+
+The instruction needs to be written from the worker's point of view and provide the necessary context, such as explaining the install/bootstrap process and the main task being assigned to it.
+
+### 2. "Optimization" has no fixed finish line
+
+If you tell an AI:
+
+> "Optimize this orchestration workflow to minimize cost while still ensuring that tasks can be completed reliably."
+
+and then give it a few test projects so it can repeatedly evaluate and improve itself, it will keep optimizing endlessly.
+
+Eventually, the workflow starts becoming **over-optimized for the test cases**, while the orchestration framework becomes increasingly rigid and formulaic.
+I've already gone through this. At one point, it proposed this design:
+
+- `wave_barrier` as an LLM lifecycle parent
+
+The idea was to introduce an intermediary subagent.
+
+The Main Agent would send it the manifest for an entire wave. The barrier would spawn the workers, absorb their completion wakeups, wait for the entire child tree to finish, and then return a single terminal bundle to the Main Agent.
+
+In theory, this would reduce the number of times the Main Agent gets woken up.
+
+But in practice, it added another layer of LLM orchestration, made the topology more complicated, forced the architecture around explicit waves, and wasn't even feasible on the platform because `wave_barrier` couldn't directly communicate with those workers.
+
+Eventually, I had to tear the whole thing down myself and return to a much simpler design philosophy:
+
+**Describe the workers, let the Main Agent control the orchestration itself, and provide a set of optimization guidelines.**
+
+### 3. Accumulated patches in instructions
+
+Another issue is the accumulation of revisions.
+For example, when an old guideline becomes obsolete, the AI tends to add something like:
+> "Do not use XYZ."
+instead of restructuring the instructions and removing the outdated part entirely.
+Over time, these patches accumulate.
+There are plenty of other small problems like this that I don't remember anymore, but these are the major ones that stood out.
+
+---
+
+## Platform Feasibility
+
+There were also several ideas that I came up with myself that sounded great in theory but simply weren't feasible on the platform.
+
+### 1. The original Explorer Companion idea
+
+The original idea behind the Explorer Companion — now just called the **Companion** — was for it to handle miscellaneous work, receive reports from workers, consolidate them, and send the result back to the Main Agent.
+
+But it turns out that it can't directly receive reports from those workers because they're all subagents.
+
+### 2. Inheriting the Main Agent's context
+
+Some roles benefit greatly from seeing the Main Agent's recent context.
+
+For example, the Archivist closing a deployment needs to know what changes were verified, the current state of the project, and the next entry point so it can update the documentation correctly.
+
+But using a different model doesn't mean you can infinitely copy the entire conversation history into it.
+
+In the current implementation, workers normally start with:
+
+`fork_turns="none"`
+
+and receive explicit context capsules.
+For closure, the Archivist can instead be created with a finite recent-context fork, currently:
+
+`fork_turns="200"`
+
+if that recent history is useful as documentation context.
+
+---
+
+There have been many times when I thought:
+
+*"Okay, this version is done. Everything makes sense now."*
+
+Then I tested it, watched how the workflow actually behaved, looked at the statistics...
+
+...and ended up changing it again.
+
+And again.
+
+And again.
+
+Until the design actually worked well **in practice**, rather than only making sense in my imagination.
+
+---
+
+The coordination process roughly works like this:
+
+**Main Agent receives the task**  
+→ reads `agent_docs/` to build a comprehensive understanding of the project's context, architecture, and timeline  
+→ identifies critical parts of the codebase and reads them itself, while deploying the `Companion` and `Investigator` workers when needed  
+→ plans the work and divides it into bounded tasks  
+→ each worker receives a work package containing the context scope, task, goal, and a knowledge package with project-specific guidance  
+→ at substantive deployment closure, `agent_docs/` is updated, the Git handoff is completed, and the integrated `$deployment-token-report` is generated.
+
+Here's an example of the token-usage report generated at the end of each Heavy-route deployment:
+
+![End-of-session token report](token_report.png)
+
+In this design, the **Companion** helps reduce context pressure on the Main Agent.
+
+Together with the **Investigators**, it offloads work that does not require the Main Agent's high intelligence, allowing the Main Agent to remain focused on orchestration, high-level reasoning, and critical decisions without being distracted by lower-value operational work.
+
+Each work package contains instructions enriched with knowledge distilled from the Main Agent, benefiting from its broad understanding of the overall task and project context.
+
+Each **Default Executor** can therefore focus on a compact, well-scoped package of work.
+
+**Luna is very powerful for this kind of bounded work.**
+
+The **Senior Executor** acts as a fallback for exceptionally difficult problems where stronger reasoning is required.
+
+## Batching Guidelines
+
+The workflow's **batching guidelines** came from extensive experimentation.
+
+They are designed to group related coordination and execution work more efficiently, significantly reducing the number of Main Agent rollouts and the repeated context replay associated with them.
+
+Basically, they're scheduling rules:
+
+- Independent workers that contribute to the same decision should be dispatched together.
+- The Main Agent waits for the relevant group of results and synthesizes them once.
+- The next batch should only be opened when evidence from the previous batch actually changes the next question.
+- Independent implementation packages without overlapping write ownership can run in parallel.
+- Dependencies, overlapping mutations, uncertainty, or high-risk work should still run sequentially.
+- Don't poll workers, request status-only updates, or ask for evidence that has already been provided.
+- Normal operational failures should go back to the appropriate owner for repair. The Main Agent only intervenes when a new decision is required.
+- Independent read/search/check operations performed by the Main Agent should also be grouped into a sensible tool turn.
+
 ## 1. Executive summary
 
 `codex_workflow` is two related systems distributed in one release:
