@@ -25,7 +25,7 @@ rollouts only when the package genuinely requires that capability.
 | Default Executor | An Astra medium production worker owning local discovery, implementation, self-check, deployment operations, and ordinary repair inside one bounded package. |
 | Senior Executor | The one optional Astra xhigh worker for an exceptionally difficult mathematical, logical, architectural, or cross-cutting package. |
 | Tester | An independent verifier owning the assigned verification, test assets, and suitable test execution, but not production repair. |
-| Archivist | The documentation and deployment-handoff worker defined by `~/.codex/codex_workflow/archivist.md`. It owns concise assigned documentation, read-only Git reporting, and the closing Deployment Token Report. |
+| Archivist | The required substantive-deployment closure worker defined by `~/.codex/codex_workflow/archivist.md`. It owns concise assigned documentation outside the main-owned deployment-state documents, read-only Git reporting, and the closing Deployment Token Report. |
 
 Companion is required on first deployment-state entry. Archivist is required at
 substantive deployment closure. Use each other role only when its capability
@@ -166,7 +166,8 @@ blocker.
 - Concurrent mutable assignments require non-overlapping ownership. Preserve
   unrelated user work and keep Git mutations within explicit authority.
 - Executors own production and repair, Testers own independent verification,
-  and Archivists receive only verified facts.
+  the main owns the three deployment-state documents, and Archivists receive
+  only verified facts for their assigned documentation and closure reporting.
 - Base every passing claim on completed, sufficiently fresh validation evidence.
 
 ## Fast Path and Closure
@@ -176,9 +177,10 @@ or small bounded leaf task. Do not use it for a subtask inside an already
 substantive Heavy deployment.
 
 Before the final response that completes, pauses, or blocks a substantive
-deployment, update `agent_docs/project_diary.md` yourself when lasting knowledge
-changed, keeping it concise. Then follow `~/.codex/codex_workflow/archivist.md`
-exactly once. Require concise, canonical documentation; combine remaining
-verified updates and handoff work in one Archivist assignment when practical.
+deployment, update `agent_docs/project_progress.md`,
+`agent_docs/project_diary.md`, and `agent_docs/latest_session_work.md` yourself,
+keeping them concise and canonical. Then follow
+`~/.codex/codex_workflow/archivist.md` exactly once. Combine any other verified
+documentation updates with its required closure assignment when practical.
 Relay its handoff and exact six-column `$deployment-token-report` table. Use a
 new deployment ID for each later deployment.

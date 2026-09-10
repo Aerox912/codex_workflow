@@ -18,7 +18,7 @@ Use only these support roles:
 | --- | --- |
 | Companion | One required persistent read-only secretary for project context, diary/module intake, large synthesis, and retained operational context. |
 | Investigator | A disposable read-only evidence worker for a bounded project or Internet context gap the main does not already understand. It supplements context; the main decides root cause and solution. |
-| Archivist | The documentation and deployment-handoff worker defined by `~/.codex/codex_workflow/archivist.md`. It owns concise assigned documentation, read-only Git reporting, and the closing Deployment Token Report. |
+| Archivist | The required substantive-deployment closure worker defined by `~/.codex/codex_workflow/archivist.md`. It owns concise assigned documentation outside the main-owned deployment-state documents, read-only Git reporting, and the closing Deployment Token Report. |
 
 ## Shared Deployment-State Entry
 
@@ -104,8 +104,10 @@ it never owns the causal, architecture, implementation, or acceptance decision.
   Investigator and Archivist.
 - Give support workers bounded questions and sufficient context; retain every
   material interpretation and final claim in the main.
-- Archivist owns documentation only. Keep implementation, production repair,
-  root-cause decisions, and verification with the main.
+- Archivist owns assigned documentation outside `project_progress.md`,
+  `project_diary.md`, and `latest_session_work.md`, plus closure reporting. Keep
+  those three documents, implementation, production repair, root-cause
+  decisions, and verification with the main.
 - Preserve unrelated work and keep Git mutations within explicit authority.
 
 ## Fast Path and Closure
@@ -115,9 +117,10 @@ or small bounded leaf task. Do not initialize deployment state merely because
 Medium remains selected.
 
 Before the final response that completes, pauses, or blocks a substantive
-deployment, update `agent_docs/project_diary.md` yourself when lasting knowledge
-changed, keeping it concise. Then follow `~/.codex/codex_workflow/archivist.md`
-exactly once. Require concise, canonical documentation; combine remaining
-verified updates and handoff work in one Archivist assignment when practical.
+deployment, update `agent_docs/project_progress.md`,
+`agent_docs/project_diary.md`, and `agent_docs/latest_session_work.md` yourself,
+keeping them concise and canonical. Then follow
+`~/.codex/codex_workflow/archivist.md` exactly once. Combine any other verified
+documentation updates with its required closure assignment when practical.
 Relay its handoff and exact six-column `$deployment-token-report` table. Use a
 new deployment ID for each later deployment.

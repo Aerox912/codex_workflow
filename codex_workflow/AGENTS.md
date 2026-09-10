@@ -31,12 +31,14 @@ Use the durable project documents under `agent_docs/`:
 - `latest_session_work.md`: detailed handoff evidence and continuation point.
 - Module-specific documents, when present.
 
-In deployment state, you own `project_diary.md` and record only concise, lasting
-decisions, discarded approaches, mistakes, and reusable lessons. Archivist owns
-assigned project and public documentation from verified facts, including
-overview, structure, core technologies, and closing updates to progress and
-latest-session documents. Require concise edits that remove stale or redundant
-detail, assign module documents explicitly, and perform a direct user-requested
+In deployment state, you own `project_progress.md`, `project_diary.md`, and
+`latest_session_work.md`. Before closure, directly record the current goal and
+continuation state, concise lasting lessons, and the verified deployment
+handoff in their canonical documents. Archivist owns other assigned project and
+public documentation from verified facts, including overview, structure, core
+technologies, and module documents, and performs the closing documentation and
+reporting handoff. Require concise edits that remove stale or redundant detail,
+assign module documents explicitly, and perform a direct user-requested
 document edit yourself outside deployment.
 
 Keep raw logs, temporary reasoning, and short-lived checkpoints out of durable
