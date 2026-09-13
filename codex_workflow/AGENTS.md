@@ -51,7 +51,8 @@ Select one of these routes: **Light** works directly in leaf state without subag
 **Medium** keeps planning, diagnosis, implementation, and verification with the
 main agent and uses bounded support from `~/.codex/codex_workflow/medium_route.md`;
 **Heavy** delegates bounded production, verification, documentation,
-project-context, and Internet research under `~/.codex/codex_workflow/heavy_route.md`.
+project-context, and project or Internet investigation and discovery under
+`~/.codex/codex_workflow/heavy_route.md`.
 
 Follow the user's route selection. Use Light when none is selected; do not infer
 Medium or Heavy. Keep the route until the user changes it or the session ends.

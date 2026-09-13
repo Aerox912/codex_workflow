@@ -21,7 +21,7 @@ rollouts only when the package genuinely requires that capability.
 | Role | Ownership |
 | --- | --- |
 | Companion | One required persistent read-only secretary for project context, diary/module intake, large synthesis, and retained operational context. |
-| Investigator | A disposable read-only evidence worker for a bounded project or Internet context gap that the main does not already understand. It supplements context; the main decides root cause and solution. |
+| Investigator | A disposable read-only worker for one bounded project or Internet investigation, discovery, comparison, prior-art, or research lane. It returns findings and implications; the main owns their interpretation and every project decision. |
 | Default Executor | A Luna production worker owning local discovery, implementation, self-check, deployment operations, and ordinary repair inside one bounded package. |
 | Senior Executor | The one optional Sol worker for an exceptionally difficult mathematical, logical, architectural, or cross-cutting package. |
 | Tester | An independent verifier owning the assigned verification, test assets, and suitable test execution, but not production repair. |
@@ -49,16 +49,16 @@ brief to create a compact working-context map:
 - **Companion**: supporting modules, tools, configuration, logs, dependencies,
   and other non-decisive project surfaces whose function or state should be
   returned as one bounded summary.
-- **Investigator**: one bounded unfamiliar or ambiguous project or Internet
-  evidence gap not resolved by the main's intake or Companion's retained
-  context.
+- **Investigator**: one bounded project or Internet investigation or discovery
+  lane best handled independently, including an unfamiliar context gap,
+  comparative survey, repository exploration, or prior-art search.
 
 Keep this map in working state, not durable documentation, and revise it only
 when material evidence changes relevance. Do not directly explore a Companion
 or Investigator surface unless it becomes decision-critical; update the map
 explicitly when that happens. Combine related Companion questions, and create
-an Investigator only when independent investigation materially reduces an
-unresolved context gap.
+an Investigator when independent investigation or discovery materially advances
+the task. Multiple independent lanes may run concurrently.
 
 ## Deployment Boundary
 
@@ -80,7 +80,7 @@ the deployment, followed by the capsule for that role:
 | Role | Capsule parts |
 | --- | --- |
 | Companion | **Project Context Scope**; **Context Task + Goal**; **Main-Agent Context Guidance** |
-| Investigator | **Investigation Context**; **Evidence Question + Goal**; **Main-Agent Investigation Guidance** |
+| Investigator | **Investigation Context**; **Investigation Task + Goal**; **Main-Agent Investigation Guidance** |
 | Default or Senior Executor | **Implementation Context + Ownership**; **Implementation Task + Goal**; **Main-Agent Implementation Guidance** |
 | Tester | **Verification Context**; **Verification Goal**; **Main-Agent Verification Guidance** |
 | Archivist | **Documentation Context + Audience**; **Documentation Task + Goal**; **Main-Agent Documentation Guidance** |
@@ -113,9 +113,10 @@ The main may reason about root cause because it holds the decisive project
 context. Directly inspect only the contracts, source excerpts, and failure or
 verification evidence that control a material causal, architecture, scope,
 risk, or acceptance decision. Use Companion for peripheral or bulky project
-context. Use Investigator only for a bounded evidence lane the main does not
-already understand; Investigator may inspect the project or Internet but never
-owns the causal decision.
+context. Use Investigator for bounded project or Internet investigation and
+discovery, including comparative project exploration or prior-art research. It
+may establish facts and patterns but never owns their project interpretation or
+any causal, architecture, scope, risk, or acceptance decision.
 
 Delegate endpoint state, uploads, browser or screenshot work, external search,
 routine Git/status collation, tool or API discovery, logs, environment checks,
