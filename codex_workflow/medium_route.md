@@ -17,7 +17,7 @@ Use only these support roles:
 | Role | Ownership |
 | --- | --- |
 | Companion | One required persistent read-only secretary for project context, diary/module intake, large synthesis, and retained operational context. |
-| Investigator | A disposable read-only evidence worker for a bounded project or Internet context gap the main does not already understand. It supplements context; the main decides root cause and solution. |
+| Investigator | A disposable read-only worker for one bounded project or Internet investigation, discovery, comparison, prior-art, or research lane. It returns findings and implications; the main owns their interpretation and every project decision. |
 | Archivist | The required substantive-deployment closure worker defined by `~/.codex/codex_workflow/archivist.md`. It owns concise assigned documentation outside the main-owned deployment-state documents, read-only Git reporting, and the closing Deployment Token Report. |
 
 ## Shared Deployment-State Entry
@@ -37,16 +37,17 @@ working-context map:
 - **Companion**: supporting modules, tools, configuration, logs, dependencies,
   and other non-decisive project surfaces whose function or state should be
   returned as one bounded summary.
-- **Investigator**: one bounded unfamiliar or ambiguous project or Internet
-  evidence gap not resolved by the main's intake or Companion's retained
-  context.
+- **Investigator**: one bounded project or Internet investigation or discovery
+  lane best handled independently, including an unfamiliar context gap,
+  comparative survey, repository exploration, or prior-art search.
 
 Keep this map in working state, not durable documentation, and revise it only
 when material evidence changes relevance. Do not directly explore a Companion
 or Investigator surface unless it becomes necessary for main-owned production
 or a material decision; update the map explicitly when that happens. Combine
-related Companion questions, and create an Investigator only when independent
-investigation materially reduces an unresolved context gap.
+related Companion questions, and create an Investigator when independent
+investigation or discovery materially advances the task. Multiple independent
+lanes may run concurrently.
 
 ## Deployment Boundary
 
@@ -68,7 +69,7 @@ within the deployment, followed by the capsule for that role:
 | Role | Capsule parts |
 | --- | --- |
 | Companion | **Project Context Scope**; **Context Task + Goal**; **Main-Agent Context Guidance** |
-| Investigator | **Investigation Context**; **Evidence Question + Goal**; **Main-Agent Investigation Guidance** |
+| Investigator | **Investigation Context**; **Investigation Task + Goal**; **Main-Agent Investigation Guidance** |
 | Archivist | **Documentation Context + Audience**; **Documentation Task + Goal**; **Main-Agent Documentation Guidance** |
 
 Treat these parts as the complete structure. Include only material context,
@@ -76,12 +77,14 @@ references, boundaries, intended outcomes, main-owned decisions, constraints,
 and cautions. Require Task ID in every report. Follow-ups repeat it and send
 only changed capsule parts.
 
-The main may investigate and decide root cause because it holds the decisive
-project context. Use Companion for peripheral or bulky project context. Create
-Investigator only for a bounded evidence lane the main does not already
-understand and whose independent project inspection or Internet research would
-materially improve the decision. Investigator returns evidence and implications;
-it never owns the causal, architecture, implementation, or acceptance decision.
+The main retains interpretation, root-cause reasoning, and every project
+decision because it holds the decisive project context. Use Companion for
+peripheral or bulky retained project context. Create Investigator for bounded
+project or Internet investigation and discovery whose independent exploration
+materially advances the task, including comparative project surveys, repository
+mapping, and prior-art research. Investigator returns findings, patterns,
+evidence, unknowns, and implications; it never owns the causal, architecture,
+implementation, or acceptance decision.
 
 ## Rollout-Efficient Support
 
