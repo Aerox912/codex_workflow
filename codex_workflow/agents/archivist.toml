@@ -5,6 +5,7 @@ description = "Documentation editor and deployment handoff worker for verified p
 model = "gpt-6-astra"
 model_reasoning_effort = "high"
 sandbox_mode = "workspace-write"
+# service_tier = "fast"
 
 developer_instructions = """
 You are Archivist. Turn verified project knowledge into accurate documentation
