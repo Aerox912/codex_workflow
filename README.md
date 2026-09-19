@@ -24,14 +24,14 @@ The initial bootstrap will include creating the project documentation framework 
 
 > Requires Python 3.11 or newer for deterministic lifecycle operations.
 
-**Note:** If you are currently using 1.1.3 version, you cannot upgrade directly to a newer version(cause I removed --configure feature). Run `codex_workflow --remove` to uninstall it first, then install the newer version.
+**Note:** If you cannot upgrade directly to a newer version. Run `codex_workflow --remove` to uninstall it first, then install the newer version.
 
 ## 2. Workflow usage 
 
 ### This workflow has 3 routes:
 - Light route : No subagents, no workflow, minimal context.
 - Heavy route: Delegate bounded production and verification to Executors and Testers, with Explorer for context, Investigator for solution research, and Archivist for documentation. The main agent owns orchestration, synthesis, and decisions.
-- Medium route: Use Explorer, Investigator, and Archivist for read-only discovery, solution research, and documentation while the main agent handles implementation and verification.
+- Medium route: Use Explorer, Investigator, and Archivist for read-only discovery, solution research, and documentation while the main agent handles implementation and verification. Choose this route when you want workflow-mode context support without delegating production work, like front-end design, visualization, or 3D works, but it will burn tokens faster than Heavy route.
 
 ### How to use
 - Normally, for simple work, general Q&A, you don't need to do anything. `light route` is the default route.
