@@ -51,9 +51,10 @@ backup of those files. It leaves the installed user-level definitions and state
 unchanged. If the project is already current, expect an explicit no-op with no
 new backup. Run the command separately in each installed project.
 
-If a legacy project entry point contains merged local edits, expect the update
-to stop. Review and extract only the project-local instructions into a temporary
-file, then rerun with:
+If a legacy project entry point contains merged local edits, or the protected
+project-local region references missing legacy route files, expect the update
+to stop. Review and extract only genuine project-local instructions into a
+temporary file, then rerun with:
 
 ```text
 --legacy-local-instructions <reviewed-file>

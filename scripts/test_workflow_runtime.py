@@ -22,7 +22,7 @@ PACKAGE_VERSION = (PACKAGE / "operate" / "VERSION").read_text(encoding="utf-8").
 
 
 def next_patch_version(version: str) -> str:
-    major, minor, patch = version.split(".")
+    major, minor, patch = version.split("+", 1)[0].split("-", 1)[0].split(".")
     return f"{major}.{minor}.{int(patch) + 1}"
 
 
@@ -65,6 +65,7 @@ from runtime.markers import (
     USER_MANAGED,
     extract,
     render_project_entry,
+    replace,
 )
 from runtime.plan import OperationPlan, read_string_list, resolve_owned_runtime_path
 from runtime.release import (
@@ -867,6 +868,25 @@ class LifecycleIntegrationTests(unittest.TestCase):
         self.assertEqual(
             set(repeated.agent_actions[0]["recovery_files"]),
             set(repeated.agent_actions[0]["framework"]),
+        )
+
+    def test_bootstrap_requires_review_for_missing_legacy_route(self) -> None:
+        self.project.active.write_text(
+            "# Project policy\nRead `agent_docs/workflows/heavy_route.md`.\n",
+            encoding="utf-8",
+        )
+        with self.assertRaisesRegex(ValidationError, "missing legacy workflow route"):
+            plan_bootstrap(self.package, self.runtime, self.project)
+
+        plan_bootstrap(
+            self.package,
+            self.runtime,
+            self.project,
+            legacy_local_instructions="# Project policy\nKeep this rule.\n",
+        ).apply()
+        self.assertEqual(
+            extract(self.project.active.read_text(encoding="utf-8"), PROJECT_LOCAL),
+            "# Project policy\nKeep this rule.",
         )
 
     def test_bootstrap_rejects_unowned_skill_collision(self) -> None:
@@ -1685,6 +1705,32 @@ class LifecycleIntegrationTests(unittest.TestCase):
         self.assertEqual(
             extract(self.project.active.read_text(encoding="utf-8"), PROJECT_LOCAL),
             "Local legacy addition.",
+        )
+
+    def test_update_repairs_missing_legacy_route_in_local_region(self) -> None:
+        self.bootstrap(existing_agents="Project policy.\n")
+        entry = self.project.active.read_text(encoding="utf-8")
+        self.project.active.write_text(
+            replace(
+                entry,
+                PROJECT_LOCAL,
+                "Read `agent_docs/workflows/heavy_route.md`.",
+            ),
+            encoding="utf-8",
+        )
+        incoming = self.incoming_package("legacy-route-incoming")
+        with self.assertRaisesRegex(ValidationError, "missing legacy workflow route"):
+            plan_update(incoming, self.runtime, self.project)
+
+        plan_update(
+            incoming,
+            self.runtime,
+            self.project,
+            legacy_local_instructions="Project policy.",
+        ).apply()
+        self.assertEqual(
+            extract(self.project.active.read_text(encoding="utf-8"), PROJECT_LOCAL),
+            "Project policy.",
         )
 
     def test_update_rejects_drift_in_workflow_managed_region(self) -> None:
