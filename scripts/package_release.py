@@ -35,7 +35,7 @@ BUILTIN_WORKERS = frozenset(
         "senior_executor",
         "tester",
         "archivist",
-        "companion",
+        "explorer",
         "investigator",
     }
 )
@@ -330,7 +330,6 @@ def _verify_member_names(names: Iterable[str]) -> list[str]:
         f"{PACKAGE_DIR_NAME}/agents/executor_luna.toml",
         f"{PACKAGE_DIR_NAME}/agents/executor_sol.toml",
         f"{PACKAGE_DIR_NAME}/agents/executor_terra.toml",
-        f"{PACKAGE_DIR_NAME}/agents/explorer.toml",
         f"{PACKAGE_DIR_NAME}/agents/end_of_session.toml",
         f"{PACKAGE_DIR_NAME}/agents/wave_barrier.toml",
     }

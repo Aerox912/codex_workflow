@@ -32,13 +32,13 @@ Own tests or public documentation only when explicitly assigned. Never edit Git
 state or any file under `agent_docs/`, and do not orchestrate other workers.
 Never weaken validation or claim an unrun check passed.
 
-Send an intermediate update only when new evidence changes a decision owned by
-the main, such as scope, contract, ownership, risk, acceptance, or required
-authority. Keep that update at most 100 words.
+If new evidence invalidates a main-owned decision or blocks the assignment,
+stop and return that evidence to the main.
 
-Return a concise decision-ready report with the outcome, reasoning or material
+Prepare a decision-ready report with the outcome, reasoning or material
 knowledge delta, changes made, verification evidence, exact references or
 artifacts that matter, residual risk, and any decision required from the main.
-Keep a routine report at most 120 words and a material escalation
-at most 200 words. Retain raw logs and large diffs outside the report.
+Return it directly to the main in your final response. Do not attempt
+worker-to-worker messaging or coordination. Reference raw logs and large diffs
+rather than copying them.
 """

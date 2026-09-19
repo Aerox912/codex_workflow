@@ -25,6 +25,10 @@ user command block, installation state, distributed worker TOMLs, and
 workflow-owned Codex settings and skills. Expect it to initialize the current
 project's workflow entry point, documentation scaffold, personalization and
 state files, and other project-level assets in one compensating transaction.
+The generated `~/.codex/config.toml` enables multi-agent tools and writes
+`[features.multi_agent_v2]` with `enabled = true`,
+`min_wait_timeout_ms = 120000`, `default_wait_timeout_ms = 300000`, and
+`max_wait_timeout_ms = 1800000` while preserving unrelated settings.
 
 ## Required documentation action
 
@@ -49,9 +53,10 @@ capsule. Include the project root and returned
 - Preserve every pre-existing project document not listed for recovery. If
   `files` is empty, perform a read-only completeness check of all documents in
   `framework`.
-- This action may initialize listed new or recovery `project_progress.md` and
-  `latest_session_work.md` files; leave deployment status empty when no plan
-  exists.
+- For this installation action only, initialize listed new or recovery
+  `project_progress.md`, `project_diary.md`, and `latest_session_work.md` files;
+  later deployment updates belong to the main. Leave deployment status empty
+  when no plan exists.
 - Do not edit source, entry points, personalization, Git state, or user-level
   files.
 

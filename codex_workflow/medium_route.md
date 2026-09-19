@@ -16,50 +16,36 @@ Use only these support roles:
 
 | Role | Ownership |
 | --- | --- |
-| Companion | One required persistent read-only secretary for project context, diary/module intake, large synthesis, and retained operational context. |
-| Investigator | A disposable read-only worker for one bounded project or Internet investigation, discovery, comparison, prior-art, or research lane. It returns findings and implications; the main owns their interpretation and every project decision. |
+| Explorer | A disposable read-only worker for bounded project-context discovery, source and contract mapping, document intake, or evidence retrieval. |
+| Investigator | One of three disposable read-only workers researching the same bounded problem from distinct search angles. Each can propose options; the main makes every project decision. |
 | Archivist | The required substantive-deployment closure worker defined by `~/.codex/codex_workflow/archivist.md`. It owns concise assigned documentation outside the main-owned deployment-state documents, read-only Git reporting, and the closing Deployment Token Report. |
 
 ## Shared Deployment-State Entry
 
-Before route-specific planning or execution, complete the shared first-entry
-Companion and `agent_docs/` contract in `AGENTS.md`. Do not repeat that intake
-or create another Companion when it was completed earlier under either route.
+Before route-specific planning or execution, complete the shared `agent_docs/`
+intake in `AGENTS.md`. Do not repeat it after a route change.
 
 ## Context Routing After Intake
 
-Immediately after the shared intake and before broader source discovery or
-planning, use `agent_docs/` and Companion's initial brief to create a compact
-working-context map:
+After the shared intake and before broader source discovery or planning, use
+`agent_docs/` to create a compact working-context map:
 
 - **Direct**: code, contracts, interfaces, and evidence the main must inspect to
   own diagnosis, implementation, verification, integration, risk, or acceptance.
-- **Companion**: supporting modules, tools, configuration, logs, dependencies,
-  and other non-decisive project surfaces whose function or state should be
-  returned as one bounded summary.
-- **Investigator**: one bounded project or Internet investigation or discovery
-  lane best handled independently, including an unfamiliar context gap,
-  comparative survey, repository exploration, or prior-art search.
+- **Explorer**: bounded context discovery, supporting modules, tools,
+  configuration, logs, dependencies, document deltas, and evidence retrieval.
+- **Investigator**: bounded fault hypotheses, solution research, alternatives,
+  feasibility, technical comparisons, or prior art using project or Internet sources.
 
 Keep this map in working state, not durable documentation, and revise it only
-when material evidence changes relevance. Do not directly explore a Companion
-or Investigator surface unless it becomes necessary for main-owned production
-or a material decision; update the map explicitly when that happens. Combine
-related Companion questions, and create an Investigator when independent
-investigation or discovery materially advances the task. Multiple independent
-lanes may run concurrently.
+when material evidence changes relevance. Directly inspect a delegated surface
+when it becomes necessary for main-owned production or a material decision.
+Dispatch independent Explorer lanes or Investigator trios together when useful.
 
 ## Deployment Boundary
 
-At the start of each substantive Medium deployment, choose a unique lowercase
-underscore-safe deployment ID and include this hidden comment once in the first
-commentary message:
-
-```text
-<!-- codex-workflow-deployment-start: <deployment_id> -->
-```
-
-Keep it in the main session as Archivist's reporting boundary.
+Follow the deployment-boundary rule in `AGENTS.md`. Keep its ID for Archivist's
+closure report.
 
 ## Support Packages and Investigation
 
@@ -68,8 +54,8 @@ within the deployment, followed by the capsule for that role:
 
 | Role | Capsule parts |
 | --- | --- |
-| Companion | **Project Context Scope**; **Context Task + Goal**; **Main-Agent Context Guidance** |
-| Investigator | **Investigation Context**; **Investigation Task + Goal**; **Main-Agent Investigation Guidance** |
+| Explorer | **Exploration Context**; **Exploration Task + Goal**; **Main-Agent Exploration Guidance** |
+| Investigator | **Problem ID**; **Solution Context**; **Solution Search Task + Goal**; **Main-Agent Solution Guidance** |
 | Archivist | **Documentation Context + Audience**; **Documentation Task + Goal**; **Main-Agent Documentation Guidance** |
 
 Treat these parts as the complete structure. Include only material context,
@@ -78,13 +64,22 @@ and cautions. Require Task ID in every report. Follow-ups repeat it and send
 only changed capsule parts.
 
 The main retains interpretation, root-cause reasoning, and every project
-decision because it holds the decisive project context. Use Companion for
-peripheral or bulky retained project context. Create Investigator for bounded
-project or Internet investigation and discovery whose independent exploration
-materially advances the task, including comparative project surveys, repository
-mapping, and prior-art research. Investigator returns findings, patterns,
-evidence, unknowns, and implications; it never owns the causal, architecture,
-implementation, or acceptance decision.
+decision because it holds the decisive project context. Use Explorer for
+bounded context work and Investigator for solution research. Both return
+evidence, unknowns, and implications; neither owns causal, architecture,
+implementation, or acceptance decisions.
+
+For one bounded problem that needs Investigator, start exactly three
+Investigators in the same dispatch. Give them one shared Problem ID and problem
+statement, distinct Task IDs, and complementary search angles in their Solution
+Search Task + Goal. Choose angles suited to the problem: different hypotheses,
+solution approaches, evidence sources, or a challenge to likely assumptions.
+Each lane seeks an answer to the full problem; its angle guides the search.
+Keep their searches independent. Wait for all three reports, compare evidence
+and disagreements rather than voting, then make the main-owned decision. If a
+lane fails, retry or replace that lane without rerunning completed lanes; do
+not treat an incomplete trio as a complete search. If replacement is unavailable,
+report the limitation with the available evidence.
 
 ## Rollout-Efficient Support
 
@@ -103,8 +98,7 @@ implementation, or acceptance decision.
 ## Fixed Boundaries
 
 - Medium has no workflow-imposed aggregate active-subagent limit.
-- Use exactly one persistent Companion. Limit other Medium workers to
-  Investigator and Archivist.
+- Limit Medium workers to Explorer, Investigator, and Archivist.
 - Give support workers bounded questions and sufficient context; retain every
   material interpretation and final claim in the main.
 - Archivist owns assigned documentation outside `project_progress.md`,

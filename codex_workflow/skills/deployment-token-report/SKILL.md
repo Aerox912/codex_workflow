@@ -12,9 +12,8 @@ assigned documentation updates, compact checks, and Git inspection are complete.
 Treat that closure state as sealed;
 the repository and closure evidence remain unchanged after reporting starts.
 
-Confirm that the main agent placed this exact hidden comment in its first
-commentary message for the deployment, using the supplied unique lowercase
-underscore-safe ID:
+Use the supplied deployment ID unchanged. It must match
+`[a-z0-9][a-z0-9_-]{0,63}` and the main agent's deployment marker:
 
 ```text
 <!-- codex-workflow-deployment-start: <deployment_id> -->

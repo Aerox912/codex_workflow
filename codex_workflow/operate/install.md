@@ -72,6 +72,9 @@ and `project_core_tech.md` files with verified project evidence. If `files` is
 empty, perform only a read-only framework completeness check. An empty project
 is valid; explicitly record that project context was unavailable and leave
 deployment status empty when no plan exists.
+For this installation action only, Archivist may initialize listed new or
+recovery `project_progress.md`, `project_diary.md`, and
+`latest_session_work.md` files; later deployment updates belong to the main.
 
 Treat installation as incomplete if the required worker cannot run or fails.
 Do not silently perform its work in the main thread.
