@@ -117,7 +117,7 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("directly read the complete current", " ".join(agents_policy.split()))
         self.assertIn("Explorer a bounded context delta", agents_policy)
         self.assertIn("start three independent", agents_policy)
-        self.assertNotIn("create one persistent Companion", agents_policy)
+        self.assertNotIn("Companion", agents_policy)
         self.assertIn("Use Light when none is selected", agents_policy)
         self.assertIn("Never repeat it later in the session", agents_policy)
         self.assertIn("Missing or unreadable required documents", agents_policy)
@@ -146,26 +146,16 @@ class MarkerTests(unittest.TestCase):
 
         self.assertIn("central knowledge director", heavy)
         self.assertIn("do not become a production Executor", " ".join(heavy.split()))
-        self.assertIn("## Companion Report Collection", heavy)
-        self.assertIn("same main-agent dispatch", heavy)
-        self.assertIn("without waiting for Companion", " ".join(heavy.split()))
-        self.assertIn("/root/companion", heavy)
-        self.assertIn("Report recipient", heavy)
-        self.assertIn("`Report recipient: main`", heavy)
-        self.assertIn("complete, evidence-linked reports", " ".join(heavy.split()))
-        self.assertIn("only Task ID and delivery status", " ".join(heavy.split()))
-        self.assertIn("If delivery fails", " ".join(heavy.split()))
-        self.assertIn("fixed word limit", " ".join(heavy.split()))
-        self.assertIn("one consolidated result", heavy)
-        self.assertIn("do not respond to routine", heavy)
-        self.assertIn("Tell Companion about unrecoverable gaps", heavy)
-        self.assertIn("at most one persistent Companion", heavy)
+        self.assertNotIn("Companion", heavy)
+        self.assertNotIn("send_message", heavy)
+        self.assertIn("smallest complete decision-ready report", " ".join(heavy.split()))
+        self.assertIn("directly to the main", " ".join(heavy.split()))
+        self.assertIn("Wait for all three reports", " ".join(heavy.split()))
         self.assertIn("at most one Senior Executor", heavy)
-        self.assertIn("Archivist's deployment-closure handoff", heavy)
         self.assertIn("Explorer for bounded context discovery", heavy)
         self.assertIn("Investigator for evidence-backed solution search", heavy)
         self.assertIn("start exactly three", heavy)
-        self.assertIn("all three Investigator Task IDs", heavy)
+        self.assertIn("distinct Task IDs", heavy)
         self.assertIn("one shared Problem ID", heavy)
         self.assertIn("rather than voting", heavy)
         self.assertIn("retry or replace only that lane", " ".join(heavy.split()))
@@ -177,23 +167,16 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("deployment-boundary rule in `AGENTS.md`", heavy)
         self.assertNotIn("required persistent read-only secretary", heavy)
 
-        companion = (PACKAGE / "agents" / "companion.toml").read_text(encoding="utf-8")
         explorer = (PACKAGE / "agents" / "explorer.toml").read_text(encoding="utf-8")
         investigator = (PACKAGE / "agents" / "investigator.toml").read_text(encoding="utf-8")
         executor = (PACKAGE / "agents" / "default_executor.toml").read_text(encoding="utf-8")
         senior = (PACKAGE / "agents" / "senior_executor.toml").read_text(encoding="utf-8")
         tester = (PACKAGE / "agents" / "tester.toml").read_text(encoding="utf-8")
         archivist = (PACKAGE / "agents" / "archivist.toml").read_text(encoding="utf-8")
-        for role in (companion, explorer, investigator, executor, senior, tester):
+        for role in (explorer, investigator, executor, senior, tester):
             self.assertIn("Task ID", role)
             self.assertIn("complete capsule structure", " ".join(role.split()))
-        self.assertIn("wait_agent", companion)
-        self.assertIn("expected reports", companion)
-        self.assertIn("three-Investigator Problem ID", companion)
-        self.assertIn("do not create or direct them", companion)
-        self.assertIn("Do not impose a\nfixed word limit", companion)
-        self.assertIn("main declares that Task ID an unrecoverable gap", companion)
-        self.assertNotIn("context worker", companion)
+        self.assertFalse((PACKAGE / "agents" / "companion.toml").exists())
         self.assertIn("what exists and where", explorer)
         self.assertIn('sandbox_mode = "read-only"', explorer)
         self.assertIn("plausible fault", investigator)
@@ -202,17 +185,13 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("Work independently", investigator)
         self.assertIn('sandbox_mode = "read-only"', investigator)
         for role in (explorer, investigator, executor, senior, tester):
-            self.assertIn("`Report recipient`", role)
-            self.assertIn("must be `main` or `/root/companion`", " ".join(role.split()))
-            self.assertIn("Apply `Report recipient` exactly", role)
-            self.assertIn("/root/companion", role)
-            self.assertIn("send_message", role)
-            self.assertIn("delivery fails", role)
-            self.assertIn("only there with send_message", " ".join(role.split()))
-            self.assertIn("only Task ID and delivery status", " ".join(role.split()))
-            self.assertIn("Never send the complete report to both", " ".join(role.split()))
-            self.assertIn("routing error", role)
-            self.assertIn("fixed word limit", role)
+            role_flat = " ".join(role.split())
+            self.assertIn("directly to the main", role_flat)
+            self.assertIn("final response", role_flat)
+            self.assertIn("Do not attempt worker-to-worker messaging", role_flat)
+            self.assertNotIn("Report recipient", role)
+            self.assertNotIn("send_message", role)
+            self.assertNotIn("Companion", role)
         self.assertIn("do not repair production code", " ".join(tester.split()))
         self.assertIn("ordinary repair", executor)
         self.assertIn("unresolved hard decision", senior)
@@ -831,7 +810,7 @@ class LifecycleIntegrationTests(unittest.TestCase):
         self.assertFalse((self.runtime.agents / "wave_barrier.toml").exists())
         self.assertFalse((self.runtime.agents / "executor_terra.toml").exists())
         self.assertTrue((self.runtime.agents / "archivist.toml").is_file())
-        self.assertTrue((self.runtime.agents / "companion.toml").is_file())
+        self.assertFalse((self.runtime.agents / "companion.toml").exists())
         self.assertTrue(
             (
                 self.runtime.skills
@@ -1138,7 +1117,7 @@ class LifecycleIntegrationTests(unittest.TestCase):
         )
         self.assertTrue(any((self.runtime.runtime / ".backups").iterdir()))
 
-    def test_update_removes_retired_orchestration_guides(self) -> None:
+    def test_update_removes_retired_orchestration_assets(self) -> None:
         self.bootstrap()
         retired = (
             "companion.md",
@@ -1150,9 +1129,21 @@ class LifecycleIntegrationTests(unittest.TestCase):
             (self.runtime.runtime / relative).write_text(
                 "# Retired orchestration guide\n", encoding="utf-8"
             )
+        retired_worker = (
+            '# codex-workflow-worker: companion\n'
+            'name = "companion"\n'
+            'description = "Retired report collector."\n'
+            'developer_instructions = "Retired."\n'
+        )
+        for path in (
+            self.runtime.agents / "companion.toml",
+            self.runtime.runtime / "templates" / "agents" / "companion.toml",
+        ):
+            path.write_text(retired_worker, encoding="utf-8")
         state_path = self.runtime.runtime / "install_state.json"
         state = json.loads(state_path.read_text(encoding="utf-8"))
         state["owned_runtime_files"].extend(retired)
+        state["owned_workers"].append("companion")
         state_path.write_text(json.dumps(state) + "\n", encoding="utf-8")
 
         incoming = self.incoming_package("capability-routes-incoming", "1.2.0")
@@ -1160,6 +1151,10 @@ class LifecycleIntegrationTests(unittest.TestCase):
 
         for relative in retired:
             self.assertFalse((self.runtime.runtime / relative).exists())
+        self.assertFalse((self.runtime.agents / "companion.toml").exists())
+        self.assertFalse(
+            (self.runtime.runtime / "templates" / "agents" / "companion.toml").exists()
+        )
 
     def test_update_restores_owned_skill_and_removes_stale_skill_files(self) -> None:
         self.bootstrap()

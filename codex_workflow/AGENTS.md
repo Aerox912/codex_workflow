@@ -72,10 +72,9 @@ the same ID to Archivist at closure.
 Batch independent reads, searches, metadata checks, and other known-input
 operations. Keep dependencies and overlapping mutations sequential. In Medium or
 Heavy, dispatch independent workers together, wait for the relevant set, and
-synthesize their reports once. In Heavy, start an optional Companion in the same
-dispatch as the workers whose reports it will collect; do not wait for it before
-starting those workers. Companion only collects reports; Explorer owns bounded
-context discovery.
+synthesize their reports once. Workers return compact evidence-linked reports
+through their parent-child result channel; Explorer owns bounded context
+discovery.
 For one bounded problem assigned to Investigator, start three independent
 Investigator lanes together and compare all three reports before deciding.
 

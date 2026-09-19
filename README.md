@@ -30,8 +30,8 @@ The initial bootstrap will include creating the project documentation framework 
 
 ### This workflow has 3 routes:
 - Light route : No subagents, no workflow, minimal context.
-- Heavy route: Delegate bounded production and verification to Executors and Testers, with Explorer for context, Investigator for solution research, Archivist for documentation, and optional Companion for collecting several worker reports. The main agent owns decisions and orchestrates the work.
-- Medium route: Use Explorer, Investigator, and Archivist for read-only discovery, solution research, and documentation while the main agent handles implementation and verification. Medium does not start Companion.
+- Heavy route: Delegate bounded production and verification to Executors and Testers, with Explorer for context, Investigator for solution research, and Archivist for documentation. The main agent owns orchestration, synthesis, and decisions.
+- Medium route: Use Explorer, Investigator, and Archivist for read-only discovery, solution research, and documentation while the main agent handles implementation and verification.
 
 ### How to use
 - Normally, for simple work, general Q&A, you don't need to do anything. `light route` is the default route.
@@ -50,9 +50,9 @@ use medium/heavy route. Continue ongoing work.
 ---------------
 > **⭐ Recommendation:** Assign very large and complex tasks to the `heavy route` to make the most of its capabilities and maximize token usage savings. Don't hesitate to choose Sol xhigh / Astra high for this route. Using much lower reasoning efforts will not actually save tokens and will severely reduce its coordination capabilities.
 
-In Heavy, the main agent creates Companion and its sibling workers in the same
-dispatch when report collection is useful. Workers send full evidence to
-Companion; Companion returns one synthesis for the main agent's decision.
+In Heavy, workers return compact evidence-linked reports directly to the main
+agent through Codex's parent-child result channel. The main batches related
+workers and makes one decision after the relevant reports arrive.
 
 What's special about the system:
 
@@ -62,7 +62,7 @@ What's special about the system:
 - Knowledge distribution: Each task package from the main agent to the workers includes a task completion guide.
 - Batching guidelines prevent excessive main agent rollout.
 - Explorer maps existing context; three parallel Investigators research each bounded fault or solution problem from independent angles.
-- Worker reports to Companion have no fixed word ceiling, so material evidence is preserved.
+- Worker reports preserve material evidence while referencing bulky logs and artifacts instead of copying them.
 - The **Senior Executor** serves as a fallback for exceptionally difficult problems where stronger reasoning is required.
 - Addresses the issue of the main agent waking up workers too often.
 - Built-in token report: End-of-session token statistics for each agent, allowing you to monitor how much each agent rolls out and how they use their tokens.
