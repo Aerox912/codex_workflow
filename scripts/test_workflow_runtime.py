@@ -118,7 +118,6 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("directly read the complete current", " ".join(agents_policy.split()))
         self.assertIn("Explorer a bounded context delta", agents_policy)
         self.assertIn("start three independent", agents_policy)
-        self.assertNotIn("Companion", agents_policy)
         self.assertIn("Use Light when none is selected", agents_policy)
         self.assertIn("Never repeat it later in the session", agents_policy)
         self.assertIn("Missing or unreadable required documents", agents_policy)
@@ -135,7 +134,6 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("| Explorer |", medium)
         self.assertIn("| Investigator |", medium)
         self.assertIn("| Archivist |", medium)
-        self.assertNotIn("| Companion |", medium)
         self.assertIn("Limit Medium workers to Explorer, Investigator, and Archivist", medium)
         self.assertIn("start exactly three", medium)
         self.assertIn("one shared Problem ID", medium)
@@ -147,7 +145,6 @@ class MarkerTests(unittest.TestCase):
 
         self.assertIn("central knowledge director", heavy)
         self.assertIn("do not become a production Executor", " ".join(heavy.split()))
-        self.assertNotIn("Companion", heavy)
         self.assertNotIn("send_message", heavy)
         self.assertIn("smallest complete decision-ready report", " ".join(heavy.split()))
         self.assertIn("directly to the main", " ".join(heavy.split()))
@@ -166,7 +163,6 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("non-overlapping ownership", heavy)
         self.assertIn("Do not poll workers", heavy)
         self.assertIn("deployment-boundary rule in `AGENTS.md`", heavy)
-        self.assertNotIn("required persistent read-only secretary", heavy)
 
         explorer = (PACKAGE / "agents" / "explorer.toml").read_text(encoding="utf-8")
         investigator = (PACKAGE / "agents" / "investigator.toml").read_text(encoding="utf-8")
@@ -177,7 +173,6 @@ class MarkerTests(unittest.TestCase):
         for role in (explorer, investigator, executor, senior, tester):
             self.assertIn("Task ID", role)
             self.assertIn("complete capsule structure", " ".join(role.split()))
-        self.assertFalse((PACKAGE / "agents" / "companion.toml").exists())
         self.assertIn("what exists and where", explorer)
         self.assertIn('sandbox_mode = "read-only"', explorer)
         self.assertIn("plausible fault", investigator)
@@ -192,7 +187,6 @@ class MarkerTests(unittest.TestCase):
             self.assertIn("Do not attempt worker-to-worker messaging", role_flat)
             self.assertNotIn("Report recipient", role)
             self.assertNotIn("send_message", role)
-            self.assertNotIn("Companion", role)
         self.assertIn("do not repair production code", " ".join(tester.split()))
         self.assertIn("ordinary repair", executor)
         self.assertIn("unresolved hard decision", senior)
@@ -269,7 +263,6 @@ class MarkerTests(unittest.TestCase):
             self.assertIn("Implementation Context + Ownership", role)
             self.assertIn("Implementation Task + Goal", role)
             self.assertIn("Main-Agent Implementation Guidance", role)
-            self.assertNotIn("verification_ledger", role)
         for part in (
             "Verification Context",
             "Verification Goal",
@@ -354,23 +347,6 @@ class MarkerTests(unittest.TestCase):
             text=True,
         )
         self.assertEqual(completed.returncode, 0, completed.stderr)
-
-    def test_removed_tuning_command_is_unavailable(self) -> None:
-        retired = "con" + "figure"
-        completed = subprocess.run(
-            [
-                sys.executable,
-                "-B",
-                str(PACKAGE / "runtime" / "workflow.py"),
-                retired,
-                "--help",
-            ],
-            check=False,
-            capture_output=True,
-            text=True,
-        )
-        self.assertNotEqual(completed.returncode, 0)
-        self.assertIn("invalid choice", completed.stderr)
 
     def test_remove_help_hides_internal_confirmation_flag(self) -> None:
         completed = subprocess.run(
@@ -584,30 +560,6 @@ class ReleaseTests(unittest.TestCase):
                 ):
                     verify_archive(self._archive_without(missing))
 
-    def test_archive_rejects_retired_wave_barrier(self) -> None:
-        names = ["codex_workflow"]
-        names.extend(
-            f"codex_workflow/{path.relative_to(PACKAGE).as_posix()}"
-            for path in PACKAGE.rglob("*")
-        )
-        names.append("codex_workflow/agents/wave_barrier.toml")
-        with self.assertRaisesRegex(PackageReleaseError, "retired worker roles"):
-            _verify_member_names(names)
-
-    def test_archive_does_not_require_retired_orchestration_guides(self) -> None:
-        names = ["codex_workflow"]
-        names.extend(
-            f"codex_workflow/{path.relative_to(PACKAGE).as_posix()}"
-            for path in PACKAGE.rglob("*")
-        )
-        for guide in (
-            "medium_companion.md",
-            "heavy_companion.md",
-            "investigation_team.md",
-        ):
-            self.assertNotIn(f"codex_workflow/{guide}", names)
-        _verify_member_names(names)
-
     def test_archive_verification_rejects_duplicate_members(self) -> None:
         archive = self._archive_without("not-present")
         with zipfile.ZipFile(archive, "a", compression=zipfile.ZIP_DEFLATED) as bundle:
@@ -808,10 +760,7 @@ class LifecycleIntegrationTests(unittest.TestCase):
         self.assertTrue((self.runtime.agents / "senior_executor.toml").is_file())
         self.assertTrue((self.runtime.agents / "explorer.toml").is_file())
         self.assertTrue((self.runtime.agents / "investigator.toml").is_file())
-        self.assertFalse((self.runtime.agents / "wave_barrier.toml").exists())
-        self.assertFalse((self.runtime.agents / "executor_terra.toml").exists())
         self.assertTrue((self.runtime.agents / "archivist.toml").is_file())
-        self.assertFalse((self.runtime.agents / "companion.toml").exists())
         self.assertTrue(
             (
                 self.runtime.skills
@@ -1137,43 +1086,44 @@ class LifecycleIntegrationTests(unittest.TestCase):
         )
         self.assertTrue(any((self.runtime.runtime / ".backups").iterdir()))
 
-    def test_update_removes_retired_orchestration_assets(self) -> None:
+    def test_update_reconciles_obsolete_owned_runtime_and_workers(self) -> None:
         self.bootstrap()
-        retired = (
-            "companion.md",
-            "medium_companion.md",
-            "heavy_companion.md",
-            "investigation_team.md",
-        )
-        for relative in retired:
-            (self.runtime.runtime / relative).write_text(
-                "# Retired orchestration guide\n", encoding="utf-8"
-            )
-        retired_worker = (
-            '# codex-workflow-worker: companion\n'
-            'name = "companion"\n'
-            'description = "Retired report collector."\n'
-            'developer_instructions = "Retired."\n'
-        )
+        obsolete_runtime = self.runtime.runtime / "obsolete-owned.md"
+        obsolete_runtime.write_text("obsolete\n", encoding="utf-8")
+        obsolete_worker = "obsolete_worker"
+        worker_definition = f"# codex-workflow-worker: {obsolete_worker}\n"
         for path in (
-            self.runtime.agents / "companion.toml",
-            self.runtime.runtime / "templates" / "agents" / "companion.toml",
+            self.runtime.agents / f"{obsolete_worker}.toml",
+            self.runtime.runtime / "templates" / "agents" / f"{obsolete_worker}.toml",
         ):
-            path.write_text(retired_worker, encoding="utf-8")
+            path.write_text(worker_definition, encoding="utf-8")
+        installed_explorer = self.runtime.agents / "explorer.toml"
+        installed_explorer.write_text(
+            "# codex-workflow-worker: explorer\n# modified\n",
+            encoding="utf-8",
+        )
         state_path = self.runtime.runtime / "install_state.json"
         state = json.loads(state_path.read_text(encoding="utf-8"))
-        state["owned_runtime_files"].extend(retired)
-        state["owned_workers"].append("companion")
+        state["owned_runtime_files"].append(obsolete_runtime.name)
+        state["owned_workers"].append(obsolete_worker)
         state_path.write_text(json.dumps(state) + "\n", encoding="utf-8")
 
-        incoming = self.incoming_package("capability-routes-incoming", "1.2.0")
+        incoming = self.incoming_package("owned-assets-incoming", "1.2.0")
         plan_update(incoming, self.runtime, self.project).apply()
 
-        for relative in retired:
-            self.assertFalse((self.runtime.runtime / relative).exists())
-        self.assertFalse((self.runtime.agents / "companion.toml").exists())
+        self.assertFalse(obsolete_runtime.exists())
+        self.assertFalse((self.runtime.agents / f"{obsolete_worker}.toml").exists())
         self.assertFalse(
-            (self.runtime.runtime / "templates" / "agents" / "companion.toml").exists()
+            (
+                self.runtime.runtime
+                / "templates"
+                / "agents"
+                / f"{obsolete_worker}.toml"
+            ).exists()
+        )
+        self.assertEqual(
+            installed_explorer.read_text(encoding="utf-8"),
+            (incoming.agent_templates / "explorer.toml").read_text(encoding="utf-8"),
         )
 
     def test_update_restores_owned_skill_and_removes_stale_skill_files(self) -> None:
@@ -1383,61 +1333,6 @@ class LifecycleIntegrationTests(unittest.TestCase):
                 PackageLayout.resolve(self.runtime.runtime), self.runtime, second
             )
         self.assertEqual(second.active.read_bytes(), before)
-
-    def test_update_removes_retired_architecture_assets(self) -> None:
-        self.bootstrap()
-        state_path = self.runtime.runtime / "install_state.json"
-        state = json.loads(state_path.read_text(encoding="utf-8"))
-        retired_verification_utility = self.runtime.runtime / "verification_ledger.py"
-        retired_verification_utility.write_text("# retired\n", encoding="utf-8")
-        state["owned_runtime_files"].append("verification_ledger.py")
-        for legacy_worker in (
-            "executor_luna",
-            "executor_sol",
-            "executor_terra",
-            "end_of_session",
-            "wave_barrier",
-        ):
-            (self.runtime.agents / f"{legacy_worker}.toml").write_text(
-                f"# codex-workflow-worker: {legacy_worker}\n",
-                encoding="utf-8",
-            )
-            (self.runtime.runtime / "templates" / "agents" / f"{legacy_worker}.toml").write_text(
-                f"# codex-workflow-worker: {legacy_worker}\n",
-                encoding="utf-8",
-            )
-            state["owned_workers"].append(legacy_worker)
-        old_explorer = self.runtime.agents / "explorer.toml"
-        old_explorer.write_text(
-            "# codex-workflow-worker: explorer\n# old role definition\n",
-            encoding="utf-8",
-        )
-        state_path.write_text(json.dumps(state) + "\n", encoding="utf-8")
-
-        incoming = self.incoming_package("worker-migration-incoming", "1.2.0")
-        plan_update(incoming, self.runtime, self.project).apply()
-        self.assertFalse(retired_verification_utility.exists())
-        for legacy_worker in (
-            "executor_luna",
-            "executor_sol",
-            "executor_terra",
-            "end_of_session",
-            "wave_barrier",
-        ):
-            self.assertFalse((self.runtime.agents / f"{legacy_worker}.toml").exists())
-            self.assertFalse(
-                (
-                    self.runtime.runtime
-                    / "templates"
-                    / "agents"
-                    / f"{legacy_worker}.toml"
-                ).exists()
-            )
-        self.assertEqual(
-            old_explorer.read_text(encoding="utf-8"),
-            (incoming.agent_templates / "explorer.toml").read_text(encoding="utf-8"),
-        )
-        PackageLayout.resolve(self.runtime.runtime)
 
     def test_cli_install_reports_enabled_disabled_and_stale_states(self) -> None:
         self.bootstrap()
