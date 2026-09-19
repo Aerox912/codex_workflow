@@ -40,6 +40,8 @@ technologies, and module documents, and performs the closing documentation and
 reporting handoff. Require concise edits that remove stale or redundant detail,
 assign module documents explicitly, and perform a direct user-requested
 document edit yourself outside deployment.
+During installation only, the installer-assigned Archivist may initialize those
+three files when they are new or still marked as templates.
 
 Keep raw logs, temporary reasoning, and short-lived checkpoints out of durable
 documents; give each fact one canonical home. Never delete a main project
@@ -49,21 +51,33 @@ document without warning and a second explicit confirmation.
 
 Select one of these routes: **Light** works directly in leaf state without subagents;
 **Medium** keeps planning, diagnosis, implementation, and verification with the
-main agent and uses bounded support from `~/.codex/codex_workflow/medium_route.md`;
-**Heavy** delegates bounded production, verification, documentation,
-project-context, and project or Internet investigation and discovery under
+main agent and uses bounded read-only discovery, solution research, and
+documentation support from `~/.codex/codex_workflow/medium_route.md`;
+**Heavy** delegates bounded production, verification, documentation, context
+exploration, and solution research under
 `~/.codex/codex_workflow/heavy_route.md`.
 
 Follow the user's route selection. Use Light when none is selected; do not infer
 Medium or Heavy. Keep the route until the user changes it or the session ends.
 Enter deployment state for Medium or Heavy only when the work is substantive.
 
+When entering a substantive Medium or Heavy deployment, choose a unique ID
+matching `[a-z0-9][a-z0-9_-]{0,63}`. Put
+`<!-- codex-workflow-deployment-start: <deployment_id> -->`, with the placeholder
+replaced by that ID, in the first commentary after entry. Emit it once and pass
+the same ID to Archivist at closure.
+
 ## Rollout Efficiency
 
 Batch independent reads, searches, metadata checks, and other known-input
 operations. Keep dependencies and overlapping mutations sequential. In Medium or
-Heavy, dispatch independent workers, wait for the
-relevant set, and synthesize their reports once.
+Heavy, dispatch independent workers together, wait for the relevant set, and
+synthesize their reports once. In Heavy, start an optional Companion in the same
+dispatch as the workers whose reports it will collect; do not wait for it before
+starting those workers. Companion only collects reports; Explorer owns bounded
+context discovery.
+For one bounded problem assigned to Investigator, start three independent
+Investigator lanes together and compare all three reports before deciding.
 
 Read personalization and project-local instructions from the protected regions
 at the end of this file. Apply them over workflow defaults subject to higher
@@ -71,31 +85,14 @@ instruction priority.
 
 ## Required Documentation Read
 
-On the first `deployment state` entry under either Medium or Heavy, immediately
-create one persistent Companion with `agent_type="companion"`,
-`task_name="companion"`, and `fork_turns="none"`, or reuse the existing target.
-Do this before planning, modifying files, or dispatching any other worker. Reuse
-that Companion after route changes; do not create a second one.
-
-Give its first assignment the current route, goal, relevant constraints, and a
-bounded diary/module intake or other substantial context consolidation. It
-retains supporting detail and returns only a task-relevant director brief.
-
 If you have not already completed the session-level intake, directly read the
 complete current `agent_docs/` framework exactly once: overview, core
 technology, structure, progress, diary, latest session work, and every
 module-specific Markdown document. This one direct read is shared across Medium
 and Heavy. Never repeat it later in the session. Use retained context or assign
-Companion a bounded diary/module intake, large synthesis, delta, or conflict
-check when freshness or detailed supporting context matters. Missing or
-unreadable required documents leave deployment entry incomplete; report the
-intake blocker.
-
-Do not overuse Companion. Each rollout reloads its persistent context. Combine
-related questions, reuse earlier findings, and avoid status-only requests, tiny
-lookups already answerable from main context, or repeated broad summaries. Use
-it when one consolidated result replaces multiple main reads or tool turns,
-suppresses bulky evidence, or will be reused later.
+Explorer a bounded context delta, module intake, or conflict check when detail
+or freshness matters. Missing or unreadable required documents leave deployment
+entry incomplete; report the intake blocker.
 
 ## Platform Paths
 

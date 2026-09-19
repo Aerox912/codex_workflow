@@ -234,14 +234,16 @@ class DeploymentTokenReportTests(unittest.TestCase):
             ],
         )
 
-    def run_report(self, *extra: str) -> subprocess.CompletedProcess[str]:
+    def run_report(
+        self, *extra: str, deployment_id: str = "major_task"
+    ) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
             [
                 sys.executable,
                 "-B",
                 str(SCRIPT),
                 "--deployment-id",
-                "major_task",
+                deployment_id,
                 "--sessions-root",
                 str(self.sessions.parents[2]),
                 "--caller-session-id",
@@ -322,6 +324,25 @@ class DeploymentTokenReportTests(unittest.TestCase):
         self.assertIn("was not found", completed.stderr)
         self.assertEqual(completed.stdout, "")
 
+    def test_invalid_deployment_id_reports_constraint(self) -> None:
+        for invalid_id in (
+            "<deployment_id>",
+            "<!-- codex-workflow-deployment-start: major_task -->",
+            "Major-Task",
+            "a" * 65,
+        ):
+            with self.subTest(deployment_id=invalid_id):
+                completed = subprocess.run(
+                    [sys.executable, "-B", str(SCRIPT), "--deployment-id", invalid_id],
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                )
+                self.assertEqual(completed.returncode, 2)
+                self.assertIn(repr(invalid_id), completed.stderr)
+                self.assertIn("[a-z0-9][a-z0-9_-]{0,63}", completed.stderr)
+                self.assertEqual(completed.stdout, "")
+
     def test_repeated_marker_in_main_rollout_is_not_ambiguous(self) -> None:
         self.build_fixture()
         path = self.sessions / "rollout-2026-08-23T10-00-00-root-session.jsonl"
@@ -349,6 +370,25 @@ class DeploymentTokenReportTests(unittest.TestCase):
         completed = self.run_report()
         self.assertEqual(completed.returncode, 2)
         self.assertIn("was not found", completed.stderr)
+
+    def test_hyphenated_deployment_id_matches_exact_marker(self) -> None:
+        self.build_fixture()
+        deployment_id = "2026-09-18-unified-chat"
+        path = self.sessions / "rollout-2026-08-23T10-00-00-root-session.jsonl"
+        text = path.read_text(encoding="utf-8").replace(
+            "codex-workflow-deployment-start: major_task",
+            f"codex-workflow-deployment-start: {deployment_id}",
+        )
+        path.write_text(text, encoding="utf-8")
+
+        completed = self.run_report("--format", "json", deployment_id=deployment_id)
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertEqual(json.loads(completed.stdout)["deployment_id"], deployment_id)
+
+        path.write_text(text.replace(deployment_id, deployment_id + "-extra"), encoding="utf-8")
+        longer_marker = self.run_report(deployment_id=deployment_id)
+        self.assertEqual(longer_marker.returncode, 2)
+        self.assertIn("was not found", longer_marker.stderr)
 
     def test_report_boundary_does_not_require_companion(self) -> None:
         self.build_fixture()

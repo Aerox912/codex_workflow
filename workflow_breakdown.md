@@ -46,17 +46,14 @@ In Codex, every time a model stops to call a tool, coordinate a subagent, etc., 
 And each rollout reloads the model's entire context, although most of that will usually be cached input tokens.
 So every time the main agent calls or coordinates a worker, that also costs a main-agent rollout.
 
-This means that overly fine-grained coordination with workers, repeatedly retrieving context reports from the Companion, and similar operations can sometimes become counterproductive from a token-cost perspective.
+This means that overly fine-grained coordination with workers and repeatedly
+requesting reports can become counterproductive from a token-cost perspective.
 
 You may successfully move some work to a worker, but in exchange, the main agent has to reload its entire context.
 In practice, you're basically trading **cached input tokens from the main agent** for **input/output tokens from workers**.
-And the main agent is roughly **40x/100x more expensive than the workers** depending on whether you're using Sol/Astra vs. Luna.
-
-==> Thats also why the Companion Is Initialized Immediately after Deployment State Entry
-
-Creating the Companion also costs a Main Agent rollout, so the workflow does it at the first
-`deployment state` entry while the Main Agent's context is still small and cheaper to replay.
-That persistent Companion is then reused; Light and the direct fast path skip this overhead.
+In Heavy, Companion is created only when several reports would benefit from
+collection. The main creates it alongside the relevant workers in one dispatch,
+without waiting for its startup report. Medium does not use Companion.
 
 This is why I apply **batching guidelines** to reduce the number of main-agent rollouts. I'll explain them later in the `codex_workflow` design section.
 AI isn't going to naturally balance all of these trade-offs for you. You have to experiment, measure, observe, and optimize the workflow yourself.
@@ -100,19 +97,12 @@ If you tell the Codex:
 and then give it a few test projects so it can repeatedly evaluate and improve itself, it will keep optimizing endlessly.
 
 Eventually, the workflow starts becoming **over-optimized for the test cases**, while the orchestration framework becomes increasingly rigid and formulaic.
-I've already gone through this. At one point, it proposed this design:
+I've already gone through this. Repeatedly adding coordination layers made the
+topology harder to understand and maintain. The current design keeps worker
+creation and decisions with the main agent while Companion only collects
+reports when that saves main-agent synthesis turns.
 
-- `wave_barrier` as an LLM lifecycle parent
-
-The idea was to introduce an intermediary subagent.
-
-The Main Agent would send it the manifest for an entire wave. The barrier would spawn the workers, absorb their completion wakeups, wait for the entire child tree to finish, and then return a single terminal bundle to the Main Agent.
-
-In theory, this would reduce the number of times the Main Agent gets woken up.
-
-But in practice, it added another layer of LLM orchestration, made the topology more complicated, forced the architecture around explicit waves, and wasn't even feasible on the platform because `wave_barrier` couldn't directly communicate with those workers.
-
-Eventually, I had to tear the whole thing down myself and return to a much simpler design philosophy:
+The design philosophy is:
 
 **Describe the workers, let the Main Agent control the orchestration itself, and provide a set of optimization guidelines.**
 
@@ -146,11 +136,16 @@ them for each task.
 
 There were also several ideas that I came up with myself that sounded great in theory but simply weren't feasible on the platform.
 
-#### 1. The original Explorer Companion idea
+#### 1. Sibling reports
 
-The original idea behind the Explorer Companion — now just called the **Companion** — was for it to handle miscellaneous work, receive reports from workers, consolidate them, and send the result back to the Main Agent.
-
-But it turns out that it can't directly receive reports from those workers because they're all subagents.
+The main creates workers as direct children and sets each task capsule's
+`Report recipient` to `main` or `/root/companion`. Each worker definition
+applies that field: with Companion, complete evidence goes only there while the
+main receives Task ID and delivery status. Failed delivery retains the report
+with its worker for resending.
+Companion stays active while awaiting the expected Task IDs and returns one
+decision-ready synthesis. Worker completion notices still reach the main because
+it is their parent; report collection reduces their content, not all wakeups.
 
 #### 2. Inheriting the Main Agent's context
 
@@ -164,11 +159,14 @@ In the current implementation, workers normally start with:
 `fork_turns="none"`
 
 and receive explicit context capsules.
-For closure, the Archivist can instead be created with a finite recent-context fork, currently:
+For closure, a newly created Archivist uses a finite recent-context fork:
 
 `fork_turns="200"`
 
-if that recent history is useful as documentation context.
+The fork supplies documentation context for that closure assignment. Companion's
+first spawn also uses `fork_turns="200"` when it starts alongside a report
+batch. Later main-agent decisions must be sent explicitly because each fork is
+a snapshot.
 
 --------------------
 
@@ -187,20 +185,23 @@ Until the design actually worked well in practice, rather than only making sense
 
 The coordination process roughly works like this:
 
-**Main Agent receives the task**  
-→ reads `agent_docs/` to build a comprehensive understanding of the project's context, architecture, and timeline  
-→ identifies critical parts of the codebase and reads them itself, while deploying the `Companion` and `Investigator` workers when needed  
-→ plans the work and divides it into bounded tasks  
-→ each worker receives a work package containing the context scope, task, goal, and a knowledge package with project-specific guidance  
-→ at substantive deployment closure, `agent_docs/` is updated, the Git handoff is completed, and the integrated `$deployment-token-report` is generated.
+1. The main reads `agent_docs/`, inspects decision-critical source, and uses
+   Explorer or Investigator for bounded context or solution questions.
+2. The main plans bounded work and gives each worker a capsule with
+   project-specific guidance. When useful, it starts Companion in the same
+   dispatch to collect their full reports.
+3. At substantive deployment closure, `agent_docs/` is updated, the Git
+   handoff is completed, and `$deployment-token-report` is generated.
 
 Here's an example of the token-usage report generated at the end of each Heavy-route deployment:
 
 ![End-of-session token report](token_report.png)
 
-In this design, the **Companion** helps reduce context pressure on the Main Agent.
-
-Together with the **Investigators**, it offloads work that does not require the Main Agent's high intelligence, allowing the Main Agent to remain focused on orchestration, high-level reasoning, and critical decisions without being distracted by lower-value operational work.
+In this design, **Explorer** handles bounded project context and
+three parallel **Investigators** search one bounded fault or solution problem.
+**Companion** handles report intake
+only in Heavy, allowing the main to consider one evidence-linked synthesis for
+a decision instead of several full reports.
 
 Each work package contains instructions enriched with knowledge distilled from the Main Agent, benefiting from its broad understanding of the overall task and project context.
 
@@ -219,7 +220,8 @@ They are designed to group related coordination and execution work more efficien
 Basically, they're scheduling rules:
 
 - Independent workers that contribute to the same decision should be dispatched together.
-- The Main Agent waits for the relevant group of results and synthesizes them once.
+- Companion collects relevant Heavy-route reports when useful; otherwise the
+  main waits for the group and synthesizes once.
 - The next batch should only be opened when evidence from the previous batch actually changes the next question.
 - Independent implementation packages without overlapping write ownership can run in parallel.
 - Dependencies, overlapping mutations, uncertainty, or high-risk work should still run sequentially.
@@ -236,16 +238,23 @@ After dispatching a worker, the Main Agent waits for it to finish or ask for hel
 | Role | Model | Primary Responsibility | Quantity |
 | --- | --- | --- | ---: |
 | **Main Agent** | Session-selected model | **Primary orchestrator.** Owns the core task context, makes high-level decisions, coordinates the workflow, and distributes the knowledge required by specialized subagents. | 1 |
-| **Companion** | Luna · xhigh | **Persistent secretary and context assistant.** Reduces context pressure and operational overhead on the Main Agent by handling supporting context, organizing information, consolidating reports, and taking care of lightweight auxiliary work. | 1 |
-| **Investigator** | Luna · xhigh | **Research, investigation, and discovery specialist.** Explores bounded questions, repositories, comparative surveys, technical evidence, documentation, prior art, and potential solutions using project material, the Internet, or both. Investigators can operate in parallel across independent lanes. | As needed |
+| **Companion** | Luna · xhigh | Optional Heavy-route collector of complete sibling-worker reports; returns one evidence-linked synthesis for the main's decision. | At most 1 |
+| **Explorer** | Luna · xhigh | Maps existing project context, contracts, documents, logs, and other bounded evidence. | As needed |
+| **Investigator** | Luna · xhigh | Three independent read-only lanes examine one bounded fault or solution problem from complementary angles. | 3 per problem |
 | **Default Executor** | Luna · max | **Default implementation worker.** Handles normal production tasks delegated by the Main Agent, including coding, modifications, integration work, and other routine implementation activities. Multiple Default Executors may work in parallel when tasks can be safely decomposed. | As needed |
 | **Senior Executor** | Sol · medium | **High-capability implementation specialist.** Reserved for exceptionally difficult or high-impact work where stronger reasoning is justified, such as project-core changes, complex algorithms, architectural modifications, or mathematically demanding tasks. | 1 maximum |
 | **Tester** | Luna · max | **Independent verification specialist.** Designs, implements, and runs tests; validates requirements and acceptance criteria; identifies regressions or defects; and provides verification evidence before work is accepted. | As needed |
 | **Archivist** | Luna · xhigh | **Documentation and closure specialist.** Handles assigned documentation outside the three main-owned deployment-state documents, performs the read-only Git handoff, and produces the end-of-deployment token report. | 1 per substantive deployment, plus as needed |
 
-![Heavy Route structure](heavy_route_structure.png)
-
-> `doc-writer` and `closure_steward` were merged into the `archivist` role in version 1.1.14.
+Companion and the report-producing workers are siblings under the main agent.
+Medium uses Explorer, Investigator, and Archivist without Companion.
+Each Investigator batch shares one Problem ID, gives its three agents distinct
+Task IDs, and compares all three evidence-linked reports before a decision.
+During deployment, the main updates `project_progress.md`, `project_diary.md`,
+and `latest_session_work.md`; Archivist initializes these only when the installer
+assigns new or still-template files. The deployment marker goes in the first
+main commentary after entry into substantive Medium or Heavy work, even when
+earlier status commentary exists.
 
 ## 2. Installed topology and state
 
@@ -259,6 +268,7 @@ After dispatching a worker, the Main Agent waits for it to finish or ask for hel
 │   ├── archivist.toml
 │   ├── companion.toml
 │   ├── default_executor.toml
+│   ├── explorer.toml
 │   ├── investigator.toml
 │   ├── senior_executor.toml
 │   └── tester.toml
@@ -297,6 +307,24 @@ Ownership lists permit later update and removal to distinguish workflow files
 from unrelated user assets. Runtime-relative paths and skill names are
 validated before they can identify deletion targets.
 
+Bootstrap and full user-level update write the workflow-owned Codex settings:
+
+```toml
+[agents]
+enabled = true
+
+[features]
+multi_agent = true
+
+[features.multi_agent_v2]
+enabled = true
+min_wait_timeout_ms = 300000
+default_wait_timeout_ms = 600000
+max_wait_timeout_ms = 1800000
+```
+
+Unrelated `config.toml` keys remain user-owned. Removal deletes the keys above.
+
 ### 2.2 Project installation
 
 ```text
@@ -334,7 +362,7 @@ the marked region of `~/.codex/AGENTS.md`.
 | `codex_workflow --install` | Current project | Uses the existing user-level runtime, imports unrecognized local instructions, creates missing project assets, repairs recognized safe omissions, and requires documentation initialization or recovery when needed |
 | `codex_workflow --personal` | Current project | Interactively validates and atomically applies all three personalization sections |
 | `codex_workflow --check-update` | User runtime, read-only | Reports every newer installable release with compact release-note summaries; downloads and changes nothing |
-| `codex_workflow --update` | User runtime + current project | Acquires the newest eligible release, verifies it, backs up owned state, replaces fixed definitions, migrates supported historical layouts, and preserves project-owned content |
+| `codex_workflow --update` | User runtime + current project, or current project only | Acquires and installs a newer release once, then brings each remaining project up to the installed version without reinstalling shared assets; a current project is a no-op |
 | `codex_workflow --disable` | Current project | Atomically moves the recognized active entry point into hidden resources and updates state |
 | `codex_workflow --enable` | Current project | Atomically moves the recognized hidden entry point back to project root and updates state |
 | `codex_workflow --remove` | User runtime + current project | Produces a read-only destructive plan, requires one explicit confirmation, then removes only recognized workflow-owned surfaces while restoring local instructions |
@@ -367,10 +395,11 @@ or a recognized entry using an older or locally modified managed template.
 ### 3.3 Update
 
 Update selects the highest non-draft semantic release containing both
-`codex_workflow-<version>.zip` and `SHA256SUMS`. Prereleases remain eligible. It
-verifies the checksum and archive structure, then delegates application to the
-incoming release's runtime. This lets a newer schema validate itself instead of
-being rejected by an older installed launcher.
+`codex_workflow-<version>.zip` and `SHA256SUMS`. Prereleases remain eligible.
+For a newer release, it verifies the checksum and archive structure, then
+delegates application to the incoming release's runtime. This lets a newer
+schema validate itself instead of being rejected by an older installed
+launcher.
 
 The update plan:
 
@@ -384,7 +413,14 @@ The update plan:
   and enabled/disabled state;
 - removes obsolete manifest-owned runtime files, workers, and skills after
   validating their ownership markers; and
-- rejects equal versions and unapproved downgrades.
+- rejects unapproved downgrades.
+
+When the selected release matches the installed user-level version, update
+uses the installed source without downloading the ZIP. It validates the current
+project against the source backup for its recorded version, backs up only the
+project files it will change, and updates that project without changing the
+installed user-level definitions or state. An already-current project returns
+a no-op without creating a backup. Users repeat this command in each project.
 
 A historical entry containing merged local edits requires explicit reviewed
 local instructions for one-time migration. The runtime does not infer them.

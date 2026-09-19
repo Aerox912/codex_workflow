@@ -7,7 +7,7 @@ Use after Heavy is selected under `AGENTS.md`.
 You are the main agent and central knowledge director. Own task direction,
 architecture, scope, material causal and root-cause decisions, package
 boundaries, integration, acceptance, final claims, and user communication.
-Coordinate every worker directly. In a substantive Heavy deployment, do not
+Create and direct each worker. In a substantive Heavy deployment, do not
 become a production Executor, deployment operator, or Tester.
 
 Optimize for fewer main-agent decision turns and lower main-agent context
@@ -20,67 +20,89 @@ rollouts only when the package genuinely requires that capability.
 
 | Role | Ownership |
 | --- | --- |
-| Companion | One required persistent read-only secretary for project context, diary/module intake, large synthesis, and retained operational context. |
-| Investigator | A disposable read-only worker for one bounded project or Internet investigation, discovery, comparison, prior-art, or research lane. It returns findings and implications; the main owns their interpretation and every project decision. |
+| Companion | Optional persistent Luna report collector for direct children of the main. It reconciles worker reports for a decision batch and returns one evidence-linked synthesis. It does not explore project context or coordinate workers. |
+| Explorer | A disposable read-only worker for bounded project-context discovery, source and contract mapping, document intake, or evidence retrieval. |
+| Investigator | One of three disposable read-only workers researching the same bounded problem from distinct search angles. Each can propose options; the main makes every project decision. |
 | Default Executor | A Luna production worker owning local discovery, implementation, self-check, deployment operations, and ordinary repair inside one bounded package. |
 | Senior Executor | The one optional Sol worker for an exceptionally difficult mathematical, logical, architectural, or cross-cutting package. |
 | Tester | An independent verifier owning the assigned verification, test assets, and suitable test execution, but not production repair. |
 | Archivist | The required substantive-deployment closure worker defined by `~/.codex/codex_workflow/archivist.md`. It owns concise assigned documentation outside the main-owned deployment-state documents, read-only Git reporting, and the closing Deployment Token Report. |
 
-Companion is required on first deployment-state entry. Archivist is required at
-substantive deployment closure. Use each other role only when its capability
-fits the task, without crossing its ownership boundary.
+Archivist is required at substantive deployment closure. Use other roles only
+when they fit the task and ownership boundary.
 
 ## Shared Deployment-State Entry
 
-Before route-specific planning or execution, complete the shared first-entry
-Companion and `agent_docs/` contract in `AGENTS.md`. Do not repeat that intake
-or create another Companion when it was completed earlier under either route.
+Before route-specific planning or execution, complete the shared `agent_docs/`
+intake in `AGENTS.md`. Do not repeat it after a route change.
 
 ## Context Routing After Intake
 
-Immediately after the shared intake and before broader source discovery,
-planning, or task-worker dispatch, use `agent_docs/` and Companion's initial
-brief to create a compact working-context map:
+After the shared intake and before broader source discovery or planning, use
+`agent_docs/` to create a compact working-context map:
 
 - **Direct**: decision-critical code, contracts, interfaces, and evidence the
   main must inspect to own architecture, root cause, scope, risk, integration,
   or acceptance.
-- **Companion**: supporting modules, tools, configuration, logs, dependencies,
-  and other non-decisive project surfaces whose function or state should be
-  returned as one bounded summary.
-- **Investigator**: one bounded project or Internet investigation or discovery
-  lane best handled independently, including an unfamiliar context gap,
-  comparative survey, repository exploration, or prior-art search.
+- **Explorer**: bounded project-context discovery, supporting modules,
+  configuration, logs, dependencies, document deltas, and evidence retrieval.
+- **Investigator**: bounded search for fault hypotheses, potential solutions,
+  technical options, feasibility, or prior art using project or Internet sources.
 
 Keep this map in working state, not durable documentation, and revise it only
-when material evidence changes relevance. Do not directly explore a Companion
-or Investigator surface unless it becomes decision-critical; update the map
-explicitly when that happens. Combine related Companion questions, and create
-an Investigator when independent investigation or discovery materially advances
-the task. Multiple independent lanes may run concurrently.
+when material evidence changes relevance. Directly inspect a delegated surface
+when it becomes decision-critical. Create independent Explorer lanes or
+Investigator trios when they materially advance the task; dispatch them together.
 
 ## Deployment Boundary
 
-At the start of each substantive Heavy deployment, choose a unique lowercase
-underscore-safe deployment ID. Include this hidden comment once in the first
-commentary message:
+Follow the deployment-boundary rule in `AGENTS.md`. Keep its ID for Archivist's
+closure report.
 
-```text
-<!-- codex-workflow-deployment-start: <deployment_id> -->
-```
+## Companion Report Collection
 
-Keep it in the main session as Archivist's reporting boundary.
+Use Companion when several worker reports or bulky evidence would otherwise
+cause repeated main-agent synthesis turns. Keep one Companion target per Heavy
+deployment and reuse it for later batches. Do not create it for a simple direct
+report or in Medium.
+
+Define the relevant decision gate and expected Task IDs before dispatch. Include
+all three Investigator Task IDs when collecting a solution-search batch. In the
+same main-agent dispatch, create Companion first with `agent_type="companion"`,
+`task_name="companion"`, and `fork_turns="200"`; then start the independent
+workers immediately without waiting for Companion's initial response. Give
+Companion the expected Task IDs, decision gate, material constraints, and the
+reporting boundary. The fork is a
+snapshot, so send later decision changes explicitly. For a later batch, wake the
+same Companion with `followup_task` as part of that batch's dispatch.
+
+Keep workers as direct children of the main. Set
+`Report recipient: /root/companion` in each worker's task capsule. They send complete,
+evidence-linked reports only to Companion with `send_message`; their final
+response to the main contains only Task ID and delivery status. If delivery
+fails, reactivate Companion if needed and ask the affected worker to resend its
+retained report. Tell Companion about unrecoverable gaps so it does not wait
+forever. Companion keeps its collection turn active
+until the expected reports arrive, then sends one consolidated result to the
+main. Do not impose a fixed word limit on worker-to-Companion reports; preserve
+material evidence and use
+references for bulky logs. Missing reports, contradictory evidence, and a
+decision-changing blocker must remain visible. Companion does not decide
+acceptance or route repair. Archivist's deployment-closure handoff and exact
+token table return directly to the main.
 
 ## Role-Specific Work Packages
 
 Start every initial package with **Task ID**, a logical identifier unique within
-the deployment, followed by the capsule for that role:
+the deployment. Every Explorer, Investigator, Executor, and Tester package then
+sets **Report recipient** to exactly `main` or `/root/companion`, followed by the
+capsule for that role:
 
 | Role | Capsule parts |
 | --- | --- |
-| Companion | **Project Context Scope**; **Context Task + Goal**; **Main-Agent Context Guidance** |
-| Investigator | **Investigation Context**; **Investigation Task + Goal**; **Main-Agent Investigation Guidance** |
+| Companion | **Report Batch Context**; **Collection Goal + Expected Task IDs**; **Main-Agent Decision Guidance** |
+| Explorer | **Exploration Context**; **Exploration Task + Goal**; **Main-Agent Exploration Guidance** |
+| Investigator | **Problem ID**; **Solution Context**; **Solution Search Task + Goal**; **Main-Agent Solution Guidance** |
 | Default or Senior Executor | **Implementation Context + Ownership**; **Implementation Task + Goal**; **Main-Agent Implementation Guidance** |
 | Tester | **Verification Context**; **Verification Goal**; **Main-Agent Verification Guidance** |
 | Archivist | **Documentation Context + Audience**; **Documentation Task + Goal**; **Main-Agent Documentation Guidance** |
@@ -96,9 +118,23 @@ deployment, self-check, and ordinary troubleshooting with that worker. Give
 Senior unresolved hard-decision context when solving it is the assignment.
 
 Give Tester acceptance intent, risks, contracts, boundaries, evidence, and any
-required gates; let it design and execute the specific checks. Ask every worker
-to retain operational detail and return concise, decision-ready evidence,
-limitations, residual risk, and only decisions the main must make.
+required gates; let it design and execute the specific checks. Without
+Companion, set `Report recipient: main`. With Companion, set
+`Report recipient: /root/companion` and ask for complete evidence without an
+arbitrary word ceiling. Keep raw logs in artifacts when practical.
+
+For one bounded problem that needs Investigator, start exactly three
+Investigators in the same dispatch. Give them one shared Problem ID and problem
+statement, distinct Task IDs, and complementary search angles in their Solution
+Search Task + Goal. Choose angles suited to the problem: different hypotheses,
+solution approaches, evidence sources, or a challenge to likely assumptions.
+Each lane seeks an answer to the full problem; its angle guides the search.
+Keep their searches independent. With Companion, collect all three reports in
+one batch; otherwise wait for all three directly. Compare evidence and
+disagreements rather than voting before deciding. If a lane fails, retry or
+replace only that lane and give Companion any new expected Task ID before it
+closes the batch. If replacement is unavailable, report the incomplete search
+as a limitation.
 
 ## Main-Agent Execution Boundary
 
@@ -112,11 +148,9 @@ evaluating returned evidence, and deciding—not performing the worker's checks.
 The main may reason about root cause because it holds the decisive project
 context. Directly inspect only the contracts, source excerpts, and failure or
 verification evidence that control a material causal, architecture, scope,
-risk, or acceptance decision. Use Companion for peripheral or bulky project
-context. Use Investigator for bounded project or Internet investigation and
-discovery, including comparative project exploration or prior-art research. It
-may establish facts and patterns but never owns their project interpretation or
-any causal, architecture, scope, risk, or acceptance decision.
+risk, or acceptance decision. Use Explorer for bounded context discovery and
+Investigator for evidence-backed solution search. Neither owns the main's
+causal, architecture, scope, risk, or acceptance decision.
 
 Delegate endpoint state, uploads, browser or screenshot work, external search,
 routine Git/status collation, tool or API discovery, logs, environment checks,
@@ -128,8 +162,10 @@ blocker.
 
 ## Orchestration, Repair, and Lifecycle
 
-- Dispatch independent workers that inform the same decision together, wait for
-  the relevant set, and synthesize once. Start another batch only when earlier
+- Dispatch independent workers that inform the same decision together. Start
+  Companion in that dispatch when it will collect their reports. Wait for the
+  relevant consolidated result and decide once; do not respond to routine
+  worker completion acknowledgments. Start another batch only when earlier
   evidence materially changes the next questions.
 - Launch independent non-overlapping implementation packages together when
   dependencies allow. Preserve sequential ordering for dependencies,
@@ -143,7 +179,9 @@ blocker.
   evidence to it instead of starting a main-agent diagnostic loop.
 - When Tester finds an ordinary production defect, forward its focused evidence
   to the owning Executor for repair, then return the repair delta to the same
-  Tester for recheck. Do not rediagnose or repair it in the main.
+  Tester for recheck. With Companion, route these reports through it and retain
+  the main's repair and acceptance decisions. Do not rediagnose or repair in
+  the main.
 - Escalate to a main-owned decision only for capsule conflict, cross-package
   contract change, invalidated material assumptions, expanded ownership,
   security or migration risk, an external blocker, or repeated focused failure.
@@ -157,10 +195,12 @@ blocker.
 
 - Heavy has no workflow-imposed aggregate active-subagent limit; choose worker
   count and concurrency for the task.
-- Use exactly one persistent Companion and at most one Senior Executor. Assign
+- Use at most one persistent Companion and at most one Senior Executor. Assign
   one closure reporting owner per deployment.
 - Initial workers normally use `fork_turns="none"` and an explicit brief.
-- Create and coordinate every worker directly; do not create an LLM wave parent.
+  Companion's first spawn uses `fork_turns="200"`; ordinary Archivist work uses
+  `"none"`, and a new closure Archivist uses `"200"` under `archivist.md`.
+- Create and direct every production or verification worker yourself.
 - Concurrent mutable assignments require non-overlapping ownership. Preserve
   unrelated user work and keep Git mutations within explicit authority.
 - Executors own production and repair, Testers own independent verification,
@@ -177,7 +217,8 @@ substantive Heavy deployment.
 Before the final response that completes, pauses, or blocks a substantive
 deployment, update `agent_docs/project_progress.md`,
 `agent_docs/project_diary.md`, and `agent_docs/latest_session_work.md` yourself,
-keeping them concise and canonical. Then follow
+keeping them concise and canonical. Resolve any pending Companion collection
+before assigning closure. Then follow
 `~/.codex/codex_workflow/archivist.md` exactly once. Combine any other verified
 documentation updates with its required closure assignment when practical.
 Relay its handoff and exact six-column `$deployment-token-report` table. Use a

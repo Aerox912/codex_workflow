@@ -34,6 +34,7 @@ from runtime.lifecycle import (
     plan_enable,
     plan_personalize,
     plan_project_install,
+    plan_project_only_update,
     plan_remove,
     plan_update,
 )
@@ -174,10 +175,10 @@ def _package_version(root: Path) -> object:
         raise WorkflowError(f"incoming package VERSION is invalid: {lines[0]!r}") from error
 
 
-def _require_newer_update(
+def _update_version_order(
     incoming_root: Path, runtime: RuntimePaths, *, allow_downgrade: bool
-) -> None:
-    """Reject equal or unintended downgrade packages before handing them off."""
+) -> int:
+    """Compare incoming and installed versions before package hand-off."""
 
     incoming = _package_version(incoming_root)
     try:
@@ -187,10 +188,9 @@ def _require_newer_update(
         raise WorkflowError(f"cannot read installed workflow VERSION: {error}") from error
     except Exception as error:
         raise WorkflowError("installed workflow VERSION is invalid") from error
-    if incoming == installed:
-        raise WorkflowError("incoming version matches the installed version; select a newer release")
     if incoming < installed and not allow_downgrade:
         raise WorkflowError("incoming version is older; pass --allow-downgrade after approval")
+    return 0 if incoming == installed else (-1 if incoming < installed else 1)
 
 
 def _delegate_update(incoming_root: Path, args: argparse.Namespace) -> int:
@@ -344,11 +344,40 @@ def main() -> int:
                 incoming_root = _package_root(args.source)
             else:
                 selected = select_latest()
-                temporary, package_path = acquire(selected)
-                incoming_root = _package_root(package_path)
-            _require_newer_update(
+                if selected.version == _package_version(runtime.runtime):
+                    # The installed source is already verified and is the
+                    # template authority for projects that lag behind it.
+                    incoming_root = runtime.runtime
+                else:
+                    temporary, package_path = acquire(selected)
+                    incoming_root = _package_root(package_path)
+            version_order = _update_version_order(
                 incoming_root, runtime, allow_downgrade=args.allow_downgrade
             )
+            if version_order == 0:
+                legacy_local = (
+                    args.legacy_local_instructions.read_text(encoding="utf-8")
+                    if args.legacy_local_instructions
+                    else None
+                )
+                installed = PackageLayout.resolve(runtime.runtime, allow_legacy=True)
+                plan = plan_project_only_update(
+                    installed,
+                    runtime,
+                    project,
+                    legacy_local_instructions=legacy_local,
+                )
+                if not plan.mutations:
+                    summary = plan.summary()
+                    summary["applied"] = False
+                    summary["status"] = (
+                        "no project workflow entry point"
+                        if plan.warnings
+                        else "already current"
+                    )
+                    _emit(summary, compact=args.json)
+                    return 0
+                return _finish(plan, args)
             if incoming_root != PACKAGE_ROOT:
                 # The incoming runtime owns package validation. An installed
                 # launcher may be older than the package it is updating to and
