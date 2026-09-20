@@ -53,6 +53,9 @@ use medium/heavy route. Continue ongoing work.
 In Heavy, workers return compact evidence-linked reports directly to the main
 agent through Codex's parent-child result channel. The main batches related
 workers and makes one decision after the relevant reports arrive.
+![Heavy route](heavy_route_structure.png)
+
+*Heavy route*
 
 What's special about the system:
 
