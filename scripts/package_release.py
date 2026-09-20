@@ -291,9 +291,6 @@ def _verify_member_names(names: Iterable[str]) -> list[str]:
         f"{PACKAGE_DIR_NAME}/operate/update.md",
         f"{PACKAGE_DIR_NAME}/operate/check_update.md",
         f"{PACKAGE_DIR_NAME}/operate/remove.md",
-        f"{PACKAGE_DIR_NAME}/operate/personalization_guide.md",
-        f"{PACKAGE_DIR_NAME}/operate/enable.md",
-        f"{PACKAGE_DIR_NAME}/operate/disable.md",
         f"{PACKAGE_DIR_NAME}/archivist.md",
         f"{PACKAGE_DIR_NAME}/runtime/workflow.py",
         f"{PACKAGE_DIR_NAME}/runtime/__init__.py",
@@ -304,13 +301,11 @@ def _verify_member_names(names: Iterable[str]) -> list[str]:
         f"{PACKAGE_DIR_NAME}/runtime/lifecycle.py",
         f"{PACKAGE_DIR_NAME}/runtime/markers.py",
         f"{PACKAGE_DIR_NAME}/runtime/platform_settings.py",
-        f"{PACKAGE_DIR_NAME}/runtime/personalization.py",
         f"{PACKAGE_DIR_NAME}/runtime/plan.py",
         f"{PACKAGE_DIR_NAME}/runtime/project_ops.py",
         f"{PACKAGE_DIR_NAME}/runtime/release.py",
         f"{PACKAGE_DIR_NAME}/runtime/runtime_ops.py",
         f"{PACKAGE_DIR_NAME}/runtime/transaction.py",
-        f"{PACKAGE_DIR_NAME}/resources/personalization.md",
     }
     required.update(
         f"{PACKAGE_DIR_NAME}/agents/{worker}.toml" for worker in BUILTIN_WORKERS

@@ -64,7 +64,11 @@ What's special about the system:
 - Fine-tuned balance: Main agent's control <---> costs & task completion capabilities. based on analysis and observation, not on feeling. 
 - Knowledge distribution: Each task package from the main agent to the workers includes a task completion guide.
 - Batching guidelines prevent excessive main agent rollout.
-- Explorer maps existing context; three parallel Investigators research each bounded fault or solution problem from independent angles.
+- Two parallel Explorers map each bounded context task from complementary angles;
+  three parallel Investigators research each bounded fault or solution problem
+  from independent angles.
+- Workflow policy lives in the managed user-level `~/.codex/AGENTS.md` region;
+  each project `AGENTS.md` remains native, project-owned personalization.
 - Worker reports preserve material evidence while referencing bulky logs and artifacts instead of copying them.
 - The **Senior Executor** serves as a fallback for exceptionally difficult problems where stronger reasoning is required.
 - Addresses the issue of the main agent waking up workers too often.
@@ -87,10 +91,8 @@ Send these exact commands to Codex from the relevant project directory:
 | Command | Purpose |
 | --- | --- |
 | `codex_workflow --install` | Install workflow in the current project and initialize its documentation framework. |
-| `codex_workflow --personal` | Add or update project-specific workflow preferences. |
 | `codex_workflow --check-update` | Check for a newer release without installing it. |
 | `codex_workflow --update` | Install a newer release for the user and current project, or bring the current project up to an already installed release. |
-| `codex_workflow --disable` / `codex_workflow --enable` | Disable or re-enable the workflow for the current project. |
 | `codex_workflow --remove` | Remove the installed workflow after a destructive dry-run and confirmation. |
 
 For the complete architecture, route, lifecycle, ownership, safety, and release

@@ -18,9 +18,7 @@ python3 ~/.codex/codex_workflow/runtime/workflow.py \
 Use the equivalent `py -3.11` invocation and native paths on Windows. Report the
 plan and explicitly warn that the confirmed phase will permanently delete:
 
-- the workflow wrapper around the recognized project-level `AGENTS.md` (active
-  or disabled), project personalization, project workflow state, and legacy
-  workflow resources;
+- project workflow state and legacy hidden workflow resources;
 - the workflow-managed region in the user-level `~/.codex/AGENTS.md` (the
   user file itself is deleted only when no unrelated content remains);
 - workflow-owned keys in `~/.codex/config.toml`;
@@ -30,11 +28,11 @@ plan and explicitly warn that the confirmed phase will permanently delete:
 - every file under `~/.codex/codex_workflow/`, including source and update
   backups.
 
-Also report that project-local instructions imported into the workflow entry
-point are restored to the root `AGENTS.md`, and that workflow-owned marked
-`.gitignore` rules are removed. `agent_docs/`, unrelated user-level
-AGENTS/config content, unrelated worker TOMLs, and unrelated skills are
-preserved. Do not claim
+Also report that a legacy project wrapper, if present, is removed while its
+project-specific instructions are restored to the native root `AGENTS.md`, and
+that workflow-owned marked `.gitignore` rules are removed. Native project
+`AGENTS.md`, `agent_docs/`, unrelated user-level AGENTS/config content,
+unrelated worker TOMLs, and unrelated skills are preserved. Do not claim
 that anything has been removed during this first phase.
 
 Then ask exactly one confirmation, for example:

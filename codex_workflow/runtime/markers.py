@@ -75,29 +75,3 @@ def append_region(text: str, marker: Marker, body: str) -> str:
     normalized = body.strip("\n")
     middle = f"\n{normalized}\n" if normalized else "\n"
     return prefix + marker.start + middle + marker.end + "\n"
-
-
-def validate_project_template(text: str) -> None:
-    for marker in (WORKFLOW_MANAGED, PROJECT_PERSONALIZATION, PROJECT_LOCAL):
-        _bounds(text, marker)
-    if extract(text, PROJECT_PERSONALIZATION) or extract(text, PROJECT_LOCAL):
-        raise ValidationError("default project template protected regions must be empty")
-    order = [
-        text.index(WORKFLOW_MANAGED.start),
-        text.index(WORKFLOW_MANAGED.end),
-        text.index(PROJECT_PERSONALIZATION.start),
-        text.index(PROJECT_PERSONALIZATION.end),
-        text.index(PROJECT_LOCAL.start),
-        text.index(PROJECT_LOCAL.end),
-    ]
-    if order != sorted(order):
-        raise ValidationError("project template marker regions overlap or are out of order")
-
-
-def render_project_entry(
-    template: str, *, personalization: str = "", local_instructions: str = ""
-) -> str:
-    validate_project_template(template)
-    rendered = replace(template, PROJECT_PERSONALIZATION, personalization)
-    rendered = replace(rendered, PROJECT_LOCAL, local_instructions)
-    return rendered

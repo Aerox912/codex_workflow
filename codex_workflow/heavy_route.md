@@ -4,7 +4,7 @@ Use after Heavy is selected under `AGENTS.md`.
 
 ## Main Role and Optimization Target
 
-You are the main agent and central knowledge director. Own task direction,
+The main agent is the central knowledge director. Own task direction,
 architecture, scope, material causal and root-cause decisions, package
 boundaries, integration, acceptance, final claims, and user communication.
 Create and direct each worker. In a substantive Heavy deployment, do not
@@ -20,7 +20,7 @@ rollouts only when the package genuinely requires that capability.
 
 | Role | Ownership |
 | --- | --- |
-| Explorer | A disposable read-only worker for bounded project-context discovery, source and contract mapping, document intake, or evidence retrieval. |
+| Explorer | One of two disposable read-only workers mapping the same bounded project-context task from complementary angles. |
 | Investigator | One of three disposable read-only workers researching the same bounded problem from distinct search angles. Each can propose options; the main makes every project decision. |
 | Default Executor | A Luna production worker owning local discovery, implementation, self-check, deployment operations, and ordinary repair inside one bounded package. |
 | Senior Executor | The one optional Sol worker for an exceptionally difficult mathematical, logical, architectural, or cross-cutting package. |
@@ -50,8 +50,8 @@ After the shared intake and before broader source discovery or planning, use
 
 Keep this map in working state, not durable documentation, and revise it only
 when material evidence changes relevance. Directly inspect a delegated surface
-when it becomes decision-critical. Create independent Explorer lanes or
-Investigator trios when they materially advance the task; dispatch them together.
+when it becomes decision-critical. Create Explorer pairs or Investigator trios
+when they materially advance the task; dispatch each set together.
 
 ## Deployment Boundary
 
@@ -65,7 +65,7 @@ the deployment, followed by the capsule for that role:
 
 | Role | Capsule parts |
 | --- | --- |
-| Explorer | **Exploration Context**; **Exploration Task + Goal**; **Main-Agent Exploration Guidance** |
+| Explorer | **Exploration ID**; **Exploration Context**; **Exploration Task + Goal**; **Main-Agent Exploration Guidance** |
 | Investigator | **Problem ID**; **Solution Context**; **Solution Search Task + Goal**; **Main-Agent Solution Guidance** |
 | Default or Senior Executor | **Implementation Context + Ownership**; **Implementation Task + Goal**; **Main-Agent Implementation Guidance** |
 | Tester | **Verification Context**; **Verification Goal**; **Main-Agent Verification Guidance** |
@@ -85,6 +85,15 @@ Give Tester acceptance intent, risks, contracts, boundaries, evidence, and any
 required gates; let it design and execute the specific checks. Require every
 worker to return the smallest complete decision-ready report directly to the
 main and reference raw logs or bulky artifacts instead of copying them.
+
+For one bounded context task that needs Explorer, start exactly two Explorers
+in the same dispatch. Give them one shared Exploration ID and context question,
+distinct Task IDs, and complementary discovery angles in each lane's
+**Exploration Task + Goal**. Each lane maps the full bounded task; its angle guides evidence
+collection. Keep the lanes independent. Wait for both reports and compare their
+evidence and gaps before deciding. If a lane fails, retry or replace only that
+lane. If replacement is unavailable, report the incomplete exploration as a
+limitation.
 
 For one bounded problem that needs Investigator, start exactly three
 Investigators in the same dispatch. Give them one shared Problem ID and problem

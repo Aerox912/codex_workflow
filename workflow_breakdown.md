@@ -8,8 +8,9 @@ instruction surface.
 
 For exact behavior, use the source that owns the relevant contract:
 
-- `codex_workflow/AGENTS.md` for shared project behavior, route selection, and
-  first deployment-state entry;
+- `codex_workflow/operate/user_AGENTS.md` for merged user-level workflow
+  behavior, route selection, lifecycle dispatch, and first deployment-state
+  entry;
 - `codex_workflow/medium_route.md` and `codex_workflow/heavy_route.md` for
   route-specific orchestration;
 - `codex_workflow/agents/*.toml` for worker models, permissions, and role
@@ -21,7 +22,7 @@ For exact behavior, use the source that owns the relevant contract:
 - `codex_workflow/skills/deployment-token-report/` for deployment usage
   reporting.
 
-This revision was reviewed against packaged version `1.1.17`, read from
+This revision describes packaged version `1.2.0`, read from
 `codex_workflow/operate/VERSION`. Version markers, package validation, and
 release tests prevent that value from drifting from the distributed user
 instruction block.
@@ -189,9 +190,10 @@ Here's an example of the token-usage report generated at the end of each Heavy-r
 
 ![End-of-session token report](token_report.png)
 
-In this design, **Explorer** handles bounded project context and
-three parallel **Investigators** search one bounded fault or solution problem.
-The main compares their evidence and owns the resulting decision.
+In this design, two parallel **Explorers** map one bounded project-context task
+from complementary angles, while three parallel **Investigators** search one
+bounded fault or solution problem. The main compares each set's evidence and
+owns the resulting decision.
 
 Each work package contains instructions enriched with knowledge distilled from the Main Agent, benefiting from its broad understanding of the overall task and project context.
 
@@ -227,7 +229,7 @@ After dispatching a worker, the Main Agent waits for it to finish or ask for hel
 | Role | Model | Primary Responsibility | Quantity |
 | --- | --- | --- | ---: |
 | **Main Agent** | Session-selected model | **Primary orchestrator.** Owns the core task context, makes high-level decisions, coordinates the workflow, and distributes the knowledge required by specialized subagents. | 1 |
-| **Explorer** | Luna · xhigh | Maps existing project context, contracts, documents, logs, and other bounded evidence. | As needed |
+| **Explorer** | Luna · xhigh | Two independent read-only lanes map one bounded context task from complementary angles. | 2 per context task |
 | **Investigator** | Luna · xhigh | Three independent read-only lanes examine one bounded fault or solution problem from complementary angles. | 3 per problem |
 | **Default Executor** | Luna · max | **Default implementation worker.** Handles normal production tasks delegated by the Main Agent, including coding, modifications, integration work, and other routine implementation activities. Multiple Default Executors may work in parallel when tasks can be safely decomposed. | As needed |
 | **Senior Executor** | Sol · medium | **High-capability implementation specialist.** Reserved for exceptionally difficult or high-impact work where stronger reasoning is justified, such as project-core changes, complex algorithms, architectural modifications, or mathematically demanding tasks. | 1 maximum |
@@ -235,6 +237,8 @@ After dispatching a worker, the Main Agent waits for it to finish or ask for hel
 | **Archivist** | Luna · xhigh | **Documentation and closure specialist.** Handles assigned documentation outside the three main-owned deployment-state documents, performs the read-only Git handoff, and produces the end-of-deployment token report. | 1 per substantive deployment, plus as needed |
 
 All report-producing workers are direct children of the main agent.
+Each Explorer pair shares one Exploration ID, gives its two agents distinct
+Task IDs, and compares both evidence-linked reports before a decision.
 Each Investigator batch shares one Problem ID, gives its three agents distinct
 Task IDs, and compares all three evidence-linked reports before a decision.
 During deployment, the main updates `project_progress.md`, `project_diary.md`,
@@ -249,7 +253,7 @@ earlier status commentary exists.
 
 ```text
 ~/.codex/
-├── AGENTS.md                         # workflow command block + unrelated user content
+├── AGENTS.md                         # workflow policy/commands + unrelated user content
 ├── config.toml                       # workflow-owned keys + unrelated settings
 ├── agents/
 │   ├── archivist.toml
@@ -266,10 +270,8 @@ earlier status commentary exists.
     ├── medium_route.md
     ├── install_state.json
     ├── operate/
-    ├── resources/
     ├── runtime/
     ├── templates/
-    │   ├── AGENTS.md
     │   ├── agents/
     │   ├── project_docs/
     │   └── skills/
@@ -281,7 +283,7 @@ The user state file records:
 
 ```json
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "version": "<installed-version>",
   "owned_runtime_files": ["<relative paths>"],
   "owned_workers": ["<worker names>"],
@@ -305,7 +307,7 @@ multi_agent = true
 [features.multi_agent_v2]
 enabled = true
 min_wait_timeout_ms = 300000
-default_wait_timeout_ms = 600000
+default_wait_timeout_ms = 300000
 max_wait_timeout_ms = 1800000
 ```
 
@@ -315,7 +317,7 @@ Unrelated `config.toml` keys remain user-owned. Removal deletes the keys above.
 
 ```text
 <project>/
-├── AGENTS.md                         # present when enabled
+├── AGENTS.md                         # optional native project-owned instructions
 ├── .gitignore                       # optional marked workflow block
 ├── agent_docs/
 │   ├── latest_session_work.md
@@ -326,16 +328,13 @@ Unrelated `config.toml` keys remain user-owned. Removal deletes the keys above.
 │   ├── project_structure.md
 │   └── <optional module documents>.md
 └── .codex_workflow_hidden_resources/
-    ├── .AGENTS.md                    # present instead of root AGENTS.md when disabled
-    ├── personalization.md
     └── state.json
 ```
 
-Enabled and disabled entry points are mutually exclusive. The project state
-records schema version, entry format version, workflow version, and enabled
-state. The recorded workflow version lets update validate a project entry
-against the exact historical source that produced it rather than assuming all
-projects already use the currently installed template.
+Workflow policy no longer wraps or owns project `AGENTS.md`; that file has its
+ordinary purpose as project personalization. Project state records only schema
+and workflow versions. Update uses historical source only when migrating a
+legacy workflow-owned wrapper.
 
 ## 3. Lifecycle commands
 
@@ -345,13 +344,10 @@ the marked region of `~/.codex/AGENTS.md`.
 | Prompt | Scope | Behavior |
 | --- | --- | --- |
 | First bootstrap guide | User runtime + current project | Validates an extracted release, installs shared assets, initializes the project, and requires an Archivist documentation action |
-| `codex_workflow --install` | Current project | Uses the existing user-level runtime, imports unrecognized local instructions, creates missing project assets, repairs recognized safe omissions, and requires documentation initialization or recovery when needed |
-| `codex_workflow --personal` | Current project | Interactively validates and atomically applies all three personalization sections |
+| `codex_workflow --install` | Current project | Uses the existing user-level runtime, preserves native project instructions, creates or repairs project state and documentation, and requires documentation initialization or recovery when needed |
 | `codex_workflow --check-update` | User runtime, read-only | Reports every newer installable release with compact release-note summaries; downloads and changes nothing |
 | `codex_workflow --update` | User runtime + current project, or current project only | Acquires and installs a newer release once, then brings each remaining project up to the installed version without reinstalling shared assets; a current project is a no-op |
-| `codex_workflow --disable` | Current project | Atomically moves the recognized active entry point into hidden resources and updates state |
-| `codex_workflow --enable` | Current project | Atomically moves the recognized hidden entry point back to project root and updates state |
-| `codex_workflow --remove` | User runtime + current project | Produces a read-only destructive plan, requires one explicit confirmation, then removes only recognized workflow-owned surfaces while restoring local instructions |
+| `codex_workflow --remove` | User runtime + current project | Produces a read-only destructive plan, requires one explicit confirmation, then removes only workflow-owned surfaces while preserving native project instructions |
 
 All lifecycle commands require Python 3.11 or newer. Windows uses the
 equivalent `py -3.11` invocation and native path syntax.
@@ -367,16 +363,12 @@ filesystem operation and required documentation action succeed.
 ### 3.2 Project install and repair
 
 Install never reinstalls `~/.codex/`. It creates only project-level assets from
-the installed templates. If an unrecognized root `AGENTS.md` exists, its exact
-content enters the project-local marker region. A recognized healthy enabled or
-disabled project is a no-op. Safe repairs include missing or stale project
-state, a recoverable missing personalization resource, workflow-owned
-`.gitignore` drift, leftover package staging, and missing or still-template
-framework documents.
-
-Ambiguous states stop with recovery guidance: both entry points present,
-unrecognized hidden entry points, malformed markers, personalization mismatch,
-or a recognized entry using an older or locally modified managed template.
+the installed templates. A native root `AGENTS.md` is never rewritten or
+imported. A healthy installed project is a no-op. Safe repairs include missing
+or stale project state, workflow-owned `.gitignore` drift, leftover package
+staging, and missing or still-template framework documents. A recognized
+legacy wrapper is unwrapped into ordinary project instructions; malformed,
+drifted, or conflicting legacy entry points stop with recovery guidance.
 
 ### 3.3 Update
 
@@ -392,47 +384,39 @@ The update plan:
 - writes a timestamped backup of user instructions, configuration, runtime,
   worker TOMLs, owned skills, and relevant project workflow files;
 - replaces route, worker, skill, template, guide, and runtime definitions;
-- updates the user command region and owned Codex settings;
+- updates the merged user workflow region and owned Codex settings;
 - preserves unrelated user settings, workers, skills, and instruction content;
-- validates each project against its recorded version's source backup;
-- preserves personalization, project-local instructions, project documentation,
-  and enabled/disabled state;
+- validates a legacy project wrapper against its recorded version's source
+  backup before migration;
+- preserves native project instructions and project documentation;
 - removes obsolete manifest-owned runtime files, workers, and skills after
   validating their ownership markers; and
 - rejects unapproved downgrades.
 
 When the selected release matches the installed user-level version, update
-uses the installed source without downloading the ZIP. It validates the current
-project against the source backup for its recorded version, backs up only the
-project files it will change, and updates that project without changing the
-installed user-level definitions or state. An already-current project returns
-a no-op without creating a backup. Users repeat this command in each project.
+uses the installed source without downloading the ZIP. It consults the source
+backup only for a legacy wrapper, backs up only the project files it will
+change, and updates that project without changing installed user-level
+definitions or state. An already-current project returns a no-op without
+creating a backup. Users repeat this command in each project.
 
-A historical entry containing merged local edits requires explicit reviewed
+A legacy entry containing merged local edits requires explicit reviewed
 local instructions for one-time migration. The runtime does not infer them.
 The public onboarding guidance treats version `1.1.3` as outside the supported
 direct-upgrade path and requires removal before installing a current release.
 
-### 3.4 Disable and enable
-
-Disable and enable move the exact recognized entry-point bytes between root and
-hidden locations and update only the `enabled` field in project state. An
-already-correct state is a safe no-op. Missing, conflicting, or unrecognized
-entry points are hard errors.
-
-### 3.5 Remove
+### 3.4 Remove
 
 Removal is the only public lifecycle operation with a separate preview and
 confirmed phase. The preview reports planned creates, replacements, deletions,
 warnings, and preserved content with `applied: false`. Only an explicit second
 confirmation runs the same validated plan.
 
-Removal deletes the workflow wrapper or restores preserved project-local
-instructions to root `AGENTS.md`; removes hidden project resources and the
-workflow-owned `.gitignore` block; removes the marked user instruction region,
-owned platform keys, marked worker TOMLs, manifest-owned marked skills, and the
-dedicated runtime including backups. It preserves `agent_docs/` and unrelated
-user content.
+Removal preserves native project `AGENTS.md`; a remaining legacy wrapper is
+unwrapped first. It removes hidden project resources and the workflow-owned
+`.gitignore` block, the marked user instruction region, owned platform keys,
+marked worker TOMLs, manifest-owned marked skills, and the dedicated runtime
+including backups. It preserves `agent_docs/` and unrelated user content.
 
 ## 4. Deployment Token Report
 

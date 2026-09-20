@@ -21,7 +21,7 @@ def patch_codex_settings(text: str) -> str:
         "features": {"multi_agent": "true"},
         "features.multi_agent_v2": {
             "enabled": "true",
-            "min_wait_timeout_ms": "120000",
+            "min_wait_timeout_ms": "300000",
             "default_wait_timeout_ms": "300000",
             "max_wait_timeout_ms": "1800000",
         },

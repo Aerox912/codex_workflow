@@ -32,24 +32,26 @@ runtime recognizes that historical layout and migrates it transactionally.
 For a newer release, let the script replace installed routes, worker TOMLs, and
 workflow-owned skills with the incoming release's fixed definitions. Expect it
 to set the workflow-owned `[features.multi_agent_v2]` values in
-`~/.codex/config.toml` to `enabled = true`, `min_wait_timeout_ms = 120000`,
+`~/.codex/config.toml` to `enabled = true`, `min_wait_timeout_ms = 300000`,
 `default_wait_timeout_ms = 300000`, and `max_wait_timeout_ms = 1800000`.
 Expect it to preserve unrelated Codex settings and skills, project documents,
-personalization, project-local instructions, source backups, and the project's
-enabled/disabled state. For a project still using an older workflow version,
-expect the script to validate its managed region against that version's source
-backup. Expect it to remove obsolete workflow-owned files and the retired
-workflow-owned `agent_docs/` `.gitignore` rule, create a verified timestamped
-backup, and apply user/project state through one compensating transaction.
+native project instructions, and source backups. For a project still using an
+older workflow wrapper, expect the script to validate its managed region
+against that version's source backup, remove the wrapper, and restore its
+personalization and project-local regions as ordinary project `AGENTS.md`
+content. Expect it to remove obsolete workflow-owned files and retired
+workflow-owned `AGENTS.md` and `agent_docs/` `.gitignore` rules, create a
+verified timestamped backup, and apply user/project state through one
+compensating transaction.
 Preserve an `agent_docs/` ignore rule that the user owns outside the
 workflow-managed block.
 
 When the user-level workflow already matches the selected release, expect a
-project-only update. It validates the project's managed region against its
-recorded historical source, updates only changed project files, and saves a
-backup of those files. It leaves the installed user-level definitions and state
-unchanged. If the project is already current, expect an explicit no-op with no
-new backup. Run the command separately in each installed project.
+project-only update. It migrates a legacy wrapper when present, updates project
+workflow state, and saves a backup only for changed existing files. It leaves
+native project instructions and installed user-level definitions unchanged. If
+the project is already current, expect an explicit no-op with no new backup.
+Run the command separately in each installed project.
 
 If a legacy project entry point contains merged local edits, or the protected
 project-local region references missing legacy route files, expect the update

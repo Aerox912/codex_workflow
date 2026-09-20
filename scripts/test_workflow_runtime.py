@@ -28,6 +28,23 @@ def next_patch_version(version: str) -> str:
 
 NEXT_PACKAGE_VERSION = next_patch_version(PACKAGE_VERSION)
 
+
+def legacy_project_entry(*, personalization: str = "", local: str = "") -> str:
+    personalization_body = f"{personalization.rstrip()}\n" if personalization else ""
+    local_body = f"{local.rstrip()}\n" if local else ""
+    return (
+        "<!-- codex-workflow-id: viettran-edgeAI/codex_workflow -->\n"
+        "<!-- codex-workflow-managed-start -->\n"
+        "# Legacy Workflow Policy\n"
+        "<!-- codex-workflow-managed-end -->\n\n"
+        "<!-- codex-workflow-project-personalization-start -->\n"
+        f"{personalization_body}"
+        "<!-- codex-workflow-project-personalization-end -->\n\n"
+        "<!-- codex-workflow-project-local-instructions-start -->\n"
+        f"{local_body}"
+        "<!-- codex-workflow-project-local-instructions-end -->\n"
+    )
+
 sys.path.insert(0, str(PACKAGE))
 sys.path.insert(0, str(PACKAGE / "runtime"))
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -50,10 +67,7 @@ from runtime.lifecycle import (
     PackageLayout,
     ProjectPaths,
     RuntimePaths,
-    materialize_personalization,
     plan_bootstrap,
-    plan_enable,
-    plan_personalize,
     plan_project_install,
     plan_project_only_update,
     plan_remove,
@@ -61,11 +75,7 @@ from runtime.lifecycle import (
 )
 from runtime.markers import (
     PROJECT_LOCAL,
-    PROJECT_PERSONALIZATION,
     USER_MANAGED,
-    extract,
-    render_project_entry,
-    replace,
 )
 from runtime.plan import OperationPlan, read_string_list, resolve_owned_runtime_path
 from runtime.release import (
@@ -82,44 +92,32 @@ class MarkerTests(unittest.TestCase):
         instructions = (PACKAGE / "operate" / "user_AGENTS.md").read_text(encoding="utf-8")
         self.assertIn("codex_workflow --check-update", instructions)
         self.assertIn("codex_workflow --remove", instructions)
-
-        personalization = (PACKAGE / "operate" / "personalization_guide.md").read_text(
-            encoding="utf-8"
-        )
-        self.assertIn("resources/personalization.md", personalization)
-        self.assertIn("missing or invalid", personalization)
-        self.assertIn("copy that section's complete", personalization)
-
-    def test_template_renders_independent_project_regions(self) -> None:
-        template = (PACKAGE / "AGENTS.md").read_text(encoding="utf-8")
-        rendered = render_project_entry(
-            template,
-            personalization="Personal rule.",
-            local_instructions="# Existing\nKeep this.",
-        )
-        self.assertEqual(extract(rendered, PROJECT_PERSONALIZATION), "Personal rule.")
-        self.assertEqual(extract(rendered, PROJECT_LOCAL), "# Existing\nKeep this.")
+        self.assertNotIn("codex_workflow --personal", instructions)
+        self.assertNotIn("codex_workflow --disable", instructions)
+        self.assertNotIn("codex_workflow --enable", instructions)
+        self.assertFalse((PACKAGE / "AGENTS.md").exists())
 
     def test_operational_policies_are_compact_and_knowledge_aware(self) -> None:
         policies = {
             name: (PACKAGE / name).read_text(encoding="utf-8")
-            for name in ("AGENTS.md", "medium_route.md", "heavy_route.md")
+            for name in ("operate/user_AGENTS.md", "medium_route.md", "heavy_route.md")
         }
         for name, limit in (
-            ("AGENTS.md", 115),
-            ("medium_route.md", 140),
-            ("heavy_route.md", 230),
+            ("operate/user_AGENTS.md", 180),
+            ("medium_route.md", 155),
+            ("heavy_route.md", 245),
         ):
             self.assertLess(len(policies[name].splitlines()), limit, name)
 
-        agents_policy = policies["AGENTS.md"]
+        agents_policy = policies["operate/user_AGENTS.md"]
         medium = policies["medium_route.md"]
         heavy = policies["heavy_route.md"]
         self.assertIn("directly read the complete current", " ".join(agents_policy.split()))
-        self.assertIn("Explorer a bounded context delta", agents_policy)
+        self.assertIn("two Explorers a bounded", " ".join(agents_policy.split()))
+        self.assertIn("start two independent", agents_policy)
         self.assertIn("start three independent", agents_policy)
         self.assertIn("Use Light when none is selected", agents_policy)
-        self.assertIn("Never repeat it later in the session", agents_policy)
+        self.assertIn("Never repeat\nit later in the session", agents_policy)
         self.assertIn("Missing or unreadable required documents", agents_policy)
         for document in (
             "project_progress.md",
@@ -136,6 +134,8 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("| Archivist |", medium)
         self.assertIn("Limit Medium workers to Explorer, Investigator, and Archivist", medium)
         self.assertIn("start exactly three", medium)
+        self.assertIn("start exactly two", medium)
+        self.assertIn("one shared Exploration ID", medium)
         self.assertIn("one shared Problem ID", medium)
         self.assertIn("distinct Task IDs", medium)
         self.assertIn("rather than voting", medium)
@@ -153,6 +153,8 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("Explorer for bounded context discovery", heavy)
         self.assertIn("Investigator for evidence-backed solution search", heavy)
         self.assertIn("start exactly three", heavy)
+        self.assertIn("start exactly two", heavy)
+        self.assertIn("one shared Exploration ID", heavy)
         self.assertIn("distinct Task IDs", heavy)
         self.assertIn("one shared Problem ID", heavy)
         self.assertIn("rather than voting", heavy)
@@ -174,6 +176,8 @@ class MarkerTests(unittest.TestCase):
             self.assertIn("Task ID", role)
             self.assertIn("complete capsule structure", " ".join(role.split()))
         self.assertIn("what exists and where", explorer)
+        self.assertIn("one other Explorer", explorer)
+        self.assertIn("Exploration ID in every report", " ".join(explorer.split()))
         self.assertIn('sandbox_mode = "read-only"', explorer)
         self.assertIn("plausible fault", investigator)
         self.assertIn("two other Investigators", investigator)
@@ -272,18 +276,18 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("Never weaken assertions", tester)
         self.assertIn("Leave repair and re-verification decisions with the main", tester)
 
-    def test_reserved_marker_collision_is_rejected_during_import(self) -> None:
+    def test_native_project_agents_is_preserved_even_with_legacy_marker_text(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             project = root / "project"
             project.mkdir()
             (project / "AGENTS.md").write_text(PROJECT_LOCAL.start, encoding="utf-8")
-            with self.assertRaises(ValidationError):
-                plan_bootstrap(
-                    PackageLayout.resolve(PACKAGE),
-                    RuntimePaths(root / "home"),
-                    ProjectPaths(project),
-                )
+            plan_bootstrap(
+                PackageLayout.resolve(PACKAGE),
+                RuntimePaths(root / "home"),
+                ProjectPaths(project),
+            ).apply()
+            self.assertEqual((project / "AGENTS.md").read_text(), PROJECT_LOCAL.start)
 
     def test_package_requires_exact_user_managed_region(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -399,7 +403,7 @@ class PlatformSettingsTests(unittest.TestCase):
             tomllib.loads(rendered)["features"]["multi_agent_v2"],
             {
                 "enabled": True,
-                "min_wait_timeout_ms": 120000,
+                "min_wait_timeout_ms": 300000,
                 "default_wait_timeout_ms": 300000,
                 "max_wait_timeout_ms": 1800000,
             },
@@ -429,7 +433,7 @@ class PlatformSettingsTests(unittest.TestCase):
             tomllib.loads(rendered)["features"]["multi_agent_v2"],
             {
                 "enabled": True,
-                "min_wait_timeout_ms": 120000,
+                "min_wait_timeout_ms": 300000,
                 "default_wait_timeout_ms": 300000,
                 "max_wait_timeout_ms": 1800000,
                 "keep_legacy": "keep",
@@ -553,11 +557,13 @@ class ReleaseTests(unittest.TestCase):
             _verify_member_names(names)
 
     def test_archive_verification_runs_the_full_package_validator(self) -> None:
-        for missing in ("AGENTS.md", "project_docs/project_diary.md"):
+        cases = (
+            ("operate/user_AGENTS.md", "archive is missing"),
+            ("project_docs/project_diary.md", "workflow package validation failed"),
+        )
+        for missing, error in cases:
             with self.subTest(missing=missing):
-                with self.assertRaisesRegex(
-                    PackageReleaseError, "workflow package validation failed"
-                ):
+                with self.assertRaisesRegex(PackageReleaseError, error):
                     verify_archive(self._archive_without(missing))
 
     def test_archive_verification_rejects_duplicate_members(self) -> None:
@@ -751,11 +757,11 @@ class LifecycleIntegrationTests(unittest.TestCase):
         )
         entry = self.project.active.read_text(encoding="utf-8")
         self.assertEqual(
-            extract(entry, PROJECT_LOCAL),
-            "# Existing instructions\nKeep local policy.",
+            entry,
+            "# Existing instructions\nKeep local policy.\n",
         )
         self.assertTrue((self.runtime.runtime / "runtime" / "workflow.py").is_file())
-        self.assertTrue((self.runtime.runtime / "templates" / "AGENTS.md").is_file())
+        self.assertFalse((self.runtime.runtime / "templates" / "AGENTS.md").exists())
         self.assertTrue((self.runtime.agents / "default_executor.toml").is_file())
         self.assertTrue((self.runtime.agents / "senior_executor.toml").is_file())
         self.assertTrue((self.runtime.agents / "explorer.toml").is_file())
@@ -787,7 +793,7 @@ class LifecycleIntegrationTests(unittest.TestCase):
             ["features"]["multi_agent_v2"],
             {
                 "enabled": True,
-                "min_wait_timeout_ms": 120000,
+                "min_wait_timeout_ms": 300000,
                 "default_wait_timeout_ms": 300000,
                 "max_wait_timeout_ms": 1800000,
             },
@@ -821,7 +827,9 @@ class LifecycleIntegrationTests(unittest.TestCase):
 
     def test_bootstrap_requires_review_for_missing_legacy_route(self) -> None:
         self.project.active.write_text(
-            "# Project policy\nRead `agent_docs/workflows/heavy_route.md`.\n",
+            legacy_project_entry(
+                local="# Project policy\nRead `agent_docs/workflows/heavy_route.md`."
+            ),
             encoding="utf-8",
         )
         with self.assertRaisesRegex(ValidationError, "missing legacy workflow route"):
@@ -834,8 +842,8 @@ class LifecycleIntegrationTests(unittest.TestCase):
             legacy_local_instructions="# Project policy\nKeep this rule.\n",
         ).apply()
         self.assertEqual(
-            extract(self.project.active.read_text(encoding="utf-8"), PROJECT_LOCAL),
-            "# Project policy\nKeep this rule.",
+            self.project.active.read_text(encoding="utf-8"),
+            "# Project policy\nKeep this rule.\n",
         )
 
     def test_bootstrap_rejects_unowned_skill_collision(self) -> None:
@@ -860,11 +868,10 @@ class LifecycleIntegrationTests(unittest.TestCase):
         gitignore = (self.project_root / ".gitignore").read_text(encoding="utf-8")
         self.assertIn("# local rules\n", gitignore)
         self.assertNotIn("agent_docs/", gitignore)
-        for entry in (
-            ".codex_workflow_hidden_resources/",
-            "AGENTS.md",
-        ):
-            self.assertEqual(gitignore.splitlines().count(entry), 1)
+        self.assertEqual(
+            gitignore.splitlines().count(".codex_workflow_hidden_resources/"), 1
+        )
+        self.assertNotIn("AGENTS.md", gitignore)
         self.assertIn("# codex-workflow-managed-start", gitignore)
         self.assertIn("# codex-workflow-managed-end", gitignore)
 
@@ -872,11 +879,10 @@ class LifecycleIntegrationTests(unittest.TestCase):
         plan_project_install(self.package, self.project).apply()
         repeated = (self.project_root / ".gitignore").read_text(encoding="utf-8")
         self.assertNotIn("agent_docs/", repeated)
-        for entry in (
-            ".codex_workflow_hidden_resources/",
-            "AGENTS.md",
-        ):
-            self.assertEqual(repeated.splitlines().count(entry), 1)
+        self.assertEqual(
+            repeated.splitlines().count(".codex_workflow_hidden_resources/"), 1
+        )
+        self.assertNotIn("AGENTS.md", repeated)
 
     def test_remove_restores_project_local_instructions_and_gitignore(self) -> None:
         self.bootstrap(existing_agents="# Original project instructions\nKeep this.\n")
@@ -952,8 +958,11 @@ class LifecycleIntegrationTests(unittest.TestCase):
         self.assertIn("# codex-workflow-managed-end", gitignore)
 
     def test_remove_restores_project_local_instructions_from_disabled_entry(self) -> None:
-        self.bootstrap(existing_agents="# Original project instructions\nKeep this.\n")
-        plan_enable(self.project, enable=False).apply()
+        self.bootstrap()
+        self.project.disabled.write_text(
+            legacy_project_entry(local="# Original project instructions\nKeep this."),
+            encoding="utf-8",
+        )
         self.assertFalse(self.project.active.exists())
         self.assertTrue(self.project.disabled.exists())
 
@@ -977,48 +986,26 @@ class LifecycleIntegrationTests(unittest.TestCase):
         self.assertEqual(set(state["owned_workers"]), self.package.worker_names)
         self.assertEqual(set(state["owned_skills"]), self.package.skill_names)
 
-    def test_personalize_and_enable_disable_preserve_regions(self) -> None:
-        self.bootstrap(existing_agents="Local policy.\n")
-        customized = (PACKAGE / "resources" / "personalization.md").read_text(
-            encoding="utf-8"
-        ).replace(
-            "Status: default\nDecision: Preserve the workflow-managed default Design Principles.",
-            "Status: customized\nDecision: Prefer explicit ports and adapters.",
-        )
-        plan_personalize(self.project, customized).apply()
-        entry = self.project.active.read_text(encoding="utf-8")
-        self.assertEqual(extract(entry, PROJECT_PERSONALIZATION), "Prefer explicit ports and adapters.")
-        self.assertEqual(extract(entry, PROJECT_LOCAL), "Local policy.")
-        plan_enable(self.project, enable=False).apply()
-        self.assertFalse(self.project.active.exists())
-        self.assertTrue(self.project.disabled.exists())
-        plan_enable(self.project, enable=True).apply()
-        self.assertTrue(self.project.active.exists())
-        self.assertFalse(self.project.disabled.exists())
-
-        self.project.personalization.unlink()
-        defaults = (PACKAGE / "resources" / "personalization.md").read_text(
-            encoding="utf-8"
-        )
-        plan_personalize(self.project, defaults).apply()
-        self.assertEqual(self.project.personalization.read_text(encoding="utf-8"), defaults)
-        self.assertEqual(
-            extract(self.project.active.read_text(encoding="utf-8"), PROJECT_PERSONALIZATION),
-            "",
-        )
-
-    def test_install_rejects_personalization_resource_drift(self) -> None:
-        self.bootstrap()
-        resource = self.project.personalization.read_text(encoding="utf-8")
-        self.project.personalization.write_text(
-            resource.replace(
-                "Status: default\nDecision: Preserve the workflow-managed default Design Principles.",
-                "Status: customized\nDecision: Prefer explicit ports and adapters.",
+    def test_install_migrates_legacy_personalization_and_local_regions(self) -> None:
+        self.project.active.write_text(
+            legacy_project_entry(
+                personalization="Prefer explicit ports and adapters.",
+                local="Local policy.",
             ),
             encoding="utf-8",
         )
-        with self.assertRaises(ValidationError):
-            plan_project_install(self.package, self.project)
+        self.bootstrap()
+        self.assertEqual(
+            self.project.active.read_text(encoding="utf-8"),
+            "Prefer explicit ports and adapters.\n\nLocal policy.\n",
+        )
+        self.assertFalse(self.project.personalization.exists())
+
+    def test_install_preserves_native_project_agents_after_local_edits(self) -> None:
+        self.bootstrap(existing_agents="Local policy.\n")
+        self.project.active.write_text("Locally revised policy.\n", encoding="utf-8")
+        plan_project_install(self.package, self.project).apply()
+        self.assertEqual(self.project.active.read_text(), "Locally revised policy.\n")
 
     def test_update_restores_workers_and_preserves_project_state(self) -> None:
         self.bootstrap(existing_agents="Local policy.\n")
@@ -1036,7 +1023,7 @@ class LifecycleIntegrationTests(unittest.TestCase):
         config = self.runtime.config_toml.read_text(encoding="utf-8")
         self.runtime.config_toml.write_text(
             config.replace(
-                "min_wait_timeout_ms = 120000",
+                "min_wait_timeout_ms = 300000",
                 'min_wait_timeout_ms = 1000\nkeep_user = "yes"',
             ),
             encoding="utf-8",
@@ -1057,7 +1044,7 @@ class LifecycleIntegrationTests(unittest.TestCase):
         incoming = PackageLayout.resolve(incoming_root)
         plan_update(incoming, self.runtime, self.project).apply()
         entry = self.project.active.read_text(encoding="utf-8")
-        self.assertEqual(extract(entry, PROJECT_LOCAL), "Local policy.")
+        self.assertEqual(entry, "Local policy.\n")
         self.assertEqual(
             (self.runtime.runtime / "operate" / "VERSION").read_text(),
             f"{NEXT_PACKAGE_VERSION}\n",
@@ -1069,11 +1056,11 @@ class LifecycleIntegrationTests(unittest.TestCase):
         updated_gitignore = gitignore.read_text(encoding="utf-8")
         self.assertNotIn("agent_docs/", updated_gitignore)
         self.assertIn(".codex_workflow_hidden_resources/", updated_gitignore)
-        self.assertIn("AGENTS.md", updated_gitignore)
+        self.assertNotIn("AGENTS.md", updated_gitignore)
         v2_settings = tomllib.loads(self.runtime.config_toml.read_text(encoding="utf-8"))[
             "features"
         ]["multi_agent_v2"]
-        self.assertEqual(v2_settings["min_wait_timeout_ms"], 120000)
+        self.assertEqual(v2_settings["min_wait_timeout_ms"], 300000)
         self.assertEqual(v2_settings["default_wait_timeout_ms"], 300000)
         self.assertEqual(v2_settings["max_wait_timeout_ms"], 1800000)
         self.assertEqual(v2_settings["keep_user"], "yes")
@@ -1163,24 +1150,17 @@ class LifecycleIntegrationTests(unittest.TestCase):
         second_root = self.root / "second-project"
         second_root.mkdir()
         second = ProjectPaths(second_root)
+        second.active.write_text("Project-owned instructions.\n", encoding="utf-8")
         plan_project_install(self.package, second).apply()
 
         incoming = self.incoming_package("multi-project-incoming", "1.2.0")
-        incoming_template = incoming.project_template.read_text(encoding="utf-8")
-        incoming.project_template.write_text(
-            incoming_template.replace("## Working State", "## Working State (1.2)"),
-            encoding="utf-8",
-        )
-        incoming = PackageLayout.resolve(incoming.root)
-
         plan_update(incoming, self.runtime, self.project).apply()
         second_plan = plan_update(incoming, self.runtime, second)
         self.assertEqual(second_plan.details["from_version"], "1.2.0")
         self.assertEqual(second_plan.details["project_from_version"], PACKAGE_VERSION)
         second_plan.apply()
-        self.assertIn(
-            "## Working State (1.2)", second.active.read_text(encoding="utf-8")
-        )
+        self.assertEqual(second.active.read_text(), "Project-owned instructions.\n")
+        self.assertEqual(json.loads(second.state.read_text())["workflow_version"], "1.2.0")
 
     def test_cli_updates_three_projects_without_reinstalling_user_level(self) -> None:
         self.bootstrap()
@@ -1189,11 +1169,6 @@ class LifecycleIntegrationTests(unittest.TestCase):
         second = ProjectPaths(second_root)
         second.active.write_text("Project 2 local instructions.\n", encoding="utf-8")
         plan_project_install(self.package, second).apply()
-        personalized = second.personalization.read_text(encoding="utf-8").replace(
-            "Status: default\nDecision: No additional frontend profile.",
-            "Status: customized\nDecision: Use the project 2 frontend profile.",
-        )
-        plan_personalize(second, personalized).apply()
         second.gitignore.write_text(
             second.gitignore.read_text(encoding="utf-8").replace(
                 "# codex-workflow-managed-start\n",
@@ -1205,14 +1180,8 @@ class LifecycleIntegrationTests(unittest.TestCase):
         third_root.mkdir()
         third = ProjectPaths(third_root)
         plan_project_install(self.package, third).apply()
-        plan_enable(third, enable=False).apply()
 
         incoming = self.incoming_package("three-project-incoming", NEXT_PACKAGE_VERSION)
-        template = incoming.project_template.read_text(encoding="utf-8")
-        incoming.project_template.write_text(
-            template.replace("## Working State", "## Working State (updated)"),
-            encoding="utf-8",
-        )
         docs_before = second.root / "agent_docs" / "project_overview.md"
         docs_before.write_text("Project 2 documentation.\n", encoding="utf-8")
 
@@ -1255,7 +1224,7 @@ class LifecycleIntegrationTests(unittest.TestCase):
         self.assertEqual(second_result["details"]["project_from_version"], PACKAGE_VERSION)
         self.assertTrue(second_result["applied"])
         second_backup = Path(second_result["details"]["backup"])
-        self.assertTrue((second_backup / "project" / "AGENTS.md").is_file())
+        self.assertFalse((second_backup / "project" / "AGENTS.md").exists())
         self.assertTrue((second_backup / "project" / ".gitignore").is_file())
         self.assertFalse((second_backup / "user").exists())
         self.assertEqual(user_files(), user_before)
@@ -1265,12 +1234,9 @@ class LifecycleIntegrationTests(unittest.TestCase):
         self.assertTrue(third_result["applied"])
         self.assertEqual(user_files(), user_before)
         self.assertFalse(third.active.exists())
-        self.assertIn("## Working State (updated)", third.disabled.read_text())
-        self.assertFalse(json.loads(third.state.read_text())["enabled"])
-        self.assertIn("## Working State (updated)", second.active.read_text())
-        self.assertEqual(extract(second.active.read_text(), PROJECT_LOCAL), "Project 2 local instructions.")
-        self.assertIn("Use the project 2 frontend profile.", second.active.read_text())
-        self.assertEqual(second.personalization.read_text(), personalized)
+        self.assertFalse(third.disabled.exists())
+        self.assertEqual(second.active.read_text(), "Project 2 local instructions.\n")
+        self.assertFalse(second.personalization.exists())
         self.assertNotIn("agent_docs/", second.gitignore.read_text())
         self.assertEqual(docs_before.read_text(), "Project 2 documentation.\n")
         self.assertEqual(json.loads(second.state.read_text())["workflow_version"], NEXT_PACKAGE_VERSION)
@@ -1318,7 +1284,7 @@ class LifecycleIntegrationTests(unittest.TestCase):
         self.assertEqual(result["status"], "already current")
         self.assertFalse(result["applied"])
 
-    def test_project_only_update_requires_recorded_historical_source(self) -> None:
+    def test_native_project_update_does_not_require_historical_template(self) -> None:
         self.bootstrap()
         second_root = self.root / "second-project"
         second_root.mkdir()
@@ -1327,14 +1293,28 @@ class LifecycleIntegrationTests(unittest.TestCase):
         incoming = self.incoming_package("missing-history-incoming", NEXT_PACKAGE_VERSION)
         plan_update(incoming, self.runtime, self.project).apply()
         shutil.rmtree(self.runtime.runtime / ".source_backup" / PACKAGE_VERSION)
-        before = second.active.read_bytes()
+        plan_project_only_update(
+            PackageLayout.resolve(self.runtime.runtime), self.runtime, second
+        ).apply()
+        self.assertEqual(
+            json.loads(second.state.read_text())["workflow_version"],
+            NEXT_PACKAGE_VERSION,
+        )
+
+    def test_legacy_wrapper_update_requires_recorded_historical_source(self) -> None:
+        self.bootstrap()
+        self.project.active.write_text(
+            legacy_project_entry(local="Legacy local policy."), encoding="utf-8"
+        )
+        state = json.loads(self.project.state.read_text())
+        state["workflow_version"] = "1.1.17"
+        self.project.state.write_text(json.dumps(state) + "\n", encoding="utf-8")
         with self.assertRaisesRegex(ValidationError, "historical workflow source"):
             plan_project_only_update(
-                PackageLayout.resolve(self.runtime.runtime), self.runtime, second
+                PackageLayout.resolve(self.runtime.runtime), self.runtime, self.project
             )
-        self.assertEqual(second.active.read_bytes(), before)
 
-    def test_cli_install_reports_enabled_disabled_and_stale_states(self) -> None:
+    def test_cli_install_reports_installed_and_repairs_project_state(self) -> None:
         self.bootstrap()
         command = [
             sys.executable,
@@ -1363,13 +1343,11 @@ class LifecycleIntegrationTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-        enabled = subprocess.run(command, check=False, capture_output=True, text=True)
-        self.assertEqual(enabled.returncode, 0, enabled.stderr)
-        self.assertEqual(json.loads(enabled.stdout)["status"], "already enabled")
-        self.assertEqual(json.loads(enabled.stdout)["instruction"], "No action is required.")
+        installed = subprocess.run(command, check=False, capture_output=True, text=True)
+        self.assertEqual(installed.returncode, 0, installed.stderr)
+        self.assertEqual(json.loads(installed.stdout)["status"], "already installed")
 
         self.project.state.unlink()
-        self.project.personalization.unlink()
         self.project.gitignore.unlink()
         repaired = subprocess.run(command, check=False, capture_output=True, text=True)
         self.assertEqual(repaired.returncode, 0, repaired.stderr)
@@ -1377,37 +1355,18 @@ class LifecycleIntegrationTests(unittest.TestCase):
         self.assertTrue(repaired_summary["applied"])
         self.assertEqual(repaired_summary["agent_actions"][0]["files"], [])
         self.assertTrue(self.project.state.is_file())
-        self.assertTrue(self.project.personalization.is_file())
+        self.assertFalse(self.project.personalization.exists())
         self.assertTrue(self.project.gitignore.is_file())
 
-        plan_enable(self.project, enable=False).apply()
-        disabled = subprocess.run(command, check=False, capture_output=True, text=True)
-        self.assertEqual(disabled.returncode, 0, disabled.stderr)
-        self.assertEqual(json.loads(disabled.stdout)["status"], "already disabled")
-        self.assertIn("--enable", json.loads(disabled.stdout)["instruction"])
-
-        plan_enable(self.project, enable=True).apply()
-        text = self.project.active.read_text(encoding="utf-8")
-        self.project.active.write_text(
-            text.replace("## Working State", "## Locally Changed Working State"),
-            encoding="utf-8",
-        )
-        stale = subprocess.run(command, check=False, capture_output=True, text=True)
-        self.assertEqual(stale.returncode, 1)
-        self.assertIn("--update", json.loads(stale.stdout)["error"])
-
-    def test_update_preserves_disabled_project_state(self) -> None:
-        self.bootstrap()
-        plan_enable(self.project, enable=False).apply()
+    def test_update_preserves_native_project_agents(self) -> None:
+        self.bootstrap(existing_agents="Native project policy.\n")
         plan_update(
-            self.incoming_package("disabled-incoming"),
+            self.incoming_package("native-agents-incoming"),
             self.runtime,
             self.project,
         ).apply()
-        self.assertFalse(self.project.active.exists())
-        self.assertTrue(self.project.disabled.exists())
-        state = json.loads(self.project.state.read_text(encoding="utf-8"))
-        self.assertFalse(state["enabled"])
+        self.assertEqual(self.project.active.read_text(), "Native project policy.\n")
+        self.assertFalse(self.project.disabled.exists())
 
     def test_cli_install_applies_without_confirmation_flag(self) -> None:
         project_root = self.root / "cli-project"
@@ -1443,7 +1402,7 @@ class LifecycleIntegrationTests(unittest.TestCase):
                 "project_core_tech.md",
             ],
         )
-        self.assertTrue((project_root / "AGENTS.md").is_file())
+        self.assertFalse((project_root / "AGENTS.md").exists())
 
     def test_remove_requires_second_confirmation_and_cleans_owned_files(self) -> None:
         self.bootstrap(existing_agents="Local policy.\n")
@@ -1575,7 +1534,7 @@ class LifecycleIntegrationTests(unittest.TestCase):
     def test_legacy_entry_with_edits_requires_reviewed_local_instructions(self) -> None:
         self.bootstrap()
         installed_template_path = self.runtime.runtime / "templates" / "AGENTS.md"
-        legacy_template = installed_template_path.read_text(encoding="utf-8")
+        legacy_template = legacy_project_entry()
         legacy_template = legacy_template.replace(
             "<!-- codex-workflow-managed-start -->\n", ""
         ).replace("<!-- codex-workflow-managed-end -->\n\n", "")
@@ -1598,18 +1557,15 @@ class LifecycleIntegrationTests(unittest.TestCase):
             legacy_local_instructions="Local legacy addition.",
         ).apply()
         self.assertEqual(
-            extract(self.project.active.read_text(encoding="utf-8"), PROJECT_LOCAL),
-            "Local legacy addition.",
+            self.project.active.read_text(encoding="utf-8"),
+            "Local legacy addition.\n",
         )
 
     def test_update_repairs_missing_legacy_route_in_local_region(self) -> None:
-        self.bootstrap(existing_agents="Project policy.\n")
-        entry = self.project.active.read_text(encoding="utf-8")
+        self.bootstrap()
         self.project.active.write_text(
-            replace(
-                entry,
-                PROJECT_LOCAL,
-                "Read `agent_docs/workflows/heavy_route.md`.",
+            legacy_project_entry(
+                local="Read `agent_docs/workflows/heavy_route.md`."
             ),
             encoding="utf-8",
         )
@@ -1624,15 +1580,18 @@ class LifecycleIntegrationTests(unittest.TestCase):
             legacy_local_instructions="Project policy.",
         ).apply()
         self.assertEqual(
-            extract(self.project.active.read_text(encoding="utf-8"), PROJECT_LOCAL),
-            "Project policy.",
+            self.project.active.read_text(encoding="utf-8"),
+            "Project policy.\n",
         )
 
     def test_update_rejects_drift_in_workflow_managed_region(self) -> None:
         self.bootstrap()
-        entry = self.project.active.read_text(encoding="utf-8")
+        installed_template_path = self.runtime.runtime / "templates" / "AGENTS.md"
+        installed_template_path.write_text(legacy_project_entry(), encoding="utf-8")
         self.project.active.write_text(
-            entry.replace("## Working State", "## Locally Changed Working State"),
+            legacy_project_entry().replace(
+                "# Legacy Workflow Policy", "# Locally Changed Workflow Policy"
+            ),
             encoding="utf-8",
         )
         incoming = self.incoming_package("drift-incoming")
@@ -1722,17 +1681,6 @@ class LifecycleIntegrationTests(unittest.TestCase):
         resolve.assert_not_called()
         delegate.assert_called_once()
         self.assertEqual(delegate.call_args.args[0], incoming_root.resolve())
-
-
-class PersonalizationTests(unittest.TestCase):
-    def test_only_customized_decisions_are_materialized(self) -> None:
-        text = (PACKAGE / "resources" / "personalization.md").read_text(encoding="utf-8")
-        self.assertEqual(materialize_personalization(text), "")
-        customized = text.replace(
-            "Status: default\nDecision: No additional frontend profile.",
-            "Status: customized\nDecision: Use the frontend profile.",
-        )
-        self.assertEqual(materialize_personalization(customized), "Use the frontend profile.")
 
 
 if __name__ == "__main__":

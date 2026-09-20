@@ -24,15 +24,12 @@ if str(PACKAGE_ROOT) not in sys.path:
     sys.path.insert(0, str(PACKAGE_ROOT))
 
 from runtime.errors import WorkflowError
-from runtime.layout import PROJECT_ID
 from runtime.lifecycle import (
     OperationPlan,
     PackageLayout,
     ProjectPaths,
     RuntimePaths,
     plan_bootstrap,
-    plan_enable,
-    plan_personalize,
     plan_project_install,
     plan_project_only_update,
     plan_remove,
@@ -100,14 +97,6 @@ def parse_args() -> argparse.Namespace:
     check_update = commands.add_parser("check-update")
     _add_common(check_update, project=False)
 
-    personalize = commands.add_parser("personalize")
-    _add_common(personalize)
-    personalize.add_argument("--resource", type=Path, required=True)
-
-    for name in ("enable", "disable"):
-        command = commands.add_parser(name)
-        _add_common(command)
-
     validate = commands.add_parser("validate")
     _add_common(validate, project=False)
     validate.add_argument("--package-root", type=Path, default=PACKAGE_ROOT)
@@ -134,15 +123,6 @@ def _finish(plan: OperationPlan, args: argparse.Namespace) -> int:
     plan.apply()
     _emit(summary, compact=args.json)
     return 0
-
-
-def _project_workflow_entry(project: ProjectPaths) -> Path | None:
-    """Return an existing recognized active or disabled project entry point."""
-
-    for path in (project.active, project.disabled):
-        if path.is_file() and PROJECT_ID in path.read_text(encoding="utf-8"):
-            return path
-    return None
 
 
 def _package_root(path: Path) -> Path:
@@ -331,48 +311,21 @@ def main() -> int:
                     "the user-level workflow bootstrap is not installed; "
                     "complete the initial bootstrap before installing a project"
                 )
-            existing = _project_workflow_entry(project)
-            if existing is not None:
-                # Validate the recognized entry before reporting a no-op. This
-                # turns stale, malformed, or personalization-drifted installs
-                # into actionable errors instead of misreporting them as merely
-                # disabled.
-                existing_plan = plan_project_install(
-                    package,
-                    project,
-                    legacy_local_instructions=legacy_local,
-                )
-                documentation_action_required = any(
-                    action.get("files") for action in existing_plan.agent_actions
-                )
-                if (
-                    existing_plan.mutations
-                    or existing_plan.cleanup_dirs
-                    or documentation_action_required
-                ):
-                    return _finish(existing_plan, args)
-                enabled = existing == project.active
-                _emit(
-                    {
-                        "applied": False,
-                        "status": "already enabled" if enabled else "already disabled",
-                        "instruction": (
-                            "No action is required."
-                            if enabled
-                            else "Run `codex_workflow --enable` to reactivate it."
-                        ),
-                    },
-                    compact=args.json,
-                )
-                return 0
-            return _finish(
-                plan_project_install(
-                    package,
-                    project,
-                    legacy_local_instructions=legacy_local,
-                ),
-                args,
+            plan = plan_project_install(
+                package,
+                project,
+                legacy_local_instructions=legacy_local,
             )
+            documentation_action_required = any(
+                action.get("files") for action in plan.agent_actions
+            )
+            if plan.mutations or plan.cleanup_dirs or documentation_action_required:
+                return _finish(plan, args)
+            summary = plan.summary()
+            summary["applied"] = False
+            summary["status"] = "already installed"
+            _emit(summary, compact=args.json)
+            return 0
         if args.command == "update":
             assert project is not None
             if args.source:
@@ -406,7 +359,7 @@ def main() -> int:
                     summary = plan.summary()
                     summary["applied"] = False
                     summary["status"] = (
-                        "no project workflow entry point"
+                        "project not installed"
                         if plan.warnings
                         else "already current"
                     )
@@ -433,13 +386,6 @@ def main() -> int:
                 ),
                 args,
             )
-        if args.command == "personalize":
-            assert project is not None
-            resource = args.resource.read_text(encoding="utf-8")
-            return _finish(plan_personalize(project, resource), args)
-        if args.command in {"enable", "disable"}:
-            assert project is not None
-            return _finish(plan_enable(project, enable=args.command == "enable"), args)
         raise WorkflowError(f"unsupported command: {args.command}")
     except (OSError, WorkflowError) as error:
         _emit({"error": str(error), "applied": False}, compact=getattr(args, "json", False))

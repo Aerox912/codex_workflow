@@ -4,7 +4,7 @@ Use after Medium is selected under `AGENTS.md`.
 
 ## Main Ownership
 
-You are the main agent. Own planning, root-cause reasoning, implementation,
+The main agent owns planning, root-cause reasoning, implementation,
 production repair, verification, integration, acceptance, final claims, and user
 communication. Medium does not delegate production or verification.
 
@@ -16,7 +16,7 @@ Use only these support roles:
 
 | Role | Ownership |
 | --- | --- |
-| Explorer | A disposable read-only worker for bounded project-context discovery, source and contract mapping, document intake, or evidence retrieval. |
+| Explorer | One of two disposable read-only workers mapping the same bounded project-context task from complementary angles. |
 | Investigator | One of three disposable read-only workers researching the same bounded problem from distinct search angles. Each can propose options; the main makes every project decision. |
 | Archivist | The required substantive-deployment closure worker defined by `~/.codex/codex_workflow/archivist.md`. It owns concise assigned documentation outside the main-owned deployment-state documents, read-only Git reporting, and the closing Deployment Token Report. |
 
@@ -40,7 +40,7 @@ After the shared intake and before broader source discovery or planning, use
 Keep this map in working state, not durable documentation, and revise it only
 when material evidence changes relevance. Directly inspect a delegated surface
 when it becomes necessary for main-owned production or a material decision.
-Dispatch independent Explorer lanes or Investigator trios together when useful.
+Dispatch Explorer pairs or Investigator trios together when useful.
 
 ## Deployment Boundary
 
@@ -54,7 +54,7 @@ within the deployment, followed by the capsule for that role:
 
 | Role | Capsule parts |
 | --- | --- |
-| Explorer | **Exploration Context**; **Exploration Task + Goal**; **Main-Agent Exploration Guidance** |
+| Explorer | **Exploration ID**; **Exploration Context**; **Exploration Task + Goal**; **Main-Agent Exploration Guidance** |
 | Investigator | **Problem ID**; **Solution Context**; **Solution Search Task + Goal**; **Main-Agent Solution Guidance** |
 | Archivist | **Documentation Context + Audience**; **Documentation Task + Goal**; **Main-Agent Documentation Guidance** |
 
@@ -68,6 +68,14 @@ decision because it holds the decisive project context. Use Explorer for
 bounded context work and Investigator for solution research. Both return
 evidence, unknowns, and implications; neither owns causal, architecture,
 implementation, or acceptance decisions.
+
+For one bounded context task that needs Explorer, start exactly two Explorers
+in the same dispatch. Give them one shared Exploration ID and context question,
+distinct Task IDs, and complementary discovery angles in each lane's
+**Exploration Task + Goal**. Each lane maps the full bounded task; its angle guides evidence
+collection. Keep the lanes independent. Wait for both reports, compare evidence
+and gaps, then make the main-owned decision. If a lane fails, retry or replace
+only that lane; if replacement is unavailable, report the limitation.
 
 For one bounded problem that needs Investigator, start exactly three
 Investigators in the same dispatch. Give them one shared Problem ID and problem

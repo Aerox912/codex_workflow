@@ -9,28 +9,19 @@ and native paths.
 
 ## Existing project installation
 
-Let the CLI validate the current project's active `AGENTS.md` and disabled
-`.codex_workflow_hidden_resources/.AGENTS.md` entry points before reporting an
-existing installation. Expect it to apply pending repairs before reporting a
-no-op when the project has a missing or stale state file, a recoverable missing
-personalization resource, missing or stale workflow-owned `.gitignore` rules,
-or leftover package staging. A repair removes the retired workflow-owned
-`agent_docs/` ignore rule so project documentation can be tracked. If any
-framework document is missing or still carries its bootstrap marker, let the
-CLI recreate only missing templates and return the required documentation
-recovery action; complete that action
-using the procedure below. Accept an empty documentation `files` list when the
-repair still applies non-document mutations. Treat a valid active entry
-reported as `already enabled` as complete. For a valid hidden entry reported as
-`already disabled`, tell the user to run:
+Let the CLI use project state, not the presence of `AGENTS.md`, to recognize an
+existing installation. It may repair stale state, the workflow-owned
+`.gitignore` block, leftover package staging, or missing and still-template
+documentation. If any framework document needs initialization or recovery,
+complete the returned documentation action below. Accept an empty `files` list
+when only non-document repairs are applied. Treat `already installed` as a
+healthy no-op.
 
-```text
-codex_workflow --enable
-```
-
-If both entry points exist, or a recognized entry is stale, malformed, or
-disagrees with its personalization resource, stop and report the CLI's recovery
-instruction. Do not misreport those states as an ordinary disabled installation.
+The project `AGENTS.md` is project-owned. Installation must preserve it exactly.
+If a legacy workflow-owned wrapper is present, expect the CLI to validate and
+remove the wrapper while restoring its personalization and project-local regions
+as ordinary project instructions. Stop on malformed, drifted, or conflicting
+legacy entry points and report the recovery instruction.
 
 ## Install the current project
 
@@ -42,14 +33,11 @@ python3 ~/.codex/codex_workflow/runtime/workflow.py install \
 ```
 
 Use the command to read templates from the existing user-level bootstrap and
-change only the current project. Expect it to create the project `AGENTS.md`,
-missing files in the `agent_docs/` documentation scaffold, hidden
-personalization and state files, and other project-level assets. Preserve an
-existing unrecognized project `AGENTS.md` through its verbatim import into the
-project-local marker region, and preserve unrelated `.gitignore` rules when the
-command adds its marked workflow-owned block. That block ignores only the
-generated `AGENTS.md` wrapper and `.codex_workflow_hidden_resources/`; it must
-not ignore `agent_docs/`.
+change only the current project. Expect it to create missing files in the
+`agent_docs/` scaffold, workflow state, and other project-level assets. Preserve
+the native project `AGENTS.md` and unrelated `.gitignore` rules. The marked
+workflow-owned block ignores only `.codex_workflow_hidden_resources/`; it must
+not ignore `AGENTS.md` or `agent_docs/`.
 
 Keep the shared user-level runtime, fixed definitions, user instructions,
 source backup, and worker TOMLs under `~/.codex/` unchanged. Stop and report the
@@ -58,8 +46,8 @@ error if the initial user-level bootstrap is missing.
 ## Required documentation action
 
 For every new installation or documentation-recovery result, run the required
-`archivist` action. Skip it for a healthy `already enabled` or `already
-disabled` no-op. Spawn the returned action with
+`archivist` action. Skip it for a healthy `already installed` no-op. Spawn the
+returned action with
 `agent_type="archivist"`, `task_name="install_docs"`, and
 `fork_turns="none"`. Use Task ID `install_docs` and the Documentation Context +
 Audience, Documentation Task + Goal, and Main-Agent Documentation Guidance
@@ -68,10 +56,15 @@ capsule. Pass the project root and returned `files`, `created_files`,
 only documents in `files`: these are newly created or still-template-marked
 recovery documents. Remove their bootstrap markers and preserve every other
 existing document. Populate listed `project_structure.md`, `project_overview.md`,
-and `project_core_tech.md` files with verified project evidence. If `files` is
-empty, perform only a read-only framework completeness check. An empty project
-is valid; explicitly record that project context was unavailable and leave
-deployment status empty when no plan exists.
+and `project_core_tech.md` files with verified project evidence. If the project
+is empty, pause before spawning Archivist and ask the user to provide either a
+concise project overview in the conversation or a path to an overview document.
+If the user provides a path, read that document as the initial project-context
+source and include the path and its verified contents in Archivist's capsule;
+do not scan unrelated files or invent missing context. Treat installation as
+incomplete and report the blocker if the user provides neither form of
+overview. If `files` is empty, perform only a read-only framework completeness
+check.
 For this installation action only, Archivist may initialize listed new or
 recovery `project_progress.md`, `project_diary.md`, and
 `latest_session_work.md` files; later deployment updates belong to the main.

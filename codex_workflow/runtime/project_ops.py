@@ -1,10 +1,10 @@
-"""Project entry-point, personalization, and documentation operations."""
+"""Project documentation, state, and legacy entry-point migration operations."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from . import ENTRY_FORMAT_VERSION, RUNTIME_SCHEMA_VERSION
+from . import RUNTIME_SCHEMA_VERSION
 from .errors import ValidationError
 from .layout import PROJECT_ID, PackageLayout, ProjectPaths
 from .markers import (
@@ -12,19 +12,18 @@ from .markers import (
     PROJECT_PERSONALIZATION,
     WORKFLOW_MANAGED,
     extract,
-    render_project_entry,
     replace,
 )
-from .personalization import materialize_personalization
 from .plan import OperationPlan, json_mutation, read_json, text_mutation
 from .transaction import Mutation
 
 
-GITIGNORE_ENTRIES = (
+GITIGNORE_ENTRIES = (".codex_workflow_hidden_resources/",)
+LEGACY_GITIGNORE_ENTRIES = (
+    "agent_docs/",
     ".codex_workflow_hidden_resources/",
     "AGENTS.md",
 )
-LEGACY_GITIGNORE_ENTRIES = ("agent_docs/", *GITIGNORE_ENTRIES)
 GITIGNORE_MANAGED_START = "# codex-workflow-managed-start"
 GITIGNORE_MANAGED_END = "# codex-workflow-managed-end"
 BOOTSTRAP_DOC_MARKER = "<!-- codex-workflow-bootstrap-template -->"
@@ -99,13 +98,11 @@ def _remove_unmarked_gitignore_entries(
 def _plan_gitignore(
     project: ProjectPaths, *, migrate_legacy: bool
 ) -> Mutation | None:
-    """Add a removable, workflow-owned block to ``.gitignore``."""
+    """Add or normalize the removable workflow resource ignore rule."""
 
     path = project.gitignore
     if path.is_symlink() or (path.exists() and not path.is_file()):
-        raise ValidationError(
-            f"project .gitignore path is not a regular file: {path}"
-        )
+        raise ValidationError(f"project .gitignore path is not a regular file: {path}")
 
     current = path.read_text(encoding="utf-8") if path.is_file() else ""
     lines = current.splitlines()
@@ -124,12 +121,10 @@ def _plan_gitignore(
             for line in outside_lines
             if line.strip() and not line.lstrip().startswith("#")
         }
-        desired_managed = [
-            entry for entry in GITIGNORE_ENTRIES if entry not in outside_entries
-        ]
-        if managed_entries == desired_managed:
+        desired = [entry for entry in GITIGNORE_ENTRIES if entry not in outside_entries]
+        if managed_entries == desired:
             return None
-        rendered_lines = lines[: start + 1] + desired_managed + lines[end:]
+        rendered_lines = lines[: start + 1] + desired + lines[end:]
         rendered = "\n".join(rendered_lines).rstrip() + "\n"
         return text_mutation(path, rendered)
 
@@ -138,17 +133,11 @@ def _plan_gitignore(
         for line in lines
         if line.strip() and not line.lstrip().startswith("#")
     }
-    # Legacy releases wrote all three entries without markers. A recognized
-    # workflow project containing that complete set can safely retire the
-    # agent_docs/ rule and adopt the remaining entries into a removable block
-    # during its next install/update operation.
     if migrate_legacy and set(LEGACY_GITIGNORE_ENTRIES).issubset(existing):
         return text_mutation(
             path,
             _append_gitignore_block(
-                _remove_unmarked_gitignore_entries(
-                    current, LEGACY_GITIGNORE_ENTRIES
-                ),
+                _remove_unmarked_gitignore_entries(current, LEGACY_GITIGNORE_ENTRIES),
                 GITIGNORE_ENTRIES,
             ),
         )
@@ -159,8 +148,6 @@ def _plan_gitignore(
 
 
 def _plan_gitignore_remove(project: ProjectPaths) -> Mutation | None:
-    """Remove only the ignore rules that this workflow can prove it owns."""
-
     path = project.gitignore
     if path.is_symlink() or (path.exists() and not path.is_file()):
         raise ValidationError(f"project .gitignore path is not a regular file: {path}")
@@ -173,8 +160,7 @@ def _plan_gitignore_remove(project: ProjectPaths) -> Mutation | None:
         start, end = managed_range
         retained = lines[:start] + lines[end + 1 :]
         rendered = "\n".join(retained).rstrip()
-        rendered = f"{rendered}\n" if rendered else ""
-        return text_mutation(path, rendered)
+        return text_mutation(path, f"{rendered}\n" if rendered else "")
     existing = {
         line.strip()
         for line in lines
@@ -189,8 +175,6 @@ def _plan_gitignore_remove(project: ProjectPaths) -> Mutation | None:
 
 
 def _plan_source_cleanup(project: ProjectPaths) -> tuple[list[Mutation], list[Path]]:
-    """Delete the extracted project-level ``Codex_Workflow`` staging tree."""
-
     source = project.source_dir
     if source.is_symlink():
         raise ValidationError(
@@ -220,104 +204,105 @@ def _plan_source_cleanup(project: ProjectPaths) -> tuple[list[Mutation], list[Pa
     return mutations, cleanup_dirs
 
 
-def plan_project_install(
-    package: PackageLayout,
+def _native_instructions(personalization: str, local: str) -> str:
+    sections = [section.strip() for section in (personalization, local) if section.strip()]
+    return "\n\n".join(sections) + ("\n" if sections else "")
+
+
+def _plan_legacy_entry_migration(
     project: ProjectPaths,
     *,
-    legacy_local_instructions: str | None = None,
-) -> OperationPlan:
+    installed_template: Path | None,
+    legacy_local_instructions: str | None,
+) -> tuple[list[Mutation], bool]:
+    """Unwrap a workflow-owned project entry into an ordinary project AGENTS.md."""
+
     active_exists = project.active.exists()
     disabled_exists = project.disabled.exists()
     if active_exists and disabled_exists:
-        raise ValidationError("both active and disabled project entry points exist")
-    template = package.project_template.read_text(encoding="utf-8")
-    personalization = (
-        project.personalization.read_text(encoding="utf-8")
-        if project.personalization.is_file()
-        else package.default_personalization.read_text(encoding="utf-8")
-    )
-    direct_personalization = materialize_personalization(personalization)
-    mutations: list[Mutation] = []
-    warnings: list[str] = []
-    recognized_project = False
-    entry_path = project.disabled if disabled_exists else project.active
-    enabled = not disabled_exists
-    if active_exists or disabled_exists:
-        current = entry_path.read_text(encoding="utf-8")
-        if PROJECT_ID in current:
-            recognized_project = True
-            if WORKFLOW_MANAGED.start not in current or PROJECT_LOCAL.start not in current:
-                raise ValidationError(
-                    "legacy workflow entry point requires update migration before installation"
-                )
-            extract(current, WORKFLOW_MANAGED)
-            current_personalization = extract(current, PROJECT_PERSONALIZATION)
-            current_local = extract(current, PROJECT_LOCAL)
-            local = _resolve_local_instructions(
-                project,
-                current_local,
-                legacy_local_instructions,
-            )
-            if not project.personalization.is_file() and current_personalization:
-                raise ValidationError(
-                    "personalization resource is missing but the generated region is not empty"
-                )
-            if current_personalization != direct_personalization:
-                raise ValidationError(
-                    "project personalization resource and generated entry point disagree; "
-                    "run codex_workflow --personal or codex_workflow --update"
-                )
-            if extract(current, WORKFLOW_MANAGED) != extract(template, WORKFLOW_MANAGED):
-                raise ValidationError(
-                    "recognized project entry point uses an older or modified workflow template; "
-                    "run codex_workflow --update"
-                )
-            if local != current_local:
-                mutations.append(
-                    text_mutation(
-                        entry_path,
-                        render_project_entry(
-                            template,
-                            personalization=direct_personalization,
-                            local_instructions=local,
-                        ),
-                    )
-                )
-        else:
-            if disabled_exists:
-                raise ValidationError("unrecognized disabled entry point cannot be imported")
-            reject_reserved_markers(current)
-            local = _resolve_local_instructions(
-                project,
-                current,
-                legacy_local_instructions,
-            )
-            rendered = render_project_entry(
-                template,
-                personalization=direct_personalization,
-                local_instructions=local,
-            )
-            mutations.append(text_mutation(entry_path, rendered))
-            warnings.append(
-                "reviewed project-local instructions will be imported"
-                if legacy_local_instructions is not None
-                else "existing AGENTS.md will be preserved in the project-local region"
-            )
-    else:
+        raise ValidationError("both active and legacy disabled project entry points exist")
+    for entry in (project.active, project.disabled):
+        if entry.is_symlink() or (entry.exists() and not entry.is_file()):
+            raise ValidationError(f"project entry point is not a regular file: {entry}")
+    if not active_exists and not disabled_exists:
         if legacy_local_instructions is not None:
             raise ValidationError(
-                "--legacy-local-instructions requires an existing project entry point"
+                "--legacy-local-instructions requires a legacy workflow entry point"
             )
-        rendered = render_project_entry(template, personalization=direct_personalization)
+        return [], False
+
+    entry = project.active if active_exists else project.disabled
+    current = entry.read_text(encoding="utf-8")
+    if PROJECT_ID not in current:
+        if disabled_exists:
+            raise ValidationError("unrecognized legacy disabled entry point cannot be migrated")
+        if legacy_local_instructions is not None:
+            raise ValidationError(
+                "--legacy-local-instructions requires a legacy workflow entry point"
+            )
+        return [], False
+
+    if WORKFLOW_MANAGED.start in current and PROJECT_LOCAL.start in current:
+        if installed_template is not None:
+            template = installed_template.read_text(encoding="utf-8")
+            if (
+                WORKFLOW_MANAGED.start in template
+                and extract(current, WORKFLOW_MANAGED)
+                != extract(template, WORKFLOW_MANAGED)
+            ):
+                raise ValidationError(
+                    "workflow-managed project region has local drift; move project rules "
+                    "to the reviewed local instructions file"
+                )
+        personalization = extract(current, PROJECT_PERSONALIZATION)
+        local = _resolve_local_instructions(
+            project,
+            extract(current, PROJECT_LOCAL),
+            legacy_local_instructions,
+        )
+    elif PROJECT_PERSONALIZATION.start in current:
+        personalization = extract(current, PROJECT_PERSONALIZATION)
+        if installed_template is not None:
+            template = installed_template.read_text(encoding="utf-8")
+            if PROJECT_PERSONALIZATION.start in template:
+                current_base = replace(current, PROJECT_PERSONALIZATION, "")
+                template_base = replace(template, PROJECT_PERSONALIZATION, "")
+                if current_base != template_base and legacy_local_instructions is None:
+                    raise ValidationError(
+                        "legacy project entry contains local edits; pass reviewed local "
+                        "instructions explicitly"
+                    )
+        local = _resolve_local_instructions(
+            project,
+            legacy_local_instructions or "",
+            legacy_local_instructions,
+        )
+    else:
+        raise ValidationError("legacy workflow entry point has an unsupported marker format")
+
+    rendered = _native_instructions(personalization, local)
+    mutations: list[Mutation] = []
+    if disabled_exists:
+        if rendered:
+            mutations.append(text_mutation(project.active, rendered))
+        mutations.append(Mutation(project.disabled, None))
+    elif rendered:
         mutations.append(text_mutation(project.active, rendered))
-    if not project.personalization.is_file():
-        mutations.append(text_mutation(project.personalization, personalization))
-    framework_sources = sorted(package.project_docs.glob("*.md"))
-    framework_docs = [source.name for source in framework_sources]
+    else:
+        mutations.append(Mutation(project.active, None))
+    return mutations, True
+
+
+def _documentation_mutations(
+    package: PackageLayout, project: ProjectPaths
+) -> tuple[list[Mutation], list[dict[str, object]]]:
+    mutations: list[Mutation] = []
+    sources = sorted(package.project_docs.glob("*.md"))
+    framework = [source.name for source in sources]
     action_docs: list[str] = []
     created_docs: list[str] = []
     recovery_docs: list[str] = []
-    for source in framework_sources:
+    for source in sources:
         target = project.docs / source.name
         if not target.exists():
             mutations.append(Mutation(target, source.read_bytes()))
@@ -328,28 +313,7 @@ def plan_project_install(
         ):
             recovery_docs.append(source.name)
             action_docs.append(source.name)
-    project_state = {
-        "schema_version": RUNTIME_SCHEMA_VERSION,
-        "entry_format_version": ENTRY_FORMAT_VERSION,
-        "workflow_version": package.version,
-        "enabled": enabled,
-    }
-    state_mutation = json_mutation(project.state, project_state)
-    if (
-        not project.state.is_file()
-        or project.state.read_bytes() != state_mutation.content
-    ):
-        mutations.append(state_mutation)
-    gitignore_mutation = _plan_gitignore(
-        project, migrate_legacy=recognized_project
-    )
-    if gitignore_mutation is not None:
-        mutations.append(gitignore_mutation)
-    cleanup_mutations, cleanup_dirs = _plan_source_cleanup(project)
-    mutations.extend(cleanup_mutations)
-    if cleanup_mutations:
-        warnings.append(f"{project.source_dir} will be deleted after installation")
-    actions = [
+    actions: list[dict[str, object]] = [
         {
             "role": "archivist",
             "action": "initialize or verify the Project Documentation Framework",
@@ -357,7 +321,7 @@ def plan_project_install(
             "files": action_docs,
             "created_files": created_docs,
             "recovery_files": recovery_docs,
-            "framework": framework_docs,
+            "framework": framework,
             "required_context_files": [
                 "project_structure.md",
                 "project_overview.md",
@@ -365,59 +329,53 @@ def plan_project_install(
             ],
         }
     ]
+    return mutations, actions
+
+
+def plan_project_install(
+    package: PackageLayout,
+    project: ProjectPaths,
+    *,
+    legacy_local_instructions: str | None = None,
+) -> OperationPlan:
+    prior_state = read_json(project.state, default={})
+    migrations, migrated = _plan_legacy_entry_migration(
+        project,
+        installed_template=package.legacy_project_template,
+        legacy_local_instructions=legacy_local_instructions,
+    )
+    mutations = list(migrations)
+    warnings = (
+        ["legacy workflow wrapper will be removed; project instructions remain in AGENTS.md"]
+        if migrated
+        else []
+    )
+    doc_mutations, actions = _documentation_mutations(package, project)
+    mutations.extend(doc_mutations)
+    state = {
+        "schema_version": RUNTIME_SCHEMA_VERSION,
+        "workflow_version": package.version,
+    }
+    state_mutation = json_mutation(project.state, state)
+    if not project.state.is_file() or project.state.read_bytes() != state_mutation.content:
+        mutations.append(state_mutation)
+    gitignore_mutation = _plan_gitignore(
+        project, migrate_legacy=migrated or bool(prior_state)
+    )
+    if gitignore_mutation is not None:
+        mutations.append(gitignore_mutation)
+    if project.personalization.is_file():
+        mutations.append(Mutation(project.personalization, None))
+    cleanup_mutations, cleanup_dirs = _plan_source_cleanup(project)
+    mutations.extend(cleanup_mutations)
+    if cleanup_mutations:
+        warnings.append(f"{project.source_dir} will be deleted after installation")
     return OperationPlan(
         "project-install",
         mutations,
         warnings,
         actions,
         cleanup_dirs=cleanup_dirs,
-    )
-
-
-def plan_personalize(project: ProjectPaths, resource_text: str) -> OperationPlan:
-    entry = recognized_entry(project)
-    current = entry.read_text(encoding="utf-8")
-    if WORKFLOW_MANAGED.start not in current or PROJECT_LOCAL.start not in current:
-        raise ValidationError("project entry point uses the legacy marker format")
-    rendered = replace(
-        current,
-        PROJECT_PERSONALIZATION,
-        materialize_personalization(resource_text),
-    )
-    return OperationPlan(
-        "personalize",
-        [
-            text_mutation(project.personalization, resource_text),
-            text_mutation(entry, rendered),
-        ],
-        [],
-        [],
-    )
-
-
-def plan_enable(project: ProjectPaths, *, enable: bool) -> OperationPlan:
-    source = project.disabled if enable else project.active
-    target = project.active if enable else project.disabled
-    operation = "enable" if enable else "disable"
-    if target.is_file() and not source.exists():
-        text = target.read_text(encoding="utf-8")
-        if PROJECT_ID not in text:
-            raise ValidationError(f"existing {target} is not workflow-owned")
-        return OperationPlan(operation, [], [f"project is already {operation}d"], [])
-    if not source.is_file() or target.exists():
-        raise ValidationError("project entry-point state is missing or conflicted")
-    content = source.read_bytes()
-    if PROJECT_ID.encode() not in content:
-        raise ValidationError("source project entry point is not workflow-owned")
-    state = read_json(project.state, default={})
-    state.setdefault("schema_version", RUNTIME_SCHEMA_VERSION)
-    state.setdefault("entry_format_version", ENTRY_FORMAT_VERSION)
-    state["enabled"] = enable
-    return OperationPlan(
-        operation,
-        [Mutation(target, content), Mutation(source, None), json_mutation(project.state, state)],
-        [],
-        [],
     )
 
 
@@ -428,114 +386,46 @@ def plan_project_update(
     *,
     legacy_local_instructions: str | None,
 ) -> tuple[list[Mutation], list[str]]:
-    active_exists = project.active.exists()
-    disabled_exists = project.disabled.exists()
-    if active_exists and disabled_exists:
-        raise ValidationError("both active and disabled project entry points exist")
-    if not active_exists and not disabled_exists:
-        return [], ["current project has no workflow entry point; user-level update only"]
-    entry = project.disabled if disabled_exists else project.active
-    current = entry.read_text(encoding="utf-8")
-    if PROJECT_ID not in current:
-        raise ValidationError("current project AGENTS.md is not workflow-owned")
-    personalization_resource = (
-        project.personalization.read_text(encoding="utf-8")
-        if project.personalization.is_file()
-        else incoming.default_personalization.read_text(encoding="utf-8")
+    prior_state = read_json(project.state, default={})
+    migrations, migrated = _plan_legacy_entry_migration(
+        project,
+        installed_template=installed.legacy_project_template,
+        legacy_local_instructions=legacy_local_instructions,
     )
-    direct = materialize_personalization(personalization_resource)
-    if WORKFLOW_MANAGED.start in current and PROJECT_LOCAL.start in current:
-        installed_template = installed.project_template.read_text(encoding="utf-8")
-        if extract(current, WORKFLOW_MANAGED) != extract(
-            installed_template, WORKFLOW_MANAGED
-        ):
-            raise ValidationError(
-                "workflow-managed project region has local drift; move project rules to the local region"
-            )
-        if not project.personalization.is_file() and extract(
-            current, PROJECT_PERSONALIZATION
-        ):
-            raise ValidationError(
-                "personalization resource is missing but the generated region is not empty"
-            )
-        local = _resolve_local_instructions(
-            project,
-            extract(current, PROJECT_LOCAL),
-            legacy_local_instructions,
-        )
-    else:
-        old_template = installed.project_template.read_text(encoding="utf-8")
-        current_without_personalization = replace(current, PROJECT_PERSONALIZATION, "")
-        old_without_personalization = replace(old_template, PROJECT_PERSONALIZATION, "")
-        if current_without_personalization != old_without_personalization:
-            if legacy_local_instructions is None:
-                raise ValidationError(
-                    "legacy project entry contains local edits; pass reviewed local instructions explicitly"
-                )
-            local = legacy_local_instructions
-        else:
-            local = legacy_local_instructions or ""
-        local = _resolve_local_instructions(project, local, local)
-    rendered = render_project_entry(
-        incoming.project_template.read_text(encoding="utf-8"),
-        personalization=direct,
-        local_instructions=local,
-    )
-    mutations = [text_mutation(entry, rendered)]
-    if not project.personalization.is_file():
-        mutations.append(text_mutation(project.personalization, personalization_resource))
+    if not prior_state and not migrated:
+        return [], ["current project is not workflow-installed; user-level update only"]
+
+    mutations = list(migrations)
     state = {
         "schema_version": RUNTIME_SCHEMA_VERSION,
-        "entry_format_version": ENTRY_FORMAT_VERSION,
         "workflow_version": incoming.version,
-        "enabled": not disabled_exists,
     }
     mutations.append(json_mutation(project.state, state))
+    if project.personalization.is_file():
+        mutations.append(Mutation(project.personalization, None))
     gitignore_mutation = _plan_gitignore(project, migrate_legacy=True)
     if gitignore_mutation is not None:
         mutations.append(gitignore_mutation)
-    return mutations, []
+    warnings = (
+        ["legacy workflow wrapper will be removed; project instructions remain in AGENTS.md"]
+        if migrated
+        else []
+    )
+    return mutations, warnings
 
 
 def plan_project_remove(
     project: ProjectPaths,
 ) -> tuple[list[Mutation], list[Path], list[str]]:
-    """Plan removal of the workflow-owned project surface."""
-
-    if project.active.is_symlink() or project.disabled.is_symlink():
-        raise ValidationError("refusing to remove a symlinked project entry point")
-    active_exists = project.active.exists()
-    disabled_exists = project.disabled.exists()
-    if active_exists and disabled_exists:
-        raise ValidationError("both active and disabled project entry points exist")
-    for entry in (project.active, project.disabled):
-        if entry.exists() and not entry.is_file():
-            raise ValidationError(f"project entry point is not a regular file: {entry}")
-
-    mutations: list[Mutation] = []
-    warnings = [
-        "project agent_docs/ files are project documentation and will be preserved",
-    ]
-    entry = project.active if active_exists else project.disabled if disabled_exists else None
-    if entry is not None:
-        current = entry.read_text(encoding="utf-8")
-        if PROJECT_ID not in current:
-            raise ValidationError(f"refusing to remove unrecognized project entry point: {entry}")
-        if PROJECT_LOCAL.start not in current or PROJECT_LOCAL.end not in current:
-            raise ValidationError(
-                "refusing to remove workflow entry without recoverable project-local instructions"
-            )
-        local_instructions = extract(current, PROJECT_LOCAL)
-        if local_instructions:
-            mutations.append(text_mutation(project.active, local_instructions.rstrip() + "\n"))
-            if entry == project.disabled:
-                mutations.append(Mutation(entry, None))
-            warnings.append(
-                f"workflow wrapper will be removed and project-local instructions restored to {project.active}"
-            )
-        else:
-            mutations.append(Mutation(entry, None))
-            warnings.append(f"{entry} will be permanently deleted because it has no project-local instructions")
+    migrations, migrated = _plan_legacy_entry_migration(
+        project,
+        installed_template=None,
+        legacy_local_instructions=None,
+    )
+    mutations = list(migrations)
+    warnings = ["project agent_docs/ and AGENTS.md are project-owned and will be preserved"]
+    if migrated:
+        warnings.append("legacy workflow wrapper will be removed from project AGENTS.md")
 
     gitignore_mutation = _plan_gitignore_remove(project)
     if gitignore_mutation is not None:
@@ -543,50 +433,29 @@ def plan_project_remove(
         warnings.append("workflow-owned .gitignore rules will be removed")
 
     hidden_dir = project.workflow_dir
-    if hidden_dir.is_symlink() or (
-        hidden_dir.exists() and not hidden_dir.is_dir()
-    ):
+    if hidden_dir.is_symlink() or (hidden_dir.exists() and not hidden_dir.is_dir()):
         raise ValidationError(f"project hidden resource is not a directory: {hidden_dir}")
 
-    for path in (project.personalization, project.state):
-        if path.is_symlink() or (path.exists() and not path.is_file()):
-            raise ValidationError(f"project workflow resource is not a regular file: {path}")
-        if path.is_file():
-            mutations.append(Mutation(path, None))
-
+    planned = {mutation.path.resolve(strict=False) for mutation in mutations}
     cleanup_dirs: list[Path] = []
+    legacy_resources = False
     if hidden_dir.is_dir():
-        planned_paths = {
-            mutation.path.resolve(strict=False) for mutation in mutations
-        }
-        legacy_resources: list[Path] = []
         for path in sorted(hidden_dir.rglob("*")):
             if path.is_symlink():
                 raise ValidationError(f"refusing to remove symlink in project resource: {path}")
             if path.is_dir():
                 cleanup_dirs.append(path)
-            elif path.is_file():
-                resolved = path.resolve(strict=False)
-                if resolved not in planned_paths:
-                    mutations.append(Mutation(path, None))
-                    planned_paths.add(resolved)
-                    legacy_resources.append(path)
+            elif path.is_file() and path.resolve(strict=False) not in planned:
+                mutations.append(Mutation(path, None))
+                planned.add(path.resolve(strict=False))
+                if path not in (project.state, project.personalization, project.disabled):
+                    legacy_resources = True
             elif path.exists() and not path.is_file():
                 raise ValidationError(f"project resource contains a non-file entry: {path}")
-        if legacy_resources:
-            warnings.append("legacy project workflow resources will be permanently deleted")
         cleanup_dirs.append(hidden_dir)
-
+    if legacy_resources:
+        warnings.append("legacy project workflow resources will be permanently deleted")
     return mutations, cleanup_dirs, warnings
-
-
-def recognized_entry(project: ProjectPaths) -> Path:
-    if project.active.exists() and project.disabled.exists():
-        raise ValidationError("both active and disabled project entry points exist")
-    path = project.active if project.active.is_file() else project.disabled
-    if not path.is_file() or PROJECT_ID not in path.read_text(encoding="utf-8"):
-        raise ValidationError("no recognized workflow project entry point")
-    return path
 
 
 def reject_reserved_markers(text: str) -> None:

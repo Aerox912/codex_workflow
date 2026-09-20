@@ -13,10 +13,10 @@ generated outputs, and project-owned content.
   manifests.
 - Heavy and Archivist contracts: fixed release inputs copied unchanged.
 - Worker TOMLs and workflow-owned Codex settings: materialized outputs.
-- Project personalization: structured project state materialized into its own
-  marker region.
-- Project-local instructions: opaque preserved content in a separate marker
-  region.
+- User-level `AGENTS.md`: one marked workflow region containing route,
+  documentation, rollout, and lifecycle-command policy.
+- Project `AGENTS.md`: native project-owned personalization, never generated or
+  wrapped by the current workflow.
 - Project documentation updates during deployment: main owns `project_progress.md`,
   `project_diary.md`, and `latest_session_work.md`; Archivist owns other
   assigned public and project documents plus the closing read-only Git handoff
@@ -27,8 +27,9 @@ generated outputs, and project-owned content.
 
 - `layout.py`: package and target path contracts.
 - `platform_settings.py`: fixed workflow-owned Codex TOML keys.
-- `markers.py`: strict text-region parsing and rendering.
-- `project_ops.py`: project entry point, personalization, and documents.
+- `markers.py`: user-region handling and legacy project-wrapper parsing.
+- `project_ops.py`: project state, documents, ignore rules, and legacy-wrapper
+  migration.
 - `runtime_ops.py`: user-level runtime and generated outputs.
 - `backup.py`: persistent update backups.
 - `transaction.py`: atomic file writes and compensating rollback.
@@ -38,11 +39,11 @@ generated outputs, and project-owned content.
 - `runtime/workflow.py`: CLI parsing, direct application, two-phase removal, and
   incoming-runtime delegation.
 
-The removal plan deletes the recognized project entry point and private
-workflow resource, strips only the marked workflow region from the user-level
-`AGENTS.md`, removes workflow-owned Codex settings and worker files, and
-cleans the dedicated runtime directory. It deliberately preserves
-`agent_docs/` and unrelated user-level content.
+The removal plan preserves native project `AGENTS.md`, deletes private workflow
+state, strips only the marked workflow region from the user-level `AGENTS.md`,
+removes workflow-owned Codex settings and worker files, and cleans the dedicated
+runtime directory. A legacy wrapped project entry is first restored to ordinary
+project instructions. `agent_docs/` and unrelated user-level content remain.
 
 ## Upgrade contract
 
@@ -52,11 +53,11 @@ cleans the dedicated runtime directory. It deliberately preserves
    version-specific package schema to that incoming release.
 3. The incoming release replaces installed routes and worker definitions.
    Worker surfaces are copied from the incoming role files.
-4. Each project entry point is validated against the source backup for the
-   workflow version recorded in its project state. Project-local regions,
-   personalization, unrelated user files, and enabled/disabled state are
-   preserved as opaque data.
-5. Marker drift or ambiguous legacy content stops before live writes.
+4. Native project instructions are not part of the update surface. A legacy
+   workflow-owned project wrapper is validated against its recorded source,
+   then its personalization and local regions become ordinary `AGENTS.md`
+   content.
+5. Legacy marker drift or ambiguous legacy content stops before live writes.
 6. Every write command validates and applies one mutation plan with rollback.
 
 Changing built-in behavior requires updating its owning route, worker, or

@@ -21,13 +21,15 @@ python3 <extracted>/codex_workflow/runtime/workflow.py bootstrap \
 ```
 
 Expect the bootstrap to install the shared runtime, templates, source backup,
-user command block, installation state, distributed worker TOMLs, and
-workflow-owned Codex settings and skills. Expect it to initialize the current
-project's workflow entry point, documentation scaffold, personalization and
-state files, and other project-level assets in one compensating transaction.
+merged user-level workflow instructions, installation state, distributed worker
+TOMLs, and workflow-owned Codex settings and skills. Expect it to initialize
+the current project's documentation scaffold, workflow state, and hidden
+resource ignore rule without creating, wrapping, or changing a native project
+`AGENTS.md`. A legacy workflow-owned wrapper is migrated back to ordinary
+project instructions in the same compensating transaction.
 The generated `~/.codex/config.toml` enables multi-agent tools and writes
 `[features.multi_agent_v2]` with `enabled = true`,
-`min_wait_timeout_ms = 120000`, `default_wait_timeout_ms = 300000`, and
+`min_wait_timeout_ms = 300000`, `default_wait_timeout_ms = 300000`, and
 `max_wait_timeout_ms = 1800000` while preserving unrelated settings.
 
 ## Required documentation action
@@ -57,8 +59,7 @@ capsule. Include the project root and returned
   `project_progress.md`, `project_diary.md`, and `latest_session_work.md` files;
   later deployment updates belong to the main. Leave deployment status empty
   when no plan exists.
-- Do not edit source, entry points, personalization, Git state, or user-level
-  files.
+- Do not edit source, project `AGENTS.md`, Git state, or user-level files.
 
 Verify that every framework file exists, no file listed in `files` retains the
 bootstrap marker, and every listed file in `required_context_files` has been

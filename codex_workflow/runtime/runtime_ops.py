@@ -56,11 +56,10 @@ def plan_runtime_files(
         target = runtime.runtime / relative
         mutations.append(Mutation(target, source.read_bytes()))
         owned.add(relative.as_posix())
-    template_targets = [(package.project_template, runtime.runtime / "templates" / "AGENTS.md")]
-    template_targets.extend(
+    template_targets = [
         (source, runtime.runtime / "templates" / "agents" / source.name)
         for source in sorted(package.agent_templates.glob("*.toml"))
-    )
+    ]
     template_targets.extend(
         (source, runtime.runtime / "templates" / "project_docs" / source.name)
         for source in package.project_docs.glob("*.md")

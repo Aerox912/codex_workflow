@@ -9,7 +9,6 @@ from . import RUNTIME_SCHEMA_VERSION
 from .backup import append_backup_mutations, append_project_backup_mutations
 from .errors import ValidationError
 from .layout import USER_STATE, PackageLayout, ProjectPaths, RuntimePaths
-from .personalization import materialize_personalization
 from .plan import (
     OperationPlan,
     deduplicate,
@@ -19,8 +18,6 @@ from .plan import (
     resolve_owned_runtime_path,
 )
 from .project_ops import (
-    plan_enable,
-    plan_personalize,
     plan_project_install,
     plan_project_remove,
     plan_project_update,
@@ -79,7 +76,7 @@ def plan_remove(
         {
             "confirmation_required": True,
             "preserves": [
-                "project agent_docs/ files",
+                "project AGENTS.md and agent_docs/ files",
                 "unrelated user AGENTS.md content",
                 "unrelated Codex config.toml keys",
                 "unrelated worker TOMLs",
@@ -99,6 +96,9 @@ def plan_update(
 ) -> OperationPlan:
     installed = PackageLayout.resolve(runtime.runtime, allow_legacy=True)
     project_installed = _project_installed_package(installed, runtime, project)
+    project_from_version = _recorded_project_version(
+        project, fallback=project_installed.version
+    )
     previous_state = read_json(runtime.runtime / USER_STATE, default={})
     backup_root = (
         runtime.runtime
@@ -149,7 +149,7 @@ def plan_update(
         {
             "from_version": installed.version,
             "to_version": incoming.version,
-            "project_from_version": project_installed.version,
+            "project_from_version": project_from_version,
             "backup": str(backup_root),
         },
         cleanup_dirs=skill_cleanup,
@@ -166,6 +166,9 @@ def plan_project_only_update(
     """Bring one project up to the installed user-level version."""
 
     project_installed = _project_installed_package(installed, runtime, project)
+    project_from_version = _recorded_project_version(
+        project, fallback=project_installed.version
+    )
     project_mutations, warnings = plan_project_update(
         project_installed,
         installed,
@@ -191,7 +194,7 @@ def plan_project_only_update(
         append_project_backup_mutations(mutations, backup_root, project, existing)
     mutations.extend(changed)
     if warnings and not changed:
-        warnings = ["current project has no workflow entry point; nothing was changed"]
+        warnings = ["current project is not workflow-installed; nothing was changed"]
     return OperationPlan(
         "project-update",
         mutations,
@@ -200,7 +203,7 @@ def plan_project_only_update(
         {
             "from_version": installed.version,
             "to_version": installed.version,
-            "project_from_version": project_installed.version,
+            "project_from_version": project_from_version,
             "backup": str(backup_root) if backup_root else None,
         },
     )
@@ -211,11 +214,17 @@ def _project_installed_package(
     runtime: RuntimePaths,
     project: ProjectPaths,
 ) -> PackageLayout:
-    """Resolve the package version that produced this project's entry point."""
+    """Resolve the package version recorded by this project's workflow state."""
 
-    if not project.active.exists() and not project.disabled.exists():
-        return installed
     state = read_json(project.state, default={})
+    legacy_entry = any(
+        path.is_file()
+        and "<!-- codex-workflow-id: viettran-edgeAI/codex_workflow -->"
+        in path.read_text(encoding="utf-8")
+        for path in (project.active, project.disabled)
+    )
+    if not state and not legacy_entry:
+        return installed
     version = state.get("workflow_version")
     if version is None:
         # Pre-state installations can only be compared with the currently
@@ -225,6 +234,8 @@ def _project_installed_package(
         raise ValidationError("project workflow_version state must be a non-empty string")
     parse_semver(version)
     if version == installed.version:
+        return installed
+    if not legacy_entry:
         return installed
     source_backups = (runtime.runtime / ".source_backup").resolve()
     historical_root = (source_backups / version).resolve()
@@ -243,3 +254,8 @@ def _project_installed_package(
             "project workflow state and historical source backup versions disagree"
         )
     return historical
+
+
+def _recorded_project_version(project: ProjectPaths, *, fallback: str) -> str:
+    version = read_json(project.state, default={}).get("workflow_version")
+    return version if isinstance(version, str) and version else fallback

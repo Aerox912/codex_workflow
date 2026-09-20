@@ -11,9 +11,7 @@ from .errors import ValidationError
 from .markers import (
     USER_MANAGED,
     extract,
-    validate_project_template,
 )
-from .personalization import materialize_personalization
 
 
 PROJECT_ID = "<!-- codex-workflow-id: viettran-edgeAI/codex_workflow -->"
@@ -41,7 +39,7 @@ BUILTIN_SKILLS = frozenset({"deployment-token-report"})
 class PackageLayout:
     root: Path
     operate: Path
-    project_template: Path
+    legacy_project_template: Path | None
     agent_templates: Path
     project_docs: Path
     skill_templates: Path
@@ -60,20 +58,22 @@ class PackageLayout:
         )
         if operate == root and not allow_legacy:
             raise ValidationError(f"package operational files are missing: {root / 'operate'}")
-        if (root / "templates" / "AGENTS.md").is_file():
+        if (root / "templates" / "agents").is_dir():
+            legacy_template = root / "templates" / "AGENTS.md"
             layout = cls(
                 root,
                 operate,
-                root / "templates" / "AGENTS.md",
+                legacy_template if legacy_template.is_file() else None,
                 root / "templates" / "agents",
                 root / "templates" / "project_docs",
                 root / "templates" / "skills",
             )
         else:
+            legacy_template = root / "AGENTS.md"
             layout = cls(
                 root,
                 operate,
-                root / "AGENTS.md",
+                legacy_template if legacy_template.is_file() else None,
                 root / "agents",
                 root / "project_docs",
                 root / "skills",
@@ -123,9 +123,6 @@ class PackageLayout:
                 "operate/update.md",
                 "operate/check_update.md",
                 "operate/remove.md",
-                "operate/personalization_guide.md",
-                "operate/enable.md",
-                "operate/disable.md",
                 "runtime/__init__.py",
                 "runtime/_toml.py",
                 "runtime/backup.py",
@@ -133,18 +130,15 @@ class PackageLayout:
                 "runtime/lifecycle.py",
                 "runtime/markers.py",
                 "runtime/platform_settings.py",
-                "runtime/personalization.py",
                 "runtime/plan.py",
                 "runtime/project_ops.py",
                 "runtime/release.py",
                 "runtime/runtime_ops.py",
                 "runtime/transaction.py",
-                "resources/personalization.md",
             ]
             missing = [relative for relative in required if not (self.root / relative).is_file()]
             if missing:
                 raise ValidationError(f"package runtime files missing: {missing}")
-            validate_project_template(self.project_template.read_text(encoding="utf-8"))
         required_docs = {
             "project_overview.md",
             "project_core_tech.md",
@@ -177,11 +171,6 @@ class PackageLayout:
             except tomllib.TOMLDecodeError as error:
                 raise ValidationError(f"invalid worker TOML {worker}: {error}") from error
         if not allow_legacy:
-            materialize_personalization(
-                (self.root / "resources" / "personalization.md").read_text(
-                    encoding="utf-8"
-                )
-            )
             skills = self.skill_names
             if skills != BUILTIN_SKILLS:
                 raise ValidationError(
@@ -225,11 +214,6 @@ class PackageLayout:
             for path in self.skill_templates.iterdir()
             if path.is_dir() and (path / "SKILL.md").is_file()
         }
-
-    @property
-    def default_personalization(self) -> Path:
-        return self.root / "resources" / "personalization.md"
-
 
 @dataclass(frozen=True)
 class RuntimePaths:
