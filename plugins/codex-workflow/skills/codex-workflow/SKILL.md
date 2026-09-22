@@ -21,14 +21,14 @@ When the user's trimmed message exactly matches a supported `codex_workflow` com
 - `--update`: `operate/update.md`
 - `--check-update`: `operate/check_update.md`
 - `--remove`: `operate/remove.md`
-- `--personal`: `operate/personalization_guide.md`
 - `--disable`: `operate/disable.md`
 - `--enable`: `operate/enable.md`
 
 Use the available Python 3 launcher with `runtime/workflow.py`. On an older
 installation, read its root-level guide and launcher instead. Automatic-update
 toggle commands are retired in the new upstream design; do not invent an
-equivalent or change agent-system's update ownership.
+equivalent or change agent-system's update ownership. Personalization commands
+are retired; preserve user-owned instructions during migration.
 Run project operations against the current repository root and preserve
 project-local protected regions.
 

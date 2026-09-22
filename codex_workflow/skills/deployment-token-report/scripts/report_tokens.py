@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any, Iterable, Iterator
 
 
-DEPLOYMENT_ID = re.compile(r"^[a-z0-9][a-z0-9_]{0,63}$")
+DEPLOYMENT_ID = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}$")
 MARKER_PREFIX = "codex-workflow-deployment-start:"
 
 
@@ -181,7 +181,7 @@ def find_boundary(
     root: Session, deployment_id: str, warnings: list[str]
 ) -> datetime:
     marker = f"{MARKER_PREFIX} {deployment_id}"
-    marker_pattern = re.compile(re.escape(marker) + r"(?![a-z0-9_])")
+    marker_pattern = re.compile(re.escape(marker) + r"(?![a-z0-9_-])")
     marker_times: list[datetime] = []
     for record in iter_jsonl(root.path, warnings):
         texts = message_texts(record, roles=frozenset({"assistant"}))
@@ -381,7 +381,8 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if not DEPLOYMENT_ID.fullmatch(args.deployment_id):
             raise ReportError(
-                "deployment ID must be lowercase, underscore-safe, and at most 64 characters"
+                f"invalid deployment ID {args.deployment_id!r}; expected "
+                "[a-z0-9][a-z0-9_-]{0,63}"
             )
         if (args.root_session_id is None) != (args.start_time is None):
             raise ReportError("--root-session-id and --start-time must be used together")

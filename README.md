@@ -24,14 +24,14 @@ The initial bootstrap will include creating the project documentation framework 
 
 > Requires Python 3.11 or newer for deterministic lifecycle operations.
 
-**Note:** If you are currently using 1.1.3 version, you cannot upgrade directly to a newer version(cause I removed --configure feature). Run `codex_workflow --remove` to uninstall it first, then install the newer version.
+**Note:** If you cannot upgrade directly to a newer version. Run `codex_workflow --remove` to uninstall it first, then install the newer version.
 
 ## 2. Workflow usage
 
 ### This workflow has 3 routes:
 - Light route : No subagents, no workflow, minimal context.
-- Heavy route : Implement the full set of workers, including `companion`, `investigator`, `default executor`, `senior executor`, `tester`, and `archivist`. The main agent orchestrates the work.
-- Medium route: Deploy `Companion`, `Investigator` and `Archivist` to assistance the Main agent. The main agent handles the deployment itself. Choose this route when you want workflow-mode context support without delegating production work, like front-end design, visualization, or 3D works, but it will burn tokens faster than Heavy route.
+- Heavy route: Delegate bounded production and verification to Executors and Testers, with Explorer for context, Investigator for solution research, and Archivist for documentation. The main agent owns orchestration, synthesis, and decisions.
+- Medium route: Use Explorer, Investigator, and Archivist for read-only discovery, solution research, and documentation while the main agent handles implementation and verification. Choose this route when you want workflow-mode context support without delegating production work, like front-end design, visualization, or 3D works, but it will burn tokens faster than Heavy route.
 
 ### How to use
 - Normally, for simple work, general Q&A, you don't need to do anything. `light route` is the default route.
@@ -50,7 +50,12 @@ use medium/heavy route. Continue ongoing work.
 ---------------
 > **⭐ Recommendation:** Assign very large and complex tasks to the `heavy route` to make the most of its capabilities and maximize token usage savings. Don't hesitate to choose Sol xhigh / Astra high for this route. Using much lower reasoning efforts will not actually save tokens and will severely reduce its coordination capabilities.
 
-![Heavy Route structure](heavy_route_structure.png)
+In Heavy, workers return compact evidence-linked reports directly to the main
+agent through Codex's parent-child result channel. The main batches related
+workers and makes one decision after the relevant reports arrive.
+![Heavy route](heavy_route_structure.png)
+
+*Heavy route*
 
 What's special about the system:
 
@@ -59,6 +64,12 @@ What's special about the system:
 - Fine-tuned balance: Main agent's control <---> costs & task completion capabilities. based on analysis and observation, not on feeling.
 - Knowledge distribution: Each task package from the main agent to the workers includes a task completion guide.
 - Batching guidelines prevent excessive main agent rollout.
+- Two parallel Explorers map each bounded context task from complementary angles;
+  three parallel Investigators research each bounded fault or solution problem
+  from independent angles.
+- Workflow policy lives in the managed user-level `~/.codex/AGENTS.md` region;
+  each project `AGENTS.md` remains native, project-owned personalization.
+- Worker reports preserve material evidence while referencing bulky logs and artifacts instead of copying them.
 - The **Senior Executor** serves as a fallback for exceptionally difficult problems where stronger reasoning is required.
 - Addresses the issue of the main agent waking up workers too often.
 - Built-in token report: End-of-session token statistics for each agent, allowing you to monitor how much each agent rolls out and how they use their tokens.
@@ -80,10 +91,8 @@ Send these exact commands to Codex from the relevant project directory:
 | Command | Purpose |
 | --- | --- |
 | `codex_workflow --install` | Install workflow in the current project and initialize its documentation framework. |
-| `codex_workflow --personal` | Add or update project-specific workflow preferences. |
 | `codex_workflow --check-update` | Check for a newer release without installing it. |
-| `codex_workflow --update` | Download, verify, and install the latest matching release. |
-| `codex_workflow --disable` / `codex_workflow --enable` | Disable or re-enable the workflow for the current project. |
+| `codex_workflow --update` | Install a newer release for the user and current project, or bring the current project up to an already installed release. |
 | `codex_workflow --remove` | Remove the installed workflow after a destructive dry-run and confirmation. |
 
 For the complete architecture, route, lifecycle, ownership, safety, and release

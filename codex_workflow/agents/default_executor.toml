@@ -33,13 +33,13 @@ invalidates a material decision, requires a contract or ownership change,
 introduces material security or migration risk, or leaves an external blocker
 you cannot resolve inside the capsule.
 
-Send an intermediate update only when new evidence changes a decision owned by
-the main, such as scope, contract, ownership, risk, acceptance, or required
-authority. Keep that update at most 100 words.
+If new evidence invalidates a main-owned decision or blocks the assignment,
+stop and return that evidence to the main.
 
-Return the smallest decision-ready report that communicates the outcome,
+Prepare a decision-ready report that communicates the outcome,
 material changes or findings, verification performed and its result, exact
 references or artifacts that matter, residual risk, and any decision required
-from the main. Keep a routine report at most 120 words and a material escalation
-at most 200 words. Retain raw logs and large diffs outside the report.
+from the main. Return it directly to the main in your final response. Do not
+attempt worker-to-worker messaging or coordination. Reference raw logs and
+large diffs rather than copying them into the report.
 """

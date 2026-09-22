@@ -19,6 +19,12 @@ def patch_codex_settings(text: str) -> str:
     sections: dict[str, dict[str, str]] = {
         "agents": {"enabled": "true"},
         "features": {"multi_agent": "true"},
+        "features.multi_agent_v2": {
+            "enabled": "true",
+            "min_wait_timeout_ms": "300000",
+            "default_wait_timeout_ms": "300000",
+            "max_wait_timeout_ms": "1800000",
+        },
     }
     lines = _remove_owned_keys(text.splitlines(), _LEGACY_OWNED_KEYS)
     for section, values in sections.items():
@@ -73,13 +79,9 @@ def _patch_section(lines: list[str], section: str, values: dict[str, str]) -> li
 _LEGACY_OWNED_KEYS: dict[str, set[str]] = {
     "agents": {"max_concurrent_threads_per_session", "max_threads"},
     "features.multi_agent_v2": {
-        "enabled",
         "max_concurrent_threads_per_session",
         "hide_spawn_agent_metadata",
         "tool_namespace",
-        "min_wait_timeout_ms",
-        "default_wait_timeout_ms",
-        "max_wait_timeout_ms",
     },
 }
 
@@ -87,7 +89,13 @@ _LEGACY_OWNED_KEYS: dict[str, set[str]] = {
 _OWNED_KEYS: dict[str, set[str]] = {
     "agents": {"enabled", "max_concurrent_threads_per_session", "max_threads"},
     "features": {"multi_agent"},
-    "features.multi_agent_v2": set(_LEGACY_OWNED_KEYS["features.multi_agent_v2"]),
+    "features.multi_agent_v2": {
+        *_LEGACY_OWNED_KEYS["features.multi_agent_v2"],
+        "enabled",
+        "min_wait_timeout_ms",
+        "default_wait_timeout_ms",
+        "max_wait_timeout_ms",
+    },
 }
 
 

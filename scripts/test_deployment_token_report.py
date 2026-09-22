@@ -117,7 +117,7 @@ class DeploymentTokenReportTests(unittest.TestCase):
         self.sessions = Path(self.temporary.name) / "sessions" / "2026" / "08" / "23"
         self.sessions.mkdir(parents=True)
         self.root_id = "root-session"
-        self.companion_id = "companion-session"
+        self.explorer_id = "explorer-session"
         self.closure_id = "closure"
 
     def tearDown(self) -> None:
@@ -153,14 +153,14 @@ class DeploymentTokenReportTests(unittest.TestCase):
             ],
         )
         self.write_session(
-            self.companion_id,
+            self.explorer_id,
             [
                 metadata(
-                    self.companion_id,
+                    self.explorer_id,
                     "2026-08-23T10:00:30Z",
                     parent=self.root_id,
-                    task="/root/companion",
-                    role="companion",
+                    task="/root/context",
+                    role="explorer",
                 ),
                 assistant_message(
                     "2026-08-23T10:00:31Z",
@@ -234,14 +234,16 @@ class DeploymentTokenReportTests(unittest.TestCase):
             ],
         )
 
-    def run_report(self, *extra: str) -> subprocess.CompletedProcess[str]:
+    def run_report(
+        self, *extra: str, deployment_id: str = "major_task"
+    ) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
             [
                 sys.executable,
                 "-B",
                 str(SCRIPT),
                 "--deployment-id",
-                "major_task",
+                deployment_id,
                 "--sessions-root",
                 str(self.sessions.parents[2]),
                 "--caller-session-id",
@@ -263,7 +265,7 @@ class DeploymentTokenReportTests(unittest.TestCase):
         self.assertEqual(
             [row["agent"] for row in report["rows"]],
             [
-                "companion",
+                "explorer",
                 "default_executor",
                 "tester",
                 "archivist",
@@ -322,6 +324,25 @@ class DeploymentTokenReportTests(unittest.TestCase):
         self.assertIn("was not found", completed.stderr)
         self.assertEqual(completed.stdout, "")
 
+    def test_invalid_deployment_id_reports_constraint(self) -> None:
+        for invalid_id in (
+            "<deployment_id>",
+            "<!-- codex-workflow-deployment-start: major_task -->",
+            "Major-Task",
+            "a" * 65,
+        ):
+            with self.subTest(deployment_id=invalid_id):
+                completed = subprocess.run(
+                    [sys.executable, "-B", str(SCRIPT), "--deployment-id", invalid_id],
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                )
+                self.assertEqual(completed.returncode, 2)
+                self.assertIn(repr(invalid_id), completed.stderr)
+                self.assertIn("[a-z0-9][a-z0-9_-]{0,63}", completed.stderr)
+                self.assertEqual(completed.stdout, "")
+
     def test_repeated_marker_in_main_rollout_is_not_ambiguous(self) -> None:
         self.build_fixture()
         path = self.sessions / "rollout-2026-08-23T10-00-00-root-session.jsonl"
@@ -350,19 +371,26 @@ class DeploymentTokenReportTests(unittest.TestCase):
         self.assertEqual(completed.returncode, 2)
         self.assertIn("was not found", completed.stderr)
 
-    def test_report_boundary_does_not_require_companion(self) -> None:
+    def test_hyphenated_deployment_id_matches_exact_marker(self) -> None:
         self.build_fixture()
-        companion = self.sessions / (
-            "rollout-2026-08-23T10-00-00-companion-session.jsonl"
+        deployment_id = "2026-09-18-unified-chat"
+        path = self.sessions / "rollout-2026-08-23T10-00-00-root-session.jsonl"
+        text = path.read_text(encoding="utf-8").replace(
+            "codex-workflow-deployment-start: major_task",
+            f"codex-workflow-deployment-start: {deployment_id}",
         )
-        companion.unlink()
+        path.write_text(text, encoding="utf-8")
 
-        completed = self.run_report("--format", "json")
+        completed = self.run_report("--format", "json", deployment_id=deployment_id)
         self.assertEqual(completed.returncode, 0, completed.stderr)
-        rows = json.loads(completed.stdout)["rows"]
-        self.assertNotIn("companion", {row["agent"] for row in rows})
+        self.assertEqual(json.loads(completed.stdout)["deployment_id"], deployment_id)
 
-    def test_marker_in_companion_only_is_not_a_boundary(self) -> None:
+        path.write_text(text.replace(deployment_id, deployment_id + "-extra"), encoding="utf-8")
+        longer_marker = self.run_report(deployment_id=deployment_id)
+        self.assertEqual(longer_marker.returncode, 2)
+        self.assertIn("was not found", longer_marker.stderr)
+
+    def test_marker_in_child_only_is_not_a_boundary(self) -> None:
         self.build_fixture()
         root = self.sessions / "rollout-2026-08-23T10-00-00-root-session.jsonl"
         root.write_text(
@@ -372,11 +400,11 @@ class DeploymentTokenReportTests(unittest.TestCase):
             ),
             encoding="utf-8",
         )
-        companion = self.sessions / (
-            "rollout-2026-08-23T10-00-00-companion-session.jsonl"
+        explorer = self.sessions / (
+            "rollout-2026-08-23T10-00-00-explorer-session.jsonl"
         )
-        companion.write_text(
-            companion.read_text(encoding="utf-8").replace(
+        explorer.write_text(
+            explorer.read_text(encoding="utf-8").replace(
                 "Project context is ready.",
                 "codex-workflow-deployment-start: major_task",
             ),
@@ -387,7 +415,7 @@ class DeploymentTokenReportTests(unittest.TestCase):
         self.assertEqual(completed.returncode, 2)
         self.assertIn("main-agent rollout", completed.stderr)
 
-    def test_companion_cannot_run_the_closure_owned_report(self) -> None:
+    def test_non_archivist_child_cannot_run_the_closure_owned_report(self) -> None:
         self.build_fixture()
         completed = subprocess.run(
             [
@@ -399,7 +427,7 @@ class DeploymentTokenReportTests(unittest.TestCase):
                 "--sessions-root",
                 str(self.sessions.parents[2]),
                 "--caller-session-id",
-                self.companion_id,
+                self.explorer_id,
             ],
             check=False,
             capture_output=True,
