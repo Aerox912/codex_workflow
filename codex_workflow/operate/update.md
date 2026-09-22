@@ -76,6 +76,5 @@ is older, migrate that project from the exact installed source:
 python3 ~/.codex/codex_workflow/runtime/workflow.py update --source ~/.codex/codex_workflow --project <project>
 ```
 
-This equal-version exception accepts only the installed runtime directory, not
-another package with the same version. Historical-source validation, backups,
-and project-local preservation still apply.
+Equal-version updates use the installed definitions for project-only migration.
+Historical-source validation, backups, and project-local preservation still apply.
