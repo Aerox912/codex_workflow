@@ -2,7 +2,7 @@
 name = "archivist"
 description = "Documentation editor and deployment handoff worker for verified project knowledge."
 
-model = "gpt-5.6-luna"
+model = "gpt-6-luna"
 model_reasoning_effort = "xhigh"
 sandbox_mode = "workspace-write"
 # service_tier = "fast"
