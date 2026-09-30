@@ -3,8 +3,8 @@ name = "senior_executor"
 
 description = "Senior Sol executor for one exceptionally difficult production or solution package."
 
-model = "gpt-6-sol"
-model_reasoning_effort = "medium"
+model = "gpt-6.1-sol"
+model_reasoning_effort = "high"
 sandbox_mode = "workspace-write"
 
 developer_instructions = """

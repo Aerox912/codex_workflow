@@ -97,6 +97,9 @@ def parse_args() -> argparse.Namespace:
     check_update = commands.add_parser("check-update")
     _add_common(check_update, project=False)
 
+    version = commands.add_parser("version")
+    _add_common(version, project=False)
+
     validate = commands.add_parser("validate")
     _add_common(validate, project=False)
     validate.add_argument("--package-root", type=Path, default=PACKAGE_ROOT)
@@ -215,6 +218,18 @@ def main() -> int:
     temporary = None
     try:
         runtime, project = _paths(args)
+        if args.command == "version":
+            version_path = _version_path(runtime.runtime)
+            if not version_path.is_file():
+                raise WorkflowError("the user-level workflow is not installed")
+            lines = version_path.read_text(encoding="utf-8").splitlines()
+            if len(lines) != 1 or not lines[0]:
+                raise WorkflowError(
+                    "installed workflow VERSION must contain exactly one version line"
+                )
+            parse_semver(lines[0])
+            _emit({"version": lines[0]}, compact=args.json)
+            return 0
         if args.command == "validate":
             package = PackageLayout.resolve(args.package_root)
             _emit(

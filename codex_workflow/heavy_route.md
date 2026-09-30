@@ -20,8 +20,8 @@ rollouts only when the package genuinely requires that capability.
 
 | Role | Ownership |
 | --- | --- |
-| Explorer | One of two disposable read-only workers mapping the same bounded project-context task from complementary angles. |
-| Investigator | One of three disposable read-only workers researching the same bounded problem from distinct search angles. Each can propose options; the main makes every project decision. |
+| Explorer | A disposable read-only worker mapping a bounded project-context task and returning evidence and gaps. |
+| Investigator | A disposable read-only worker researching a bounded fault or solution problem. Each can propose options; the main makes every project decision. |
 | Default Executor | A Luna production worker owning local discovery, implementation, self-check, deployment operations, and ordinary repair inside one bounded package. |
 | Senior Executor | The one optional Sol worker for an exceptionally difficult mathematical, logical, architectural, or cross-cutting package. |
 | Tester | An independent verifier owning the assigned verification, test assets, and suitable test execution, but not production repair. |
@@ -30,10 +30,63 @@ rollouts only when the package genuinely requires that capability.
 Archivist is required at substantive deployment closure. Use other roles only
 when they fit the task and ownership boundary.
 
+## Working State
+
+- `deployment state`: planning or executing substantive project changes or
+  deliverables under a broad, possibly multi-session deployment plan.
+- `leaf state`: otherwise, including standalone questions, searches, read-only
+  research, and small bounded operations.
+
+Classify by the requested outcome, not research breadth, worker count, or the
+selected route. Standalone read-only research is leaf work; research supporting
+an active deployment remains part of that deployment.
+
+## Project Documentation
+
+Use the durable project documents under `agent_docs/`:
+
+- `project_overview.md`: goals, architecture, workflow, and major decisions.
+- `project_core_tech.md`: concise special technology or architecture notes.
+- `project_structure.md`: layout, modules, components, and ownership.
+- `project_progress.md`: goal, overall progress, current position, next milestone.
+- `project_diary.md`: distilled decisions, discarded approaches, mistakes, and
+  reusable lessons.
+- `latest_session_work.md`: detailed handoff evidence and continuation point.
+- Module-specific documents, when present.
+
+In deployment state, directly maintain `project_progress.md`,
+`project_diary.md`, and `latest_session_work.md`. Before closure, record the
+current goal and continuation state, concise lasting lessons, and the verified
+deployment handoff in their canonical documents. Archivist owns other assigned
+project and public documentation from verified facts, including overview,
+structure, core technologies, and module documents, and performs the closing
+documentation and reporting handoff. Require concise edits that remove stale or
+redundant detail, assign module documents explicitly, and perform a direct
+user-requested document edit outside deployment. During installation only, the
+installer-assigned Archivist may initialize those three files when they are new
+or still marked as templates.
+
+Leaf work does not trigger automatic `agent_docs/` updates or deployment
+closure. Update documents only for an explicit documentation request or verified
+changes to durable project knowledge; ordinary search results alone do not
+require a project progress, diary, or session-handoff entry.
+
+Keep raw logs, temporary reasoning, and short-lived checkpoints out of durable
+documents; give each fact one canonical home. Never delete a main project
+document without warning. If the user has not explicitly requested or
+authorized that deletion, obtain confirmation before deleting it.
+
 ## Shared Deployment-State Entry
 
-Before route-specific planning or execution, complete the shared `agent_docs/`
-intake in `AGENTS.md`. Do not repeat it after a route change.
+On substantive deployment entry, before planning or execution, if session-level
+intake is not complete, directly read the complete current `agent_docs/`
+framework exactly once: overview, core technology, structure, progress,
+diary, latest session work, and every module-specific Markdown document.
+This one direct read is shared across Medium and Heavy. Never repeat it later
+in the session. Use retained context or assign Explorer a bounded context delta,
+module intake, or conflict check when detail or freshness matters. Missing or
+unreadable required documents leave deployment entry incomplete; report the
+intake blocker. For a small leaf task, read only task-relevant project documents.
 
 ## Context Routing After Intake
 
@@ -50,13 +103,16 @@ After the shared intake and before broader source discovery or planning, use
 
 Keep this map in working state, not durable documentation, and revise it only
 when material evidence changes relevance. Directly inspect a delegated surface
-when it becomes decision-critical. Create Explorer pairs or Investigator trios
-when they materially advance the task; dispatch each set together.
+when it becomes decision-critical. Use Explorer or Investigator when it
+materially advances the task; dispatch independent workers together.
 
 ## Deployment Boundary
 
-Follow the deployment-boundary rule in `AGENTS.md`. Keep its ID for Archivist's
-closure report.
+On substantive deployment entry, choose a unique ID
+matching `[a-z0-9][a-z0-9_-]{0,63}`. Put
+`<!-- codex-workflow-deployment-start: <deployment_id> -->`, with the placeholder
+replaced by that ID, in the first commentary after entry. Emit it once and pass
+the same ID to Archivist at closure.
 
 ## Role-Specific Work Packages
 
@@ -86,25 +142,20 @@ required gates; let it design and execute the specific checks. Require every
 worker to return the smallest complete decision-ready report directly to the
 main and reference raw logs or bulky artifacts instead of copying them.
 
-For one bounded context task that needs Explorer, start exactly two Explorers
-in the same dispatch. Give them one shared Exploration ID and context question,
-distinct Task IDs, and complementary discovery angles in each lane's
-**Exploration Task + Goal**. Each lane maps the full bounded task; its angle guides evidence
-collection. Keep the lanes independent. Wait for both reports and compare their
-evidence and gaps before deciding. If a lane fails, retry or replace only that
-lane. If replacement is unavailable, report the incomplete exploration as a
-limitation.
+For difficult or broad questions, prefer parallel Explorers or Investigators
+(e.g., 2, 3, or more) when independent evidence can improve coverage and result
+quality. The main chooses the count needed for the task; a narrow lookup or
+focused search can use a single worker.
 
-For one bounded problem that needs Investigator, start exactly three
-Investigators in the same dispatch. Give them one shared Problem ID and problem
-statement, distinct Task IDs, and complementary search angles in their Solution
-Search Task + Goal. Choose angles suited to the problem: different hypotheses,
-solution approaches, evidence sources, or a challenge to likely assumptions.
-Each lane seeks an answer to the full problem; its angle guides the search.
-Keep their searches independent. Wait for all three reports and compare evidence
-and disagreements rather than voting before deciding. If a lane fails, retry or
-replace only that lane. If replacement is unavailable, report the incomplete
-search as a limitation.
+When multiple workers address the same question, dispatch them together with
+one shared Exploration ID or Problem ID, distinct Task IDs, and complementary
+angles in each worker's Exploration Task + Goal or Solution Search Task + Goal.
+Each worker seeks an answer to the full bounded question; its angle guides
+evidence collection. Keep their searches independent. Wait for the assigned
+set's reports and compare evidence, gaps, and disagreements rather than voting
+before deciding. If a worker fails, retry or replace only that worker when its
+missing evidence is needed; otherwise state the coverage limitation and decide
+whether the available evidence is sufficient. Preserve completed reports.
 
 ## Main-Agent Execution Boundary
 
@@ -176,9 +227,12 @@ blocker.
 
 ## Fast Path and Closure
 
-Use the worker-free direct fast path only when the complete request is a question
-or small bounded leaf task. Do not use it for a subtask inside an already
-substantive Heavy deployment.
+Use the direct fast path for standalone questions, searches, read-only research,
+and small bounded leaf tasks. Work directly when no support workers are needed.
+Read only task-relevant project documents and skip deployment entry, full
+documentation intake, automatic `agent_docs/` updates, Archivist closure, and
+token reporting. Handle explicit documentation requests within their assigned
+scope. Research supporting an active deployment remains part of that deployment.
 
 Before the final response that completes, pauses, or blocks a substantive
 deployment, update `agent_docs/project_progress.md`,

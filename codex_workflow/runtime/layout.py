@@ -122,6 +122,7 @@ class PackageLayout:
                 "operate/bootstrap.md",
                 "operate/update.md",
                 "operate/check_update.md",
+                "operate/version.md",
                 "operate/remove.md",
                 "runtime/__init__.py",
                 "runtime/_toml.py",

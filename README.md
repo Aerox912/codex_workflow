@@ -29,12 +29,16 @@ The initial bootstrap will include creating the project documentation framework 
 ## 2. Workflow usage 
 
 ### This workflow has 3 routes:
-- Light route : No subagents, no workflow, minimal context.
+- Light route: No workflow mode, minimal context.
 - Heavy route: Delegate bounded production and verification to Executors and Testers, with Explorer for context, Investigator for solution research, and Archivist for documentation. The main agent owns orchestration, synthesis, and decisions.
 - Medium route: Use Explorer, Investigator, and Archivist for read-only discovery, solution research, and documentation while the main agent handles implementation and verification. Choose this route when you want workflow-mode context support without delegating production work, like front-end design, visualization, or 3D works, but it will burn tokens faster than Heavy route.
 
 ### How to use
 - Normally, for simple work, general Q&A, you don't need to do anything. `light route` is the default route.
+- Medium and Heavy retain a fast path for standalone questions, searches,
+  read-only research, and small bounded tasks. These tasks do not trigger
+  deployment intake, automatic project-document updates, or closure reporting.
+  Research supporting an active deployment remains part of that deployment.
 
 --------------------------------
 - When starting a new task, tell Codex :
@@ -59,14 +63,15 @@ workers and makes one decision after the relevant reports arrive.
 
 What's special about the system:
 
-- Built-in project memory: `agent_docs/` keeps project goals, architecture, progress, decisions, and the latest handoff across sessions.
+- Built-in project memory in Medium and Heavy: `agent_docs/` keeps project goals, architecture, progress, decisions, and the latest handoff across sessions. Its framework instructions live in those route documents.
 - Flexibility: The system doesn't force the main agent into a rigid process: requiring coordination in this way, that way... It provides it with resources and power (specialized agents) and fine-tuning and guidance based on hundreds of trials.
 - Fine-tuned balance: Main agent's control <---> costs & task completion capabilities. based on analysis and observation, not on feeling. 
 - Knowledge distribution: Each task package from the main agent to the workers includes a task completion guide.
 - Batching guidelines prevent excessive main agent rollout.
-- Two parallel Explorers map each bounded context task from complementary angles;
-  three parallel Investigators research each bounded fault or solution problem
-  from independent angles.
+- For difficult or broad questions, parallel workers (e.g., 2, 3, or more) are
+  recommended when independent angles can improve coverage and result quality.
+  The main chooses roles and counts per bounded question. Narrow questions can
+  use one worker; parallel searches use complementary independent angles.
 - Workflow policy lives in the managed user-level `~/.codex/AGENTS.md` region;
   each project `AGENTS.md` remains native, project-owned personalization.
 - Worker reports preserve material evidence while referencing bulky logs and artifacts instead of copying them.
@@ -92,6 +97,7 @@ Send these exact commands to Codex from the relevant project directory:
 | --- | --- |
 | `codex_workflow --install` | Install workflow in the current project and initialize its documentation framework. |
 | `codex_workflow --check-update` | Check for a newer release without installing it. |
+| `codex_workflow --version` | Report the currently installed workflow version. |
 | `codex_workflow --update` | Install a newer release for the user and current project, or bring the current project up to an already installed release. |
 | `codex_workflow --remove` | Remove the installed workflow after a destructive dry-run and confirmation. |
 

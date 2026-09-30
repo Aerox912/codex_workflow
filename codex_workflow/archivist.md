@@ -38,6 +38,8 @@ for its documentation handoff and exact six-column `$deployment-token-report`
 table, then relay both without repeating its operational checks. A later
 substantive deployment uses a new ID and receives its own closure and report.
 
-For questions and small bounded tasks on the direct fast path, work directly
-without this closure or token report. If Archivist is unavailable or blocked,
-report the limitation and the remaining work accurately.
+Standalone questions, searches, read-only research, and small bounded leaf tasks
+skip deployment closure and token reporting. Assign ordinary documentation work
+only for an explicit request or verified changes to durable project knowledge.
+If Archivist is unavailable or blocked, report the limitation and remaining work
+accurately.

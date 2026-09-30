@@ -290,6 +290,7 @@ def _verify_member_names(names: Iterable[str]) -> list[str]:
         f"{PACKAGE_DIR_NAME}/operate/install.md",
         f"{PACKAGE_DIR_NAME}/operate/update.md",
         f"{PACKAGE_DIR_NAME}/operate/check_update.md",
+        f"{PACKAGE_DIR_NAME}/operate/version.md",
         f"{PACKAGE_DIR_NAME}/operate/remove.md",
         f"{PACKAGE_DIR_NAME}/archivist.md",
         f"{PACKAGE_DIR_NAME}/runtime/workflow.py",

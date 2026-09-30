@@ -91,6 +91,8 @@ class MarkerTests(unittest.TestCase):
     def test_user_command_contract_exposes_only_supported_lifecycle_prompts(self) -> None:
         instructions = (PACKAGE / "operate" / "user_AGENTS.md").read_text(encoding="utf-8")
         self.assertIn("codex_workflow --check-update", instructions)
+        self.assertIn("codex_workflow --version", instructions)
+        self.assertIn("operate/version.md", instructions)
         self.assertIn("codex_workflow --remove", instructions)
         self.assertNotIn("codex_workflow --personal", instructions)
         self.assertNotIn("codex_workflow --disable", instructions)
@@ -104,7 +106,7 @@ class MarkerTests(unittest.TestCase):
         }
         for name, limit in (
             ("operate/user_AGENTS.md", 180),
-            ("medium_route.md", 155),
+            ("medium_route.md", 210),
             ("heavy_route.md", 245),
         ):
             self.assertLess(len(policies[name].splitlines()), limit, name)
@@ -112,19 +114,40 @@ class MarkerTests(unittest.TestCase):
         agents_policy = policies["operate/user_AGENTS.md"]
         medium = policies["medium_route.md"]
         heavy = policies["heavy_route.md"]
-        self.assertIn("directly read the complete current", " ".join(agents_policy.split()))
-        self.assertIn("two Explorers a bounded", " ".join(agents_policy.split()))
-        self.assertIn("start two independent", agents_policy)
-        self.assertIn("start three independent", agents_policy)
+        self.assertNotIn("agent_docs", agents_policy)
+        self.assertNotIn("## Project Documentation", agents_policy)
+        self.assertNotIn("codex-workflow-deployment-start:", agents_policy)
         self.assertIn("Use Light when none is selected", agents_policy)
-        self.assertIn("Never repeat\nit later in the session", agents_policy)
-        self.assertIn("Missing or unreadable required documents", agents_policy)
+        for policy in (agents_policy, medium, heavy):
+            policy_flat = " ".join(policy.split())
+            self.assertNotIn("start exactly two", policy_flat)
+            self.assertNotIn("start exactly three", policy_flat)
+            self.assertIn("For difficult or broad questions, prefer parallel", policy_flat)
+            self.assertIn("(e.g., 2, 3, or more)", policy_flat)
+        for policy in (medium, heavy):
+            policy_flat = " ".join(policy.split())
+            self.assertIn("directly read the complete current", policy_flat)
+            self.assertIn("assign Explorer a bounded", policy_flat)
+            self.assertIn("Never repeat it later in the session", policy_flat)
+            self.assertIn("Missing or unreadable required documents", policy_flat)
+            self.assertIn("This one direct read is shared across Medium and Heavy", policy_flat)
+            self.assertIn("For a small leaf task", policy)
+            self.assertIn("If the user has not explicitly requested or authorized that deletion", policy_flat)
+            self.assertIn("codex-workflow-deployment-start: <deployment_id>", policy)
+            self.assertIn("## Project Documentation", policy)
+        install_policy = " ".join((PACKAGE / "operate" / "install.md").read_text(encoding="utf-8").split())
+        self.assertIn("is empty, proceed with the returned documentation action", install_policy)
+        self.assertIn("record unavailable context", install_policy)
+        self.assertNotIn("pause before spawning Archivist", install_policy)
         for document in (
+            "project_overview.md",
+            "project_core_tech.md",
+            "project_structure.md",
             "project_progress.md",
             "project_diary.md",
             "latest_session_work.md",
         ):
-            self.assertIn(document, agents_policy)
+            self.assertNotIn(document, agents_policy)
             self.assertIn(document, medium)
             self.assertIn(document, heavy)
 
@@ -133,38 +156,32 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("| Investigator |", medium)
         self.assertIn("| Archivist |", medium)
         self.assertIn("Limit Medium workers to Explorer, Investigator, and Archivist", medium)
-        self.assertIn("start exactly three", medium)
-        self.assertIn("start exactly two", medium)
-        self.assertIn("one shared Exploration ID", medium)
-        self.assertIn("one shared Problem ID", medium)
+        self.assertIn("one shared Exploration ID or Problem ID", " ".join(medium.split()))
+        self.assertIn("The main chooses the count needed", " ".join(medium.split()))
         self.assertIn("distinct Task IDs", medium)
         self.assertIn("rather than voting", medium)
-        self.assertIn("retry or replace that lane", medium)
+        self.assertIn("retry or replace only that worker", " ".join(medium.split()))
         self.assertIn("## Context Routing After Intake", medium)
-        self.assertIn("deployment-boundary rule in `AGENTS.md`", medium)
 
         self.assertIn("central knowledge director", heavy)
         self.assertIn("do not become a production Executor", " ".join(heavy.split()))
         self.assertNotIn("send_message", heavy)
         self.assertIn("smallest complete decision-ready report", " ".join(heavy.split()))
         self.assertIn("directly to the main", " ".join(heavy.split()))
-        self.assertIn("Wait for all three reports", " ".join(heavy.split()))
+        self.assertIn("Wait for the assigned set's reports", " ".join(heavy.split()))
         self.assertIn("at most one Senior Executor", heavy)
         self.assertIn("Explorer for bounded context discovery", heavy)
         self.assertIn("Investigator for evidence-backed solution search", heavy)
-        self.assertIn("start exactly three", heavy)
-        self.assertIn("start exactly two", heavy)
-        self.assertIn("one shared Exploration ID", heavy)
+        self.assertIn("one shared Exploration ID or Problem ID", " ".join(heavy.split()))
         self.assertIn("distinct Task IDs", heavy)
-        self.assertIn("one shared Problem ID", heavy)
+        self.assertIn("The main chooses the count needed", " ".join(heavy.split()))
         self.assertIn("rather than voting", heavy)
-        self.assertIn("retry or replace only that lane", " ".join(heavy.split()))
+        self.assertIn("retry or replace only that worker", " ".join(heavy.split()))
         self.assertIn("defining gates, assigning execution", heavy)
         self.assertIn("owning Executor for repair", heavy)
         self.assertIn("same\n  Tester for recheck", heavy)
         self.assertIn("non-overlapping ownership", heavy)
         self.assertIn("Do not poll workers", heavy)
-        self.assertIn("deployment-boundary rule in `AGENTS.md`", heavy)
 
         explorer = (PACKAGE / "agents" / "explorer.toml").read_text(encoding="utf-8")
         investigator = (PACKAGE / "agents" / "investigator.toml").read_text(encoding="utf-8")
@@ -176,11 +193,11 @@ class MarkerTests(unittest.TestCase):
             self.assertIn("Task ID", role)
             self.assertIn("complete capsule structure", " ".join(role.split()))
         self.assertIn("what exists and where", explorer)
-        self.assertIn("one other Explorer", explorer)
+        self.assertIn("other Explorers, if assigned", explorer)
         self.assertIn("Exploration ID in every report", " ".join(explorer.split()))
         self.assertIn('sandbox_mode = "read-only"', explorer)
         self.assertIn("plausible fault", investigator)
-        self.assertIn("two other Investigators", investigator)
+        self.assertIn("other Investigators, if assigned", investigator)
         self.assertIn("Problem ID in every report", " ".join(investigator.split()))
         self.assertIn("Work independently", investigator)
         self.assertIn('sandbox_mode = "read-only"', investigator)
@@ -197,7 +214,7 @@ class MarkerTests(unittest.TestCase):
         self.assertIn('model = "gpt-6-luna"', explorer)
         self.assertIn('model = "gpt-6-luna"', investigator)
         self.assertIn('model = "gpt-6-luna"', executor)
-        self.assertIn('model = "gpt-6-sol"', senior)
+        self.assertIn('model = "gpt-6.1-sol"', senior)
         self.assertIn('model = "gpt-6-luna"', tester)
         self.assertIn('model = "gpt-6-luna"', archivist)
 
@@ -352,6 +369,47 @@ class MarkerTests(unittest.TestCase):
             text=True,
         )
         self.assertEqual(completed.returncode, 0, completed.stderr)
+
+    def test_version_reports_installed_version_without_network_or_project(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary) / "codex-home"
+            installed = home / "codex_workflow" / "operate" / "VERSION"
+            installed.parent.mkdir(parents=True)
+            installed.write_text("9.8.7\n", encoding="utf-8")
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    "-B",
+                    str(PACKAGE / "runtime" / "workflow.py"),
+                    "version",
+                    "--codex-home",
+                    str(home),
+                    "--json",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            self.assertEqual(json.loads(completed.stdout), {"version": "9.8.7"})
+
+            installed.unlink()
+            missing = subprocess.run(
+                [
+                    sys.executable,
+                    "-B",
+                    str(PACKAGE / "runtime" / "workflow.py"),
+                    "version",
+                    "--codex-home",
+                    str(home),
+                    "--json",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(missing.returncode, 1)
+            self.assertIn("not installed", json.loads(missing.stdout)["error"])
 
     def test_remove_help_hides_internal_confirmation_flag(self) -> None:
         completed = subprocess.run(

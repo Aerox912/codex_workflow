@@ -8,11 +8,11 @@ instruction surface.
 
 For exact behavior, use the source that owns the relevant contract:
 
-- `codex_workflow/operate/user_AGENTS.md` for merged user-level workflow
-  behavior, route selection, lifecycle dispatch, and first deployment-state
-  entry;
+- `codex_workflow/operate/user_AGENTS.md` for shared principles, route selection,
+  rollout efficiency, and lifecycle dispatch;
 - `codex_workflow/medium_route.md` and `codex_workflow/heavy_route.md` for
-  route-specific orchestration;
+  route-specific orchestration, deployment-state entry, and the `agent_docs/`
+  framework, intake, and documentation ownership;
 - `codex_workflow/agents/*.toml` for worker models, permissions, and role
   boundaries;
 - `codex_workflow/archivist.md` for documentation assignments and deployment
@@ -22,7 +22,7 @@ For exact behavior, use the source that owns the relevant contract:
 - `codex_workflow/skills/deployment-token-report/` for deployment usage
   reporting.
 
-This revision describes packaged version `1.2.0`, read from
+This revision describes packaged version `1.2.2`, read from
 `codex_workflow/operate/VERSION`. Version markers, package validation, and
 release tests prevent that value from drifting from the distributed user
 instruction block.
@@ -186,14 +186,22 @@ The coordination process roughly works like this:
 3. At substantive deployment closure, `agent_docs/` is updated, the Git
    handoff is completed, and `$deployment-token-report` is generated.
 
+Medium and Heavy keep standalone questions, searches, read-only research, and
+small bounded tasks on the direct fast path. These leaf tasks skip deployment
+entry, full documentation intake, automatic `agent_docs/` updates, and closure
+reporting. Research supporting an active deployment remains part of that
+deployment. Explicit documentation requests retain their assigned scope.
+
 Here's an example of the token-usage report generated at the end of each Heavy-route deployment:
 
 ![End-of-session token report](token_report.png)
 
-In this design, two parallel **Explorers** map one bounded project-context task
-from complementary angles, while three parallel **Investigators** search one
-bounded fault or solution problem. The main compares each set's evidence and
-owns the resulting decision.
+For difficult or broad questions, parallel **Explorers** or **Investigators**
+(e.g., 2, 3, or more) are recommended when independent evidence can improve
+coverage and result quality. The main chooses roles and counts per bounded
+question. A narrow question can use one worker. When multiple workers address
+the same question, each seeks a full answer from a complementary independent angle;
+the main compares the assigned set's evidence and owns the resulting decision.
 
 Each work package contains instructions enriched with knowledge distilled from the Main Agent, benefiting from its broad understanding of the overall task and project context.
 
@@ -229,18 +237,17 @@ After dispatching a worker, the Main Agent waits for it to finish or ask for hel
 | Role | Model | Primary Responsibility | Quantity |
 | --- | --- | --- | ---: |
 | **Main Agent** | Session-selected model | **Primary orchestrator.** Owns the core task context, makes high-level decisions, coordinates the workflow, and distributes the knowledge required by specialized subagents. | 1 |
-| **Explorer** | Luna · xhigh | Two independent read-only lanes map one bounded context task from complementary angles. | 2 per context task |
-| **Investigator** | Luna · xhigh | Three independent read-only lanes examine one bounded fault or solution problem from complementary angles. | 3 per problem |
+| **Explorer** | Luna · xhigh | Maps one bounded context task; parallel workers use complementary independent angles when useful. | As needed |
+| **Investigator** | Luna · xhigh | Examines one bounded fault or solution problem; parallel workers use complementary independent angles when useful. | As needed |
 | **Default Executor** | Luna · max | **Default implementation worker.** Handles normal production tasks delegated by the Main Agent, including coding, modifications, integration work, and other routine implementation activities. Multiple Default Executors may work in parallel when tasks can be safely decomposed. | As needed |
-| **Senior Executor** | Sol · medium | **High-capability implementation specialist.** Reserved for exceptionally difficult or high-impact work where stronger reasoning is justified, such as project-core changes, complex algorithms, architectural modifications, or mathematically demanding tasks. | 1 maximum |
+| **Senior Executor** | GPT-6.1 Sol · high | **High-capability implementation specialist.** Reserved for exceptionally difficult or high-impact work where stronger reasoning is justified, such as project-core changes, complex algorithms, architectural modifications, or mathematically demanding tasks. | 1 maximum |
 | **Tester** | Luna · max | **Independent verification specialist.** Designs, implements, and runs tests; validates requirements and acceptance criteria; identifies regressions or defects; and provides verification evidence before work is accepted. | As needed |
 | **Archivist** | Luna · xhigh | **Documentation and closure specialist.** Handles assigned documentation outside the three main-owned deployment-state documents, performs the read-only Git handoff, and produces the end-of-deployment token report. | 1 per substantive deployment, plus as needed |
 
 All report-producing workers are direct children of the main agent.
-Each Explorer pair shares one Exploration ID, gives its two agents distinct
-Task IDs, and compares both evidence-linked reports before a decision.
-Each Investigator batch shares one Problem ID, gives its three agents distinct
-Task IDs, and compares all three evidence-linked reports before a decision.
+Explorers answering the same question share one Exploration ID; Investigators
+share one Problem ID. Each worker receives a distinct Task ID. The main compares
+the assigned set's evidence-linked reports before a decision.
 During deployment, the main updates `project_progress.md`, `project_diary.md`,
 and `latest_session_work.md`; Archivist initializes these only when the installer
 assigns new or still-template files. The deployment marker goes in the first
@@ -346,6 +353,7 @@ the marked region of `~/.codex/AGENTS.md`.
 | First bootstrap guide | User runtime + current project | Validates an extracted release, installs shared assets, initializes the project, and requires an Archivist documentation action |
 | `codex_workflow --install` | Current project | Uses the existing user-level runtime, preserves native project instructions, creates or repairs project state and documentation, and requires documentation initialization or recovery when needed |
 | `codex_workflow --check-update` | User runtime, read-only | Reports every newer installable release with compact release-note summaries; downloads and changes nothing |
+| `codex_workflow --version` | User runtime, read-only | Reports the locally installed workflow version without contacting the release service |
 | `codex_workflow --update` | User runtime + current project, or current project only | Acquires and installs a newer release once, then brings each remaining project up to the installed version without reinstalling shared assets; a current project is a no-op |
 | `codex_workflow --remove` | User runtime + current project | Produces a read-only destructive plan, requires one explicit confirmation, then removes only workflow-owned surfaces while preserving native project instructions |
 
