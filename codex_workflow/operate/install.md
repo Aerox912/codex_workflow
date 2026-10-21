@@ -47,7 +47,8 @@ error if the initial user-level bootstrap is missing.
 
 For every new installation or documentation-recovery result, run the required
 `archivist` action. Skip it for a healthy `already installed` no-op. Spawn the
-returned action with
+returned action after applying `~/.codex/codex_workflow/agent_lifecycle.md` to
+free a slot when needed, with
 `agent_type="archivist"`, `task_name="install_docs"`, and
 `fork_turns="none"`. Use Task ID `install_docs` and the Documentation Context +
 Audience, Documentation Task + Goal, and Main-Agent Documentation Guidance
@@ -63,6 +64,7 @@ include it in Archivist's capsule. Otherwise tell Archivist that no source or
 overview is available; record unavailable context in the new documents rather
 than inventing facts. If `files` is empty, perform only a read-only framework
 completeness check.
+Preserve the returned handoff and release the worker's slot when supported.
 For this installation action only, Archivist may initialize listed new or
 recovery `project_progress.md`, `project_diary.md`, and
 `latest_session_work.md` files; later deployment updates belong to the main.

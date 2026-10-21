@@ -1,6 +1,8 @@
 # Medium Route
 
 Use after Medium is selected under `AGENTS.md`.
+Before using workers, read `~/.codex/codex_workflow/agent_lifecycle.md` and apply
+its shared capacity, queue, reuse, and release rules.
 
 ## Main Ownership
 
@@ -16,8 +18,8 @@ Use only these support roles:
 
 | Role | Ownership |
 | --- | --- |
-| Explorer | A disposable read-only worker mapping a bounded project-context task and returning evidence and gaps. |
-| Investigator | A disposable read-only worker researching a bounded fault or solution problem. Each can propose options; the main makes every project decision. |
+| Explorer | A read-only worker mapping a bounded project-context task and returning evidence and gaps. |
+| Investigator | A read-only worker researching a bounded fault or solution problem. Each can propose options; the main makes every project decision. |
 | Archivist | The required substantive-deployment closure worker defined by `~/.codex/codex_workflow/archivist.md`. It owns concise assigned documentation outside the main-owned deployment-state documents, read-only Git reporting, and the closing Deployment Token Report. |
 
 ## Working State
@@ -93,7 +95,7 @@ After the shared intake and before broader source discovery or planning, use
 Keep this map in working state, not durable documentation, and revise it only
 when material evidence changes relevance. Directly inspect a delegated surface
 when it becomes necessary for main-owned production or a material decision.
-Dispatch independent Explorer or Investigator workers together when useful.
+Dispatch independent Explorer or Investigator workers together within capacity.
 
 ## Deployment Boundary
 
@@ -116,8 +118,8 @@ within the deployment, followed by the capsule for that role:
 
 Treat these parts as the complete structure. Include only material context,
 references, boundaries, intended outcomes, main-owned decisions, constraints,
-and cautions. Require Task ID in every report. Follow-ups repeat it and send
-only changed capsule parts.
+and cautions. Require Task ID in every report. A new package has a new Task ID
+and full capsule; continuations keep the Task ID and send only changed parts.
 
 The main retains interpretation, root-cause reasoning, and every project
 decision because it holds the decisive project context. Use Explorer for
@@ -130,23 +132,23 @@ For difficult or broad questions, prefer parallel Explorers or Investigators
 quality. The main chooses the count needed for the task; a narrow lookup or
 focused search can use a single worker.
 
-When multiple workers address the same question, dispatch them together with
+When multiple workers address the same question, schedule their tasks with
 one shared Exploration ID or Problem ID, distinct Task IDs, and complementary
 angles in each worker's Exploration Task + Goal or Solution Search Task + Goal.
 Each worker seeks an answer to the full bounded question; its angle guides
-evidence collection. Keep their searches independent. Wait for the assigned
-set's reports and compare evidence, gaps, and disagreements rather than voting
-before deciding. If a worker fails, retry or replace only that worker when its
-missing evidence is needed; otherwise state the coverage limitation and decide
-whether the available evidence is sufficient. Preserve completed reports.
+evidence collection. Keep searches independent across waves. Compare the
+assigned set's reports, gaps, and disagreements rather than voting before
+deciding. If a worker fails, retry or replace only that worker when its missing
+evidence is needed; otherwise state the coverage limitation and decide whether
+the available evidence is sufficient. Preserve completed reports.
 
 ## Rollout-Efficient Support
 
 - Batch independent main-owned reads, searches, metadata checks, and tool
   operations into bounded calls.
-- When several support workers inform one decision, dispatch them together,
-  wait for the relevant set, and synthesize once. Start another batch only when
-  existing evidence materially changes the questions.
+- When several support workers inform one decision, dispatch within capacity,
+  collect reports and release slots between waves, then synthesize once. Open
+  new questions only when existing evidence materially changes them.
 - Do not poll support workers, request status-only updates, inspect activity
   files, or repeatedly request available evidence. Use lifecycle events,
   appropriately long waits, and `list_agents` only for genuine terminal-state
@@ -156,7 +158,7 @@ whether the available evidence is sufficient. Preserve completed reports.
 
 ## Fixed Boundaries
 
-- Medium has no workflow-imposed aggregate active-subagent limit.
+- Fit worker concurrency to the session using `agent_lifecycle.md`.
 - Limit Medium workers to Explorer, Investigator, and Archivist.
 - Give support workers bounded questions and sufficient context; retain every
   material interpretation and final claim in the main.

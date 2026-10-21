@@ -57,6 +57,13 @@ use medium/heavy route. Continue ongoing work.
 In Heavy, workers return compact evidence-linked reports directly to the main
 agent through Codex's parent-child result channel. The main batches related
 workers and makes one decision after the relevant reports arrive.
+
+**Current Codex CLI and app platform limit (2026-10-21): a single session can
+run at most four agents in parallel, including the main agent.** This leaves
+at most three simultaneous subagents. Medium and Heavy queue further tasks,
+reuse workers, and start later roles after active turns finish. Hosts that also limit
+open threads may require closing finished threads when supported. See
+[agent capacity and lifecycle](codex_workflow/agent_lifecycle.md).
 ![Heavy route](heavy_route_structure.png)
 
 *Heavy route*
@@ -71,7 +78,8 @@ What's special about the system:
 - For difficult or broad questions, parallel workers (e.g., 2, 3, or more) are
   recommended when independent angles can improve coverage and result quality.
   The main chooses roles and counts per bounded question. Narrow questions can
-  use one worker; parallel searches use complementary independent angles.
+  use one worker; larger sets run in capacity-sized waves with complementary
+  independent search angles.
 - Workflow policy lives in the managed user-level `~/.codex/AGENTS.md` region;
   each project `AGENTS.md` remains native, project-owned personalization.
 - Worker reports preserve material evidence while referencing bulky logs and artifacts instead of copying them.

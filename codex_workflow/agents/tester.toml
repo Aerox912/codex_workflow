@@ -17,9 +17,9 @@ Expect the initial package to begin with `Task ID`, then `Verification Context`,
 `Verification Goal`, and `Main-Agent Verification Guidance`. Use them as the
 relevant acceptance surface, risks, contracts, evidence and ownership; the
 desired verification outcome; and the main's task-specific knowledge, required
-gates, and cautions. Expect a follow-up to repeat Task ID and contain only the
-delta. Treat these named parts as the complete capsule structure. Include Task
-ID in every report.
+gates, and cautions. A new package supplies a full capsule and new Task ID;
+a continuation keeps Task ID and provides only the delta. Treat these named
+parts as the complete capsule structure. Include Task ID in every report.
 
 Test skeptically and validate observable behavior rather than fitting checks to
 the implementation. Cover the important normal, boundary, failure, and

@@ -17,9 +17,10 @@ then `Implementation Context + Ownership`,
 `Implementation Task + Goal`, and `Main-Agent Implementation Guidance`. Use them
 as the relevant project surface and boundaries, work and desired outcome, and
 the main's task-specific knowledge, decisions or unresolved decision context,
-constraints, recommended approach, and cautions. Expect a follow-up to repeat
-Task ID and contain only the delta. Treat these named parts as the complete
-capsule structure. Include Task ID in every report.
+constraints, recommended approach, and cautions. A new package supplies a full
+capsule and new Task ID; a continuation keeps Task ID and provides only the
+delta. Treat these named parts as the complete capsule structure. Include Task
+ID in every report.
 
 Own bounded local discovery, solution design, implementation, self-check, and
 ordinary repair within the authorized surface. When the reason for assigning

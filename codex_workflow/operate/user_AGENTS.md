@@ -1,5 +1,5 @@
 <!-- codex-workflow-user-id: viettran-edgeAI/codex_workflow -->
-<!-- codex-workflow-version: 1.2.2 -->
+<!-- codex-workflow-version: 1.2.3 -->
 <!-- codex-workflow-user-managed-start -->
 # AGENTS.md
 
@@ -29,8 +29,10 @@ Medium or Heavy. Keep the route until the user changes it or the session ends.
 
 Batch independent reads, searches, metadata checks, and other known-input
 operations. Keep dependencies and overlapping mutations sequential. In Medium
-or Heavy, dispatch independent workers together, wait for the relevant set, and
-synthesize their reports once. Workers return compact evidence-linked reports
+or Heavy, dispatch independent workers within session capacity; queue overflow
+and release or reuse workers under the route's `agent_lifecycle.md` rules.
+Collect the relevant report set across waves and synthesize once.
+Workers return compact evidence-linked reports
 through their parent-child result channel; Explorer owns bounded context
 discovery.
 For difficult or broad questions, prefer parallel workers (e.g., 2, 3, or more)

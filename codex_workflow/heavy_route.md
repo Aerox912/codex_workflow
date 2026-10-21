@@ -1,6 +1,8 @@
 # Heavy Route
 
 Use after Heavy is selected under `AGENTS.md`.
+Before using workers, read `~/.codex/codex_workflow/agent_lifecycle.md` and apply
+its shared capacity, queue, reuse, and release rules.
 
 ## Main Role and Optimization Target
 
@@ -20,15 +22,12 @@ rollouts only when the package genuinely requires that capability.
 
 | Role | Ownership |
 | --- | --- |
-| Explorer | A disposable read-only worker mapping a bounded project-context task and returning evidence and gaps. |
-| Investigator | A disposable read-only worker researching a bounded fault or solution problem. Each can propose options; the main makes every project decision. |
+| Explorer | A read-only worker mapping a bounded project-context task and returning evidence and gaps. |
+| Investigator | A read-only worker researching a bounded fault or solution problem. Each can propose options; the main makes every project decision. |
 | Default Executor | A Luna production worker owning local discovery, implementation, self-check, deployment operations, and ordinary repair inside one bounded package. |
 | Senior Executor | The one optional Sol worker for an exceptionally difficult mathematical, logical, architectural, or cross-cutting package. |
 | Tester | An independent verifier owning the assigned verification, test assets, and suitable test execution, but not production repair. |
 | Archivist | The required substantive-deployment closure worker defined by `~/.codex/codex_workflow/archivist.md`. It owns concise assigned documentation outside the main-owned deployment-state documents, read-only Git reporting, and the closing Deployment Token Report. |
-
-Archivist is required at substantive deployment closure. Use other roles only
-when they fit the task and ownership boundary.
 
 ## Working State
 
@@ -104,7 +103,7 @@ After the shared intake and before broader source discovery or planning, use
 Keep this map in working state, not durable documentation, and revise it only
 when material evidence changes relevance. Directly inspect a delegated surface
 when it becomes decision-critical. Use Explorer or Investigator when it
-materially advances the task; dispatch independent workers together.
+materially advances the task; dispatch independent workers within capacity.
 
 ## Deployment Boundary
 
@@ -129,8 +128,8 @@ the deployment, followed by the capsule for that role:
 
 Treat these parts as the complete package structure. Include only material
 context, references, boundaries, decisions, constraints, intended outcomes,
-approach, and cautions. Require Task ID in every report. Follow-ups repeat it
-and send only changed capsule parts.
+approach, and cautions. Require Task ID in every report. A new package has a new
+Task ID and full capsule; continuations keep the Task ID and send only changed parts.
 
 Distribute enough project knowledge and rationale for an Executor to complete
 its package well. Leave bounded discovery, command selection, implementation,
@@ -147,15 +146,15 @@ For difficult or broad questions, prefer parallel Explorers or Investigators
 quality. The main chooses the count needed for the task; a narrow lookup or
 focused search can use a single worker.
 
-When multiple workers address the same question, dispatch them together with
+When multiple workers address the same question, schedule their tasks with
 one shared Exploration ID or Problem ID, distinct Task IDs, and complementary
 angles in each worker's Exploration Task + Goal or Solution Search Task + Goal.
 Each worker seeks an answer to the full bounded question; its angle guides
-evidence collection. Keep their searches independent. Wait for the assigned
-set's reports and compare evidence, gaps, and disagreements rather than voting
-before deciding. If a worker fails, retry or replace only that worker when its
-missing evidence is needed; otherwise state the coverage limitation and decide
-whether the available evidence is sufficient. Preserve completed reports.
+evidence collection. Keep searches independent across waves. Compare the
+assigned set's reports, gaps, and disagreements rather than voting before
+deciding. If a worker fails, retry or replace only that worker when its missing
+evidence is needed; otherwise state the coverage limitation and decide whether
+the available evidence is sufficient. Preserve completed reports.
 
 ## Main-Agent Execution Boundary
 
@@ -183,9 +182,9 @@ blocker.
 
 ## Orchestration, Repair, and Lifecycle
 
-- Dispatch independent workers that inform the same decision together. Wait for
-  the relevant reports and decide once. Start another batch only when earlier
-  evidence materially changes the next questions.
+- Dispatch independent workers within capacity. Collect reports and release
+  slots between waves; compare the required report set and decide once. Open
+  new questions only when earlier evidence materially changes them.
 - Launch independent non-overlapping implementation packages together when
   dependencies allow. Preserve sequential ordering for dependencies,
   overlapping mutations, uncertainty, or risk.
@@ -197,9 +196,10 @@ blocker.
   diagnosis with the responsible worker. Return failed or ambiguous operational
   evidence to it instead of starting a main-agent diagnostic loop.
 - When Tester finds an ordinary production defect, forward its focused evidence
-  to the owning Executor for repair, then return the repair delta to the same
-  Tester for recheck. Retain the main's repair and acceptance decisions. Do not
-  rediagnose or repair in the main.
+  to the owning Executor for repair, then return the repair delta to the
+  independent Tester for recheck. Replace unavailable workers within capacity
+  under `agent_lifecycle.md`. Retain the main's repair and acceptance decisions;
+  do not rediagnose or repair in the main.
 - Escalate to a main-owned decision only for capsule conflict, cross-package
   contract change, invalidated material assumptions, expanded ownership,
   security or migration risk, an external blocker, or repeated focused failure.
@@ -211,12 +211,11 @@ blocker.
 
 ## Fixed Boundaries
 
-- Heavy has no workflow-imposed aggregate active-subagent limit; choose worker
-  count and concurrency for the task.
+- Fit worker concurrency to the session using `agent_lifecycle.md`.
 - Use at most one Senior Executor and one closure reporting owner per deployment.
 - Initial workers normally use `fork_turns="none"` and an explicit brief.
-  Ordinary Archivist work uses `"none"`, and a new closure Archivist uses
-  `"200"` under `archivist.md`.
+  Archivist context and closure assignments follow `archivist.md` and the
+  current spawn schema.
 - Create and direct every production or verification worker yourself.
 - Concurrent mutable assignments require non-overlapping ownership. Preserve
   unrelated user work and keep Git mutations within explicit authority.

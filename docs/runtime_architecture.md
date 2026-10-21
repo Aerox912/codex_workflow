@@ -7,12 +7,16 @@ generated outputs, and project-owned content.
 
 - Route documents and worker TOMLs: authoritative behavior distributed by a
   release.
+- `agent_lifecycle.md`: shared main-agent capacity, queue, worker reuse/release,
+  and role-transition rules for routes, installation, and closure.
 - `~/.codex/codex_workflow/operate/`: user command guides, the user-level
   instruction source, and package version metadata.
 - `~/.codex/codex_workflow/install_state.json`: installed version and ownership
   manifests.
 - Heavy and Archivist contracts: fixed release inputs copied unchanged.
 - Worker TOMLs and workflow-owned Codex settings: materialized outputs.
+- `[agents]` concurrency settings: user-owned platform controls, preserved by
+  bootstrap, update, and removal; session capacity can impose a lower limit.
 - User-level `AGENTS.md`: one marked workflow region containing route,
   documentation, rollout, and lifecycle-command policy.
 - Project `AGENTS.md`: native project-owned personalization, never generated or

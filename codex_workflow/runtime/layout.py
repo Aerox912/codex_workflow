@@ -118,6 +118,7 @@ class PackageLayout:
                 "heavy_route.md",
                 "medium_route.md",
                 "archivist.md",
+                "agent_lifecycle.md",
                 "operate/install.md",
                 "operate/bootstrap.md",
                 "operate/update.md",

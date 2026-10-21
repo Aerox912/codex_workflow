@@ -77,7 +77,6 @@ def _patch_section(lines: list[str], section: str, values: dict[str, str]) -> li
 
 
 _LEGACY_OWNED_KEYS: dict[str, set[str]] = {
-    "agents": {"max_concurrent_threads_per_session", "max_threads"},
     "features.multi_agent_v2": {
         "max_concurrent_threads_per_session",
         "hide_spawn_agent_metadata",
@@ -86,8 +85,9 @@ _LEGACY_OWNED_KEYS: dict[str, set[str]] = {
 }
 
 
+# Supported [agents] concurrency controls are user-owned, including max_threads.
 _OWNED_KEYS: dict[str, set[str]] = {
-    "agents": {"enabled", "max_concurrent_threads_per_session", "max_threads"},
+    "agents": {"enabled"},
     "features": {"multi_agent"},
     "features.multi_agent_v2": {
         *_LEGACY_OWNED_KEYS["features.multi_agent_v2"],

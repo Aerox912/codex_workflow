@@ -31,11 +31,15 @@ The generated `~/.codex/config.toml` enables multi-agent tools and writes
 `[features.multi_agent_v2]` with `enabled = true`,
 `min_wait_timeout_ms = 300000`, `default_wait_timeout_ms = 300000`, and
 `max_wait_timeout_ms = 1800000` while preserving unrelated settings.
+Concurrency settings under `[agents]` remain user-owned; the workflow does not
+generate, raise, or remove them. Session limits still govern worker scheduling.
 
 ## Required documentation action
 
 Read the command's `agent_actions` result. Expect one required `archivist`
-action for the Project Documentation Framework. Spawn it with
+action for the Project Documentation Framework. Apply the installed
+`~/.codex/codex_workflow/agent_lifecycle.md` to free a slot when needed, then
+spawn it with
 `agent_type="archivist"`, `task_name="bootstrap_docs"`, and
 `fork_turns="none"`. Use Task ID `bootstrap_docs` and the Documentation Context +
 Audience, Documentation Task + Goal, and Main-Agent Documentation Guidance
@@ -65,6 +69,7 @@ Verify that every framework file exists, no file listed in `files` retains the
 bootstrap marker, and every listed file in `required_context_files` has been
 populated. Treat installation as incomplete if the required worker cannot run
 or fails; do not silently perform its work in the main thread.
+Preserve the documentation handoff and release the worker's slot when supported.
 
 Restart Codex only after the bootstrap and required documentation action both
 succeed.

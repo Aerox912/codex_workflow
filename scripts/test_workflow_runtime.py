@@ -168,7 +168,7 @@ class MarkerTests(unittest.TestCase):
         self.assertNotIn("send_message", heavy)
         self.assertIn("smallest complete decision-ready report", " ".join(heavy.split()))
         self.assertIn("directly to the main", " ".join(heavy.split()))
-        self.assertIn("Wait for the assigned set's reports", " ".join(heavy.split()))
+        self.assertIn("Compare the assigned set's reports", " ".join(heavy.split()))
         self.assertIn("at most one Senior Executor", heavy)
         self.assertIn("Explorer for bounded context discovery", heavy)
         self.assertIn("Investigator for evidence-backed solution search", heavy)
@@ -179,7 +179,8 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("retry or replace only that worker", " ".join(heavy.split()))
         self.assertIn("defining gates, assigning execution", heavy)
         self.assertIn("owning Executor for repair", heavy)
-        self.assertIn("same\n  Tester for recheck", heavy)
+        self.assertIn("independent Tester for recheck", " ".join(heavy.split()))
+        self.assertIn("Replace unavailable workers within capacity", heavy)
         self.assertIn("non-overlapping ownership", heavy)
         self.assertIn("Do not poll workers", heavy)
 
@@ -192,6 +193,12 @@ class MarkerTests(unittest.TestCase):
         for role in (explorer, investigator, executor, senior, tester):
             self.assertIn("Task ID", role)
             self.assertIn("complete capsule structure", " ".join(role.split()))
+        for role in (explorer, investigator, executor, senior, tester, archivist):
+            role_flat = " ".join(role.split())
+            self.assertIn("new package", role_flat)
+            self.assertIn("full capsule", role_flat)
+            self.assertIn("new Task ID", role_flat)
+            self.assertIn("a continuation keeps Task ID", role_flat)
         self.assertIn("what exists and where", explorer)
         self.assertIn("other Explorers, if assigned", explorer)
         self.assertIn("Exploration ID in every report", " ".join(explorer.split()))
@@ -220,7 +227,9 @@ class MarkerTests(unittest.TestCase):
 
         handoff = (PACKAGE / "archivist.md").read_text(encoding="utf-8")
         self.assertIn('agent_type="archivist"', handoff)
-        self.assertIn('fork_turns="200"', handoff)
+        self.assertIn('fork_turns="all"', handoff)
+        self.assertIn('fork_turns="none"', handoff)
+        self.assertIn("canonical deployment-state", handoff)
         self.assertIn("one reporting owner", handoff)
         self.assertIn("$deployment-token-report", archivist)
         skill = (
@@ -232,6 +241,58 @@ class MarkerTests(unittest.TestCase):
         )
         for policy in (agents_policy, medium, heavy, handoff, archivist):
             self.assertNotIn("end this session", policy.lower())
+
+    def test_agent_lifecycle_covers_capacity_waves_and_role_transitions(self) -> None:
+        lifecycle = " ".join(
+            (PACKAGE / "agent_lifecycle.md").read_text(encoding="utf-8").split()
+        )
+        for contract in (
+            "four total slots allow three workers",
+            "A limit explicitly excluding the main is already a worker budget",
+            "active-turn limits from open-thread limits",
+            "including retained workers and descendants",
+            "Queue overflow",
+            "Save each compact report",
+            "same role",
+            "require fresh worker contexts, full capsules",
+            "Do not reuse a context containing another angle's findings as independent coverage",
+            "Executor/Tester separation",
+            "confirm release before reusing their slots",
+            "Completion alone is insufficient for an open-thread limit",
+            "Interruption is not proof of thread release",
+            "Never wait for an unstarted queued task",
+            "With one releasable worker slot",
+            "plan room for all required roles before starting optional support",
+            "report that capability blocker before starting work",
+            "Retry only after that capacity change",
+            "preserve successful dispatches and reports",
+            "admit one Archivist",
+            "completed turns suffice even when their threads are retained and no close operation exists",
+            "without claiming completion or changing route ownership",
+        ):
+            with self.subTest(contract=contract):
+                self.assertIn(contract, lifecycle)
+
+        for entry in (
+            "medium_route.md", "heavy_route.md", "archivist.md",
+            "operate/bootstrap.md", "operate/install.md", "operate/user_AGENTS.md",
+        ):
+            policy = (PACKAGE / entry).read_text(encoding="utf-8")
+            with self.subTest(entry=entry):
+                self.assertIn("agent_lifecycle.md", policy)
+                self.assertNotIn("no workflow-imposed aggregate", policy)
+                self.assertNotIn('fork_turns="200"', policy)
+        heavy = " ".join((PACKAGE / "heavy_route.md").read_text().split())
+        self.assertIn("do not become a production Executor", heavy)
+        self.assertIn("defining gates, assigning execution", heavy)
+
+    def test_package_requires_shared_agent_lifecycle(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "codex_workflow"
+            shutil.copytree(PACKAGE, root, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+            (root / "agent_lifecycle.md").unlink()
+            with self.assertRaisesRegex(ValidationError, "agent_lifecycle.md"):
+                PackageLayout.resolve(root)
 
     def test_closure_bootstrap_and_worker_boundaries_remain_explicit(self) -> None:
         skill = (
@@ -500,7 +561,7 @@ class PlatformSettingsTests(unittest.TestCase):
         )
         self.assertEqual(patch_codex_settings(rendered), rendered)
 
-    def test_toml_patch_removes_legacy_agents_alias(self) -> None:
+    def test_toml_patch_preserves_user_concurrency_settings(self) -> None:
         original = (
             "[agents]\n"
             "max_concurrent_threads_per_session = 20\n"
@@ -509,10 +570,21 @@ class PlatformSettingsTests(unittest.TestCase):
             "job_max_runtime_seconds = 1800\n"
         )
         rendered = patch_codex_settings(original)
-        self.assertNotIn("max_threads", rendered)
+        self.assertIn("max_threads = 8", rendered)
         self.assertIn("max_depth = 1", rendered)
         self.assertIn("job_max_runtime_seconds = 1800", rendered)
-        self.assertNotIn("max_concurrent_threads_per_session", rendered)
+        self.assertIn("max_concurrent_threads_per_session = 20", rendered)
+        self.assertEqual(patch_codex_settings(rendered), rendered)
+
+    def test_user_capacity_survives_patching_and_removal(self) -> None:
+        for key in ("max_concurrent_threads_per_session", "max_threads"):
+            for capacity in (1, 3, 4, 8):
+                with self.subTest(key=key, capacity=capacity):
+                    original = f"[agents]\n{key} = {capacity}\n"
+                    patched = patch_codex_settings(original)
+                    self.assertEqual(tomllib.loads(patched)["agents"][key], capacity)
+                    removed = remove_workflow_owned_settings(patched)
+                    self.assertEqual(tomllib.loads(removed)["agents"], {key: capacity})
 
     def test_toml_patch_replaces_owned_v2_gate(self) -> None:
         rendered = patch_codex_settings(
@@ -546,7 +618,7 @@ class PlatformSettingsTests(unittest.TestCase):
         self.assertIn("keep_agent = true", rendered)
         self.assertIn('keep_feature = "keep"', rendered)
         self.assertIn('keep_legacy = "keep"', rendered)
-        self.assertNotIn("max_concurrent_threads_per_session", rendered)
+        self.assertIn("max_concurrent_threads_per_session = 20", rendered)
         self.assertIn("[agents]", rendered)
         self.assertNotIn("enabled = true", rendered)
         self.assertNotIn("multi_agent = true", rendered)
@@ -563,7 +635,7 @@ class PlatformSettingsTests(unittest.TestCase):
         self.assertNotIn("Fixed Workflow Settings", heavy)
         self.assertIn('model_reasoning_effort = "max"', default)
         self.assertIn(
-            'fork_turns="200"',
+            'fork_turns="all"',
             (PACKAGE / "archivist.md").read_text(encoding="utf-8"),
         )
 
@@ -618,6 +690,7 @@ class ReleaseTests(unittest.TestCase):
     def test_archive_verification_runs_the_full_package_validator(self) -> None:
         cases = (
             ("operate/user_AGENTS.md", "archive is missing"),
+            ("agent_lifecycle.md", "archive is missing"),
             ("project_docs/project_diary.md", "workflow package validation failed"),
         )
         for missing, error in cases:
@@ -820,6 +893,10 @@ class LifecycleIntegrationTests(unittest.TestCase):
             "# Existing instructions\nKeep local policy.\n",
         )
         self.assertTrue((self.runtime.runtime / "runtime" / "workflow.py").is_file())
+        self.assertEqual(
+            (self.runtime.runtime / "agent_lifecycle.md").read_bytes(),
+            (PACKAGE / "agent_lifecycle.md").read_bytes(),
+        )
         self.assertFalse((self.runtime.runtime / "templates" / "AGENTS.md").exists())
         self.assertTrue((self.runtime.agents / "default_executor.toml").is_file())
         self.assertTrue((self.runtime.agents / "senior_executor.toml").is_file())
@@ -1044,6 +1121,48 @@ class LifecycleIntegrationTests(unittest.TestCase):
         state = json.loads((self.runtime.runtime / "install_state.json").read_text())
         self.assertEqual(set(state["owned_workers"]), self.package.worker_names)
         self.assertEqual(set(state["owned_skills"]), self.package.skill_names)
+
+    def test_capacity_and_lifecycle_survive_bootstrap_update_and_removal(self) -> None:
+        incoming = self.incoming_package("capacity-update", NEXT_PACKAGE_VERSION)
+        for key in ("max_concurrent_threads_per_session", "max_threads"):
+            with self.subTest(key=key):
+                runtime = RuntimePaths(self.root / key / "codex-home")
+                project = ProjectPaths(self.root / key / "project")
+                project.root.mkdir(parents=True)
+                project.active.write_text("Keep project policy.\n", encoding="utf-8")
+                runtime.config_toml.parent.mkdir(parents=True)
+                runtime.config_toml.write_text(
+                    f'[agents]\n{key} = 1\n\n[unrelated]\nkeep = "yes"\n',
+                    encoding="utf-8",
+                )
+                plan_bootstrap(self.package, runtime, project).apply()
+                installed_guide = runtime.runtime / "agent_lifecycle.md"
+                self.assertEqual(installed_guide.read_bytes(), (PACKAGE / installed_guide.name).read_bytes())
+                self.assertEqual(tomllib.loads(runtime.config_toml.read_text())["agents"][key], 1)
+
+                # An older runtime may not contain or own the new lifecycle guide.
+                installed_guide.unlink()
+                state_path = runtime.runtime / "install_state.json"
+                state = json.loads(state_path.read_text())
+                state["owned_runtime_files"].remove("agent_lifecycle.md")
+                state_path.write_text(json.dumps(state), encoding="utf-8")
+                plan_update(incoming, runtime, project).apply()
+                self.assertEqual(installed_guide.read_bytes(), (incoming.root / installed_guide.name).read_bytes())
+                state = json.loads(state_path.read_text())
+                self.assertIn("agent_lifecycle.md", state["owned_runtime_files"])
+                config = tomllib.loads(runtime.config_toml.read_text())
+                self.assertEqual(config["agents"][key], 1)
+                self.assertEqual(config["unrelated"], {"keep": "yes"})
+                self.assertIn("agent_lifecycle.md", runtime.user_agents.read_text())
+                self.assertEqual(project.active.read_text(), "Keep project policy.\n")
+
+                plan_remove(runtime, project).apply()
+                self.assertFalse(installed_guide.exists())
+                self.assertEqual(
+                    tomllib.loads(runtime.config_toml.read_text()),
+                    {"agents": {key: 1}, "unrelated": {"keep": "yes"}},
+                )
+                self.assertEqual(project.active.read_text(), "Keep project policy.\n")
 
     def test_install_migrates_legacy_personalization_and_local_regions(self) -> None:
         self.project.active.write_text(

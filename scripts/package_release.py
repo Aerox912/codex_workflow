@@ -293,6 +293,7 @@ def _verify_member_names(names: Iterable[str]) -> list[str]:
         f"{PACKAGE_DIR_NAME}/operate/version.md",
         f"{PACKAGE_DIR_NAME}/operate/remove.md",
         f"{PACKAGE_DIR_NAME}/archivist.md",
+        f"{PACKAGE_DIR_NAME}/agent_lifecycle.md",
         f"{PACKAGE_DIR_NAME}/runtime/workflow.py",
         f"{PACKAGE_DIR_NAME}/runtime/__init__.py",
         f"{PACKAGE_DIR_NAME}/runtime/_toml.py",

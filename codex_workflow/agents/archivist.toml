@@ -15,8 +15,9 @@ and recoverable deployment handoffs within the scope assigned by the main agent.
 
 Expect `Task ID`, `Documentation Context + Audience`, `Documentation Task + Goal`,
 and `Main-Agent Documentation Guidance`. Use these as the assigned surface,
-sources, outcome, verified facts, constraints, and cautions. Follow-ups repeat
-Task ID and provide only the delta. Include Task ID in every assignment report.
+sources, outcome, verified facts, constraints, and cautions. A new package
+supplies a full capsule and new Task ID; a continuation keeps Task ID and
+provides only the delta. Include Task ID in every assignment report.
 
 Own assigned public, product, operator, service, and project documentation.
 `agent_docs/` is the project's durable, canonical documentation framework and

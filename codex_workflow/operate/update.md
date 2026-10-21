@@ -45,6 +45,9 @@ verified timestamped backup, and apply user/project state through one
 compensating transaction.
 Preserve an `agent_docs/` ignore rule that the user owns outside the
 workflow-managed block.
+Concurrency settings under `[agents]` remain user-owned and survive updates
+and removal. The workflow schedules within effective session capacity rather
+than generating or raising a concurrency setting.
 
 When the user-level workflow already matches the selected release, expect a
 project-only update. It migrates a legacy wrapper when present, updates project

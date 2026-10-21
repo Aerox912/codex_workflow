@@ -17,12 +17,14 @@ For exact behavior, use the source that owns the relevant contract:
   boundaries;
 - `codex_workflow/archivist.md` for documentation assignments and deployment
   closure;
+- `codex_workflow/agent_lifecycle.md` for shared capacity, queue, reuse, and
+  release rules;
 - `codex_workflow/operate/*.md` for user-facing lifecycle procedures;
 - `codex_workflow/runtime/*.py` for deterministic lifecycle mutations; and
 - `codex_workflow/skills/deployment-token-report/` for deployment usage
   reporting.
 
-This revision describes packaged version `1.2.2`, read from
+This revision describes packaged version `1.2.3`, read from
 `codex_workflow/operate/VERSION`. Version markers, package validation, and
 release tests prevent that value from drifting from the distributed user
 instruction block.
@@ -52,8 +54,9 @@ requesting reports can become counterproductive from a token-cost perspective.
 
 You may successfully move some work to a worker, but in exchange, the main agent has to reload its entire context.
 In practice, you're basically trading **cached input tokens from the main agent** for **input/output tokens from workers**.
-In Heavy, related workers are dispatched together and return compact reports
-directly to the main. The main waits for the relevant batch and decides once.
+In Heavy, related workers are dispatched within capacity and return compact
+reports directly to the main. The main collects the required set across waves
+and decides once.
 
 This is why I apply **batching guidelines** to reduce the number of main-agent rollouts. I'll explain them later in the `codex_workflow` design section.
 AI isn't going to naturally balance all of these trade-offs for you. You have to experiment, measure, observe, and optimize the workflow yourself.
@@ -154,12 +157,15 @@ In the current implementation, workers normally start with:
 `fork_turns="none"`
 
 and receive explicit context capsules.
-For closure, a newly created Archivist uses a finite recent-context fork:
+For closure, a newly created Archivist can inherit the conversation when it
+fits its model:
 
-`fork_turns="200"`
+`fork_turns="all"`
 
-The fork supplies documentation context for that closure assignment. Later
-main-agent decisions must be sent explicitly because each fork is a snapshot.
+Otherwise it uses `"none"` with canonical deployment-state documents and
+targeted verified evidence references. Fork values must match the current
+spawn schema. Later main-agent decisions are sent explicitly because each
+fork is a snapshot.
 
 --------------------
 
@@ -181,8 +187,8 @@ The coordination process roughly works like this:
 1. The main reads `agent_docs/`, inspects decision-critical source, and uses
    Explorer or Investigator for bounded context or solution questions.
 2. The main plans bounded work and gives each worker a capsule with
-   project-specific guidance. Related workers are dispatched together and
-   return compact reports directly to the main.
+   project-specific guidance. Related workers are dispatched within capacity
+   and return compact reports directly to the main across scheduled waves.
 3. At substantive deployment closure, `agent_docs/` is updated, the Git
    handoff is completed, and `$deployment-token-report` is generated.
 
@@ -219,14 +225,27 @@ They are designed to group related coordination and execution work more efficien
 
 Basically, they're scheduling rules:
 
-- Independent workers that contribute to the same decision should be dispatched together.
-- The main waits for the relevant report group and synthesizes once.
-- The next batch should only be opened when evidence from the previous batch actually changes the next question.
+- Independent tasks are dispatched together within available capacity; overflow
+  waits in a queue. Four total slots permit the main plus three workers.
+- Reports are retained and finished workers are reused or released between
+  waves. Open-thread limits can require closing a completed thread; an
+  active-turn limit frees running capacity when that turn finishes.
+- The main compares the required report set across waves and synthesizes once.
+  A new research question needs material new evidence; continuing an existing
+  queue does not.
 - Independent implementation packages without overlapping write ownership can run in parallel.
 - Dependencies, overlapping mutations, uncertainty, or high-risk work should still run sequentially.
 - Don't poll workers, request status-only updates, or ask for evidence that has already been provided.
 - Normal operational failures should go back to the appropriate owner for repair. The Main Agent only intervenes when a new decision is required.
 - Independent read/search/check operations performed by the Main Agent should also be grouped into a sensible tool turn.
+
+Worker roles are definitions, not permanently occupied slots. An Executor can
+finish and release its slot before an independent Tester starts, then an
+Archivist can use a released slot for closure. Closed repair/recheck workers
+receive their task capsules and current evidence when recreated. Where closing
+is unavailable, compatible idle workers can be reused through supported
+follow-up tools. Concurrency settings remain user-owned and do not bypass a
+stricter session limit.
 
 ### Avoiding Unnecessary Worker Wakeups
 

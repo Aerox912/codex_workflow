@@ -1,5 +1,9 @@
 # Archivist Assignments
 
+Before assigning a worker, apply `~/.codex/codex_workflow/agent_lifecycle.md`.
+Collect relevant reports and release finished workers as needed to admit
+Archivist; the role need not remain resident during other work.
+
 Use Archivist for verified documentation work in Medium or Heavy. Give each
 assignment a Task ID and the Documentation Context + Audience, Documentation
 Task + Goal, and Main-Agent Documentation Guidance capsule. Identify the write
@@ -7,6 +11,8 @@ surface and provide verified facts or exact evidence references. Require the
 smallest durable update that preserves current decisions, state, limitations,
 and a recoverable continuation point; remove stale or redundant detail instead
 of accumulating session history.
+A new package has a new Task ID and full capsule; a continuation keeps the
+Task ID and supplies only changed parts.
 
 Choose the number, timing, and reuse of Archivist workers according to the task.
 Give concurrent workers non-overlapping document ownership. Ordinary assignments
@@ -28,14 +34,17 @@ or `blocked`), and read-only Git handoff.
 
 Reuse an Archivist when its retained context plus a concise delta is sufficient.
 Otherwise create one with `agent_type="archivist"`, a unique underscore-safe
-task name, and `fork_turns="200"`. For this inherited-context
-assignment, reference the fork as documentation context instead of writing a
-deployment summary. Supply only scope and guidance the fork does not establish.
+task name, and `fork_turns="all"` when the inherited context fits its model.
+Reference that fork as documentation context and supply only missing scope and
+guidance. Otherwise use `fork_turns="none"` with the canonical deployment-state
+documents and targeted verified evidence references as its context. Use only
+fork values accepted by the current spawn schema.
 
 Ensure other workers have finished changes relevant to the handoff before
 Archivist seals it. Assign only one reporting owner for each deployment. Wait
 for its documentation handoff and exact six-column `$deployment-token-report`
-table, then relay both without repeating its operational checks. A later
+table, preserve both before releasing its slot, then relay them without
+repeating its operational checks. A later
 substantive deployment uses a new ID and receives its own closure and report.
 
 Standalone questions, searches, read-only research, and small bounded leaf tasks
